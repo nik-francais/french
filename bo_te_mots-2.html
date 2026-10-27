@@ -1,0 +1,4229 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boîte à Mots — Вивчення французьких слів</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,700;1,7..72,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Французька палітра: верже, чорнило Waterman, бордо Gallimard та лініювання зошита Séyès */
+  --bg-page: #f6f4ee;
+  --bg-card: #fdfcf9;
+  --bg-elevated: #ede9df;
+  --bg-input: #ffffff;
+  --text-main: #1f242e;
+  --text-muted: #5c6473;
+  --text-faint: #8a92a0;
+
+  --accent: #1e3a5f;              /* Bleu d'encre (глибоке чорнило перової ручки) */
+  --accent-hover: #152943;
+  --accent-soft: #e5edf5;
+  --border: #dcd7ca;
+  --border-subtle: #eae5d8;
+
+  --card-top-line: #9b2c2c;        /* Rouge Carmin (видавництво Gallimard) */
+  --card-seyes-main: rgba(43, 90, 140, 0.045); /* Séyès grands carreaux */
+  --card-margin-line: rgba(180, 60, 60, 0.16);  /* Ліве поле французького зошита */
+
+  --danger: #9b2c2c;
+  --danger-soft: #fbf0f0;
+  --warning: #a36116;
+  --warning-soft: #fbf3e6;
+  --success: #286343;
+  --success-soft: #edf6f0;
+
+  --st-new: #6b778d;
+  --st-learn: #a36116;
+  --st-know: #2c5282;
+  --st-master: #286343;
+
+  --shadow: 0 3px 10px rgba(35, 30, 20, 0.05), 0 1px 3px rgba(35, 30, 20, 0.04);
+  --radius: 6px;
+  --font-ui: 'Golos Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-fr: 'Literata', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-page: #15171c;
+    --bg-card: #1c1f26;
+    --bg-elevated: #262a34;
+    --bg-input: #171920;
+    --text-main: #f0eee6;
+    --text-muted: #9fa6b2;
+    --text-faint: #6c7380;
+    --accent: #7ca5d8;
+    --accent-hover: #a3c4ed;
+    --accent-soft: #1e2838;
+    --border: #353a47;
+    --border-subtle: #292d37;
+    --card-top-line: #c94a4a;
+    --card-seyes-main: rgba(255, 255, 255, 0.025);
+    --card-margin-line: rgba(230, 90, 90, 0.22);
+    --danger: #f87171;
+    --danger-soft: #381a1a;
+    --warning: #fbbf24;
+    --warning-soft: #3a280c;
+    --success: #4ade80;
+    --success-soft: #123320;
+    --st-new: #94a3b8;
+    --st-learn: #fbbf24;
+    --st-know: #7ca5d8;
+    --st-master: #4ade80;
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg-page: #15171c;
+  --bg-card: #1c1f26;
+  --bg-elevated: #262a34;
+  --bg-input: #171920;
+  --text-main: #f0eee6;
+  --text-muted: #9fa6b2;
+  --text-faint: #6c7380;
+  --accent: #7ca5d8;
+  --accent-hover: #a3c4ed;
+  --accent-soft: #1e2838;
+  --border: #353a47;
+  --border-subtle: #292d37;
+  --card-top-line: #c94a4a;
+  --card-seyes-main: rgba(255, 255, 255, 0.025);
+  --card-margin-line: rgba(230, 90, 90, 0.22);
+  --danger: #f87171;
+  --danger-soft: #381a1a;
+  --warning: #fbbf24;
+  --warning-soft: #3a280c;
+  --success: #4ade80;
+  --success-soft: #123320;
+  --st-new: #94a3b8;
+  --st-learn: #fbbf24;
+  --st-know: #7ca5d8;
+  --st-master: #4ade80;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.app-shell {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px 16px 54px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Повідомлення про інкогніто */
+.storage-banner {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  display: none;
+}
+
+/* Шапка */
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.brand-title {
+  font-family: var(--font-fr);
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.brand-sub {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-switch {
+  display: inline-flex;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2px;
+}
+
+.lang-switch button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  border-radius: calc(var(--radius) - 2px);
+  font-size: 0.8125rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.lang-switch button.active {
+  background: var(--bg-card);
+  color: var(--accent);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* Навігаційні вкладки */
+.nav-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  background: var(--bg-elevated);
+  padding: 4px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.nav-tab {
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  border-radius: calc(var(--radius) - 2px);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.nav-tab.active {
+  background: var(--bg-card);
+  color: var(--text-main);
+  box-shadow: var(--shadow);
+}
+
+/* Естетика французького зошита Séyès */
+.index-card {
+  background-color: var(--bg-card);
+  background-image:
+    linear-gradient(90deg, transparent 42px, var(--card-margin-line) 42px, var(--card-margin-line) 43px, transparent 43px),
+    repeating-linear-gradient(to bottom, transparent 0px, transparent 31px, var(--card-seyes-main) 31px, var(--card-seyes-main) 32px);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--card-top-line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px 22px 22px 52px;
+  position: relative;
+}
+
+@media (max-width: 480px) {
+  .index-card {
+    padding: 18px 16px 18px 20px;
+    background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 31px, var(--card-seyes-main) 31px, var(--card-seyes-main) 32px);
+  }
+}
+
+.panel-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+/* Кнопки */
+.btn {
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--bg-elevated);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn-sm {
+  min-height: 38px;
+  padding: 4px 10px;
+  font-size: 0.8125rem;
+}
+
+.btn-icon {
+  min-width: 42px;
+  min-height: 42px;
+  padding: 8px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-icon:hover {
+  background: var(--bg-elevated);
+  color: var(--accent);
+}
+
+svg.icon {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* Фокус на темі */
+.topic-focus-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+
+.topic-focus-select {
+  padding: 6px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-weight: 600;
+  color: var(--text-main);
+  max-width: 250px;
+}
+
+/* Дашборд героя */
+.hero-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hero-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.due-counter {
+  display: flex;
+  flex-direction: column;
+}
+
+.due-label {
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.due-number {
+  font-family: var(--font-mono);
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--accent);
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-val {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.stat-lbl {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Сегментний прогрес-бар */
+.section-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.segment-bar {
+  height: 12px;
+  width: 100%;
+  background: var(--bg-elevated);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.seg-part {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.segment-legend {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  font-size: 0.8125rem;
+}
+
+@media (min-width: 480px) {
+  .segment-legend {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-count {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  margin-left: auto;
+}
+
+/* Графік прогнозу на 7 днів */
+.forecast-chart {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  align-items: end;
+  height: 110px;
+  padding-top: 18px;
+}
+
+.forecast-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.forecast-val {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.forecast-bar-wrap {
+  width: 100%;
+  max-width: 32px;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.forecast-bar {
+  width: 100%;
+  background: var(--accent);
+  border-radius: 4px 4px 0 0;
+  min-height: 3px;
+}
+
+.forecast-day {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Плитка режимів */
+.modes-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 520px) {
+  .modes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.mode-tile {
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: border-color 0.15s, transform 0.1s;
+  min-height: 76px;
+}
+
+.mode-tile:hover:not(.disabled) {
+  border-color: var(--accent);
+}
+
+.mode-tile.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mode-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mode-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+.mode-desc {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* Порожній стан */
+.empty-state {
+  text-align: center;
+  padding: 38px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.empty-title {
+  font-family: var(--font-fr);
+  font-size: 1.45rem;
+  font-weight: 600;
+}
+
+.empty-desc {
+  color: var(--text-muted);
+  max-width: 460px;
+  font-size: 0.9375rem;
+}
+
+/* Вкладка «Слова» */
+.words-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.filters-bar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+@media (min-width: 540px) {
+  .filters-bar {
+    grid-template-columns: 1.4fr 1fr 1fr;
+  }
+}
+
+.input, .select, .textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  color: var(--text-main);
+  font-size: 0.9375rem;
+}
+
+.textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.word-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.word-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--st-new);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.word-item[data-status="learn"] { border-left-color: var(--st-learn); }
+.word-item[data-status="know"] { border-left-color: var(--st-know); }
+.word-item[data-status="master"] { border-left-color: var(--st-master); }
+
+.word-item-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.word-fr-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.word-fr {
+  font-family: var(--font-fr);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.word-pos {
+  font-family: var(--font-fr);
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.word-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.badge {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+}
+
+.word-meaning {
+  font-size: 0.98rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.word-item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-subtle);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.inline-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Навчальні екрани */
+.session-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.session-progress {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.study-word-title {
+  font-family: var(--font-fr);
+  font-size: 1.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+
+.study-pos {
+  font-family: var(--font-fr);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 16px;
+}
+
+.study-divider {
+  border: none;
+  border-top: 1px dashed var(--border);
+  margin: 16px 0;
+}
+
+.study-meaning {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.study-def {
+  font-family: var(--font-fr);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  padding-left: 10px;
+  border-left: 2px solid var(--border);
+}
+
+.study-example {
+  font-family: var(--font-fr);
+  font-size: 1.05rem;
+  line-height: 1.45;
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border-left: 3px solid var(--card-top-line);
+  border-radius: 4px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hl-word {
+  color: var(--card-top-line);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.grade-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (min-width: 480px) {
+  .grade-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.grade-btn {
+  min-height: 54px;
+  padding: 8px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.grade-btn:hover {
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+
+.grade-btn .g-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.grade-btn .g-time {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.grade-again { border-bottom: 3px solid var(--danger); }
+.grade-hard { border-bottom: 3px solid var(--warning); }
+.grade-good { border-bottom: 3px solid var(--accent); }
+.grade-easy { border-bottom: 3px solid var(--success); }
+
+/* Опції (Вибір, Контекст, Синоніми) */
+.options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.option-btn {
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+}
+
+.option-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.option-key {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.option-btn.correct {
+  border-color: var(--success);
+  background: var(--success-soft);
+}
+
+.option-btn.wrong {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* Напиши: Чіткі пробіли між словами */
+.template-mask {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin: 14px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px; /* Чіткий видимий відступ між словами */
+  align-items: center;
+}
+
+.template-word {
+  display: inline-flex;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.feedback-box {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  font-size: 0.9375rem;
+}
+
+.feedback-box.ok { background: var(--success-soft); color: var(--success); border: 1px solid var(--success); }
+.feedback-box.almost { background: var(--warning-soft); color: var(--warning); border: 1px solid var(--warning); }
+.feedback-box.err { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger); }
+
+/* Пари */
+.pairs-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.pair-card {
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  word-break: break-word;
+}
+
+.pair-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.pair-card.matched {
+  opacity: 0.35;
+  pointer-events: none;
+  border-color: var(--success);
+}
+
+/* Анаграма */
+.anagram-slots, .anagram-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+  min-height: 48px;
+}
+
+.letter-tile {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.letter-tile.used {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Кросворд */
+.cw-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+.cw-grid {
+  display: grid;
+  gap: 2px;
+  background: var(--border);
+  padding: 3px;
+  border-radius: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.cw-cell {
+  width: clamp(26px, 7.2vw, 38px);
+  height: clamp(26px, 7.2vw, 38px);
+  position: relative;
+  background: var(--bg-elevated);
+}
+
+.cw-cell.empty {
+  background: transparent;
+}
+
+.cw-cell input {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: lowercase;
+  padding: 0;
+  border-radius: 2px;
+}
+
+.cw-cell input.cw-ok {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.cw-cell input.cw-err {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.cw-num {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  pointer-events: none;
+  line-height: 1;
+}
+
+.cw-clues {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 540px) {
+  .cw-clues {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.cw-clue-item {
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cw-clue-item:hover {
+  background: var(--bg-elevated);
+}
+
+/* Модальне вікно */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.modal-backdrop.open {
+  display: flex;
+}
+
+.modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: var(--radius);
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 22px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-row label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Тости сповіщень */
+.toast-container {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 92vw;
+  width: 420px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--text-main);
+  color: var(--bg-card);
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  box-shadow: var(--shadow);
+  pointer-events: auto;
+}
+
+/* Налаштування */
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.setting-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 14px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.mark-ok { color: var(--success); font-family: var(--font-mono); font-weight: 700; }
+.mark-err { color: var(--danger); font-family: var(--font-mono); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <div id="storageBanner" class="storage-banner" role="status">
+    Локальне сховище браузера недоступне (можливо, суворий режим інкогніто). Застосунок працює в пам'яті сесії. Використовуйте резервний код для збереження.
+  </div>
+
+  <header class="app-header">
+    <div class="brand">
+      <h1 class="brand-title">Boîte à Mots</h1>
+      <span class="brand-sub">fait par nik.peredela</span>
+    </div>
+    <div class="header-controls">
+      <div class="lang-switch" role="group" aria-label="Режим підказок">
+        <button type="button" id="btnModeUkFr" class="active">UK + FR</button>
+        <button type="button" id="btnModeFrFr">FR + FR</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav-tabs" aria-label="Головна навігація">
+    <button type="button" class="nav-tab active" data-tab="study">Вчити</button>
+    <button type="button" class="nav-tab" data-tab="words">Слова <span id="navWordCount" class="badge">0</span></button>
+    <button type="button" class="nav-tab" data-tab="settings">Налаштування</button>
+  </nav>
+
+  <main id="mainView"></main>
+</div>
+
+<!-- Модальне вікно -->
+<div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div id="modalContent" class="modal-box"></div>
+</div>
+
+<!-- Тости -->
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  /* =========================================================
+   * 1. СХОВИЩЕ ТА СТАН ЗАСТОСУНКУ
+   * ========================================================= */
+  const STORAGE_KEY = 'bam_app_data_v1';
+  let memoryFallback = false;
+
+  const defaultState = () => ({
+    words: [],
+    settings: {
+      langMode: 'UK_FR',     // 'UK_FR' | 'FR_FR'
+      newLimit: 10,          // 5 | 10 | 15 | 20
+      voiceURI: '',
+      theme: 'auto',         // 'auto' | 'light' | 'dark'
+      focusTopic: 'all'      // 'all' або конкретна назва теми (src)
+    },
+    stats: {
+      streak: 0,
+      lastStudyDate: '',
+      dailyDate: todayStr(),
+      answersToday: 0,
+      newLearnedToday: 0,
+      blitzBest: 0
+    }
+  });
+
+  let state = defaultState();
+
+  function todayStr(ts = Date.now()) {
+    const d = new Date(ts);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function loadState() {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        state = {
+          words: Array.isArray(parsed.words) ? parsed.words : [],
+          settings: Object.assign(defaultState().settings, parsed.settings || {}),
+          stats: Object.assign(defaultState().stats, parsed.stats || {})
+        };
+      }
+    } catch (e) {
+      memoryFallback = true;
+      const banner = document.getElementById('storageBanner');
+      if (banner) banner.style.display = 'block';
+    }
+    checkDailyRollover();
+    applyTheme();
+  }
+
+  function saveState() {
+    checkDailyRollover();
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      memoryFallback = true;
+      const banner = document.getElementById('storageBanner');
+      if (banner) banner.style.display = 'block';
+    }
+    updateNavBadge();
+  }
+
+  function checkDailyRollover() {
+    const today = todayStr();
+    if (state.stats.dailyDate !== today) {
+      state.stats.dailyDate = today;
+      state.stats.answersToday = 0;
+      state.stats.newLearnedToday = 0;
+    }
+  }
+
+  function recordDailyActivity(wasNewWord) {
+    checkDailyRollover();
+    const today = todayStr();
+    state.stats.answersToday += 1;
+    if (wasNewWord) {
+      state.stats.newLearnedToday += 1;
+    }
+    if (state.stats.lastStudyDate !== today) {
+      const yesterday = todayStr(Date.now() - 86400000);
+      if (state.stats.lastStudyDate === yesterday) {
+        state.stats.streak += 1;
+      } else {
+        state.stats.streak = 1;
+      }
+      state.stats.lastStudyDate = today;
+    }
+  }
+
+  function applyTheme() {
+    const root = document.documentElement;
+    if (state.settings.theme === 'light' || state.settings.theme === 'dark') {
+      root.setAttribute('data-theme', state.settings.theme);
+    } else {
+      root.removeAttribute('data-theme');
+    }
+  }
+
+  function showToast(msg, duration = 3800) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    container.appendChild(el);
+    setTimeout(() => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }, duration);
+  }
+
+  /* =========================================================
+   * 2. НОРМАЛІЗАЦІЯ СЛІВ
+   * ========================================================= */
+  function makeWordId(frText) {
+    return String(frText || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'mot';
+  }
+
+  function stripFrenchArticles(frText) {
+    let s = String(frText || '').trim().toLowerCase();
+    s = s.replace(/[’‘]/g, "'");
+    const prefixes = ['un ', 'une ', 'le ', 'la ', 'les ', "l'", "d'", 'se ', "s'"];
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const p of prefixes) {
+        if (s.startsWith(p)) {
+          s = s.slice(p.length).trim();
+          changed = true;
+          break;
+        }
+      }
+    }
+    return makeWordId(s);
+  }
+
+  function stripDiacritics(str) {
+    return String(str || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/œ/g, 'oe')
+      .replace(/æ/g, 'ae');
+  }
+
+  function createWordRecord(raw) {
+    const fr = String(raw.fr || '').trim();
+    const uk = String(raw.uk || '').trim();
+    const def = String(raw.def || '').trim();
+    const ex = String(raw.ex || '').trim();
+    const syn = Array.isArray(raw.syn)
+      ? raw.syn.map(s => String(s).trim()).filter(Boolean)
+      : (typeof raw.syn === 'string' ? raw.syn.split(',').map(s => s.trim()).filter(Boolean) : []);
+    const pos = String(raw.pos || '').trim();
+    const src = String(raw.src || 'Загальний').trim();
+    const added = /^\d{4}-\d{2}-\d{2}$/.test(String(raw.added || '')) ? raw.added : todayStr();
+
+    return {
+      id: makeWordId(fr),
+      fr,
+      uk,
+      def,
+      ex,
+      syn,
+      pos,
+      src,
+      added,
+      iv: typeof raw.iv === 'number' ? raw.iv : 0,
+      ef: typeof raw.ef === 'number' ? raw.ef : 2.5,
+      r: typeof raw.r === 'number' ? raw.r : 0,
+      l: typeof raw.l === 'number' ? raw.l : 0,
+      due: typeof raw.due === 'number' ? raw.due : 0,
+      t: typeof raw.t === 'number' ? raw.t : 0
+    };
+  }
+
+  function upsertWords(rawList) {
+    let addedCount = 0;
+    let updatedCount = 0;
+
+    for (const item of rawList) {
+      if (!item || typeof item !== 'object') continue;
+      const fr = String(item.fr || '').trim();
+      const uk = String(item.uk || '').trim();
+      const def = String(item.def || '').trim();
+      if (!fr || (!uk && !def)) continue;
+
+      const normKey = stripFrenchArticles(fr);
+      const idKey = makeWordId(fr);
+      const existing = state.words.find(w =>
+        makeWordId(w.fr) === idKey || stripFrenchArticles(w.fr) === normKey
+      );
+
+      if (existing) {
+        existing.fr = fr;
+        existing.id = makeWordId(fr);
+        if (uk) existing.uk = uk;
+        if (def) existing.def = def;
+        if (item.ex !== undefined) existing.ex = String(item.ex || '').trim();
+        if (item.syn !== undefined) {
+          existing.syn = Array.isArray(item.syn)
+            ? item.syn.map(s => String(s).trim()).filter(Boolean)
+            : String(item.syn || '').split(',').map(s => s.trim()).filter(Boolean);
+        }
+        if (item.pos !== undefined) existing.pos = String(item.pos || '').trim();
+        if (item.src !== undefined) existing.src = String(item.src || '').trim();
+        if (item.added !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(item.added)) {
+          existing.added = item.added;
+        }
+        updatedCount++;
+      } else {
+        state.words.push(createWordRecord(item));
+        addedCount++;
+      }
+    }
+
+    saveState();
+    return { addedCount, updatedCount };
+  }
+
+  function getPromptText(word) {
+    if (state.settings.langMode === 'FR_FR') {
+      return word.def || word.uk || '—';
+    }
+    return word.uk || word.def || '—';
+  }
+
+  /* =========================================================
+   * 3. SM-2 ТА ФОКУС-ПУЛ
+   * ========================================================= */
+  const DAY_MS = 86400000;
+  const MIN_MS = 60000;
+
+  function getActiveWordsPool() {
+    if (!state.settings.focusTopic || state.settings.focusTopic === 'all') {
+      return state.words;
+    }
+    return state.words.filter(w => w.src === state.settings.focusTopic);
+  }
+
+  function getWordStatus(word) {
+    if (!word.r || word.r === 0) return 'new';
+    if (word.iv < 7) return 'learn';
+    if (word.iv < 30) return 'know';
+    return 'master';
+  }
+
+  function getStatusLabel(status) {
+    switch (status) {
+      case 'new': return 'Нове';
+      case 'learn': return 'Вчу';
+      case 'know': return 'Знаю';
+      case 'master': return 'Засвоєно';
+      default: return 'Нове';
+    }
+  }
+
+  function previewNextInterval(word, grade) {
+    const isInitial = (word.r === 0 || word.iv < 1);
+    let ivDays = 0;
+    if (grade === 'again') {
+      return { iv: 0, ms: 10 * MIN_MS, label: '10 хв' };
+    }
+    if (isInitial) {
+      if (grade === 'hard') return { iv: 0.5, ms: 12 * 60 * MIN_MS, label: '12 год' };
+      if (grade === 'good') return { iv: 1, ms: DAY_MS, label: '1 дн' };
+      if (grade === 'easy') return { iv: 3, ms: 3 * DAY_MS, label: '3 дн' };
+    } else {
+      const ef = word.ef || 2.5;
+      if (grade === 'hard') ivDays = Math.min(365, word.iv * 1.2);
+      if (grade === 'good') ivDays = Math.min(365, word.iv * ef);
+      if (grade === 'easy') ivDays = Math.min(365, word.iv * ef * 1.3);
+      ivDays = Math.max(1, Math.round(ivDays * 10) / 10);
+      const rounded = Math.round(ivDays);
+      return { iv: ivDays, ms: ivDays * DAY_MS, label: `${rounded} дн` };
+    }
+  }
+
+  function applySM2Grade(word, grade) {
+    const now = Date.now();
+    const wasNew = (word.r === 0);
+    const isInitial = (word.r === 0 || word.iv < 1);
+    let ef = word.ef || 2.5;
+    let iv = word.iv || 0;
+
+    if (grade === 'again') {
+      iv = 0;
+      ef = Math.max(1.3, ef - 0.2);
+      word.l = (word.l || 0) + 1;
+      word.due = now + 10 * MIN_MS;
+    } else if (isInitial) {
+      if (grade === 'hard') {
+        iv = 0.5;
+        word.due = now + 12 * 60 * MIN_MS;
+      } else if (grade === 'good') {
+        iv = 1;
+        word.due = now + DAY_MS;
+      } else if (grade === 'easy') {
+        iv = 3;
+        ef = Math.min(3.2, ef + 0.15);
+        word.due = now + 3 * DAY_MS;
+      }
+    } else {
+      if (grade === 'hard') {
+        iv = Math.min(365, iv * 1.2);
+        ef = Math.max(1.3, ef - 0.15);
+      } else if (grade === 'good') {
+        iv = Math.min(365, iv * ef);
+      } else if (grade === 'easy') {
+        iv = Math.min(365, iv * ef * 1.3);
+        ef = Math.min(3.2, ef + 0.15);
+      }
+      iv = Math.round(iv * 100) / 100;
+      word.due = now + iv * DAY_MS;
+    }
+
+    word.iv = iv;
+    word.ef = Math.round(ef * 100) / 100;
+    word.r = (word.r || 0) + 1;
+    word.t = now;
+
+    recordDailyActivity(wasNew);
+    saveState();
+  }
+
+  function handleMiniGameResult(word, isCorrect) {
+    const now = Date.now();
+    if (!isCorrect) {
+      applySM2Grade(word, 'again');
+    } else {
+      if (word.r === 0 || word.due <= now) {
+        applySM2Grade(word, 'good');
+      } else {
+        recordDailyActivity(false);
+        saveState();
+      }
+    }
+  }
+
+  function getDueAndNewQueues() {
+    checkDailyRollover();
+    const pool = getActiveWordsPool();
+    const now = Date.now();
+    const dueReview = pool
+      .filter(w => w.r > 0 && w.due <= now)
+      .sort((a, b) => a.due - b.due);
+
+    const remainingNewAllowance = Math.max(0, state.settings.newLimit - state.stats.newLearnedToday);
+    const newPool = pool
+      .filter(w => w.r === 0)
+      .sort((a, b) => String(b.added || '').localeCompare(String(a.added || '')));
+
+    const newToday = newPool.slice(0, remainingNewAllowance);
+    return {
+      dueReview,
+      newToday,
+      combined: [...dueReview, ...newToday],
+      totalNewAvailable: newPool.length
+    };
+  }
+
+  /* =========================================================
+   * 4. ОЗВУЧЕННЯ (WEB SPEECH API)
+   * ========================================================= */
+  const speechSupported = ('speechSynthesis' in window);
+  let frenchVoices = [];
+  let activeUtterances = []; // Захист від збирання сміття (Garbage Collection)
+
+  function refreshVoices() {
+    if (!speechSupported) return;
+    const voices = window.speechSynthesis.getVoices();
+    // Фільтруємо лише французькі голоси (fr-FR, fr-CA, fr-CH тощо)
+    frenchVoices = voices.filter(v => /^fr(-|_|$)/i.test(v.lang));
+    
+    const sel = document.getElementById('selVoice');
+    if (sel) {
+      const currentVal = state.settings.voiceURI;
+      sel.innerHTML = '<option value="">Автоматичний вибір (fr)</option>' +
+        frenchVoices.map(v => `<option value="${escapeHtml(v.voiceURI)}" ${currentVal === v.voiceURI ? 'selected' : ''}>${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`).join('');
+    }
+  }
+
+  if (speechSupported) {
+    window.speechSynthesis.onvoiceschanged = refreshVoices;
+  }
+
+  function speakFrench(text, rate = 1.0) {
+    if (!speechSupported) return;
+    const cleanText = String(text || '').replace(/\[|\]/g, '').trim();
+    if (!cleanText) return;
+
+    // Зупиняємо попереднє озвучення
+    window.speechSynthesis.cancel();
+
+    // Пауза 85мс потрібна для деяких браузерів (Safari/Chrome), щоб уникнути обривів
+    setTimeout(() => {
+      const u = new SpeechSynthesisUtterance(cleanText);
+      u.lang = 'fr-FR';
+      u.rate = rate;
+
+      if (state.settings.voiceURI) {
+        const chosen = frenchVoices.find(v => v.voiceURI === state.settings.voiceURI);
+        if (chosen) u.voice = chosen;
+      } else if (frenchVoices.length > 0) {
+        // Якщо голос не обрано, намагаємось автоматично знайти найкращий (Premium/Enhanced)
+        const premium = frenchVoices.find(v => v.name.includes('Premium') || v.name.includes('Enhanced'));
+        u.voice = premium || frenchVoices[0];
+      }
+
+      // Додаємо в масив, щоб уникнути передчасного видалення об'єкта браузером
+      activeUtterances.push(u);
+      
+      u.onend = () => {
+        const idx = activeUtterances.indexOf(u);
+        if (idx > -1) activeUtterances.splice(idx, 1);
+      };
+      
+      u.onerror = (e) => {
+        console.error("Speech error", e);
+        const idx = activeUtterances.indexOf(u);
+        if (idx > -1) activeUtterances.splice(idx, 1);
+      };
+
+      window.speechSynthesis.speak(u);
+    }, 85);
+  }
+
+  function speakerBtnHtml(text, label = 'Озвучити') {
+    if (!speechSupported) return '';
+    const encoded = encodeURIComponent(String(text || '').replace(/\[|\]/g, ''));
+    return `<button type="button" class="btn-icon js-speak-btn" data-speak="${encoded}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">
+      <svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+    </button>`;
+  }
+
+  /* =========================================================
+   * 5. ДОПОМІЖНІ ФУНКЦІЇ ТА РЕЖИМИ
+   * ========================================================= */
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function highlightBracketExample(ex, wordFr) {
+    if (!ex) return '';
+    const safe = escapeHtml(ex);
+    if (/\[.+?\]/.test(safe)) {
+      return safe.replace(/\[(.+?)\]/g, '<span class="hl-word">$1</span>');
+    }
+    return safe;
+  }
+
+  function maskBracketExample(ex, wordFr) {
+    if (!ex) return '…';
+    const safe = escapeHtml(ex);
+    if (/\[.+?\]/.test(safe)) {
+      return safe.replace(/\[(.+?)\]/g, '<span class="hl-word">[ … ]</span>');
+    }
+    const re = new RegExp(escapeHtml(wordFr).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    if (re.test(safe)) {
+      return safe.replace(re, '<span class="hl-word">[ … ]</span>');
+    }
+    return safe + ' <span class="hl-word">[ … ]</span>';
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function pickStudyWords(count = 10, filterFn = null) {
+    const basePool = getActiveWordsPool();
+    const pool = filterFn ? basePool.filter(filterFn) : basePool.slice();
+    const now = Date.now();
+    const due = shuffle(pool.filter(w => w.r > 0 && w.due <= now));
+    const fresh = pool.filter(w => w.r === 0).sort((a, b) => String(b.added).localeCompare(String(a.added)));
+    const rest = shuffle(pool.filter(w => w.r > 0 && w.due > now));
+    return [...due, ...fresh, ...rest].slice(0, count);
+  }
+
+  function formatDueDate(word) {
+    if (!word.r || word.r === 0) return '';
+    const diff = word.due - Date.now();
+    if (diff <= 0) return 'Сьогодні';
+    const hours = Math.ceil(diff / (3600 * 1000));
+    if (hours < 24) return `Через ${hours} год`;
+    const days = Math.ceil(diff / DAY_MS);
+    return `Через ${days} дн`;
+  }
+
+  const MODES_META = [
+    { id: 'cards', name: 'Картки', min: 1, desc: 'Класичні картки з оцінкою SM-2 та прикладами', svg: '<rect x="4" y="4" width="16" height="16" rx="2"/><line x1="4" y1="9" x2="20" y2="9"/>' },
+    { id: 'choice', name: 'Вибір', min: 4, desc: '10 запитань із 4 варіантами (прямий і зворотний)', svg: '<circle cx="6" cy="7" r="1.5"/><line x1="10" y1="7" x2="20" y2="7"/><circle cx="6" cy="12" r="1.5"/><line x1="10" y1="12" x2="20" y2="12"/><circle cx="6" cy="17" r="1.5"/><line x1="10" y1="17" x2="20" y2="17"/>' },
+    { id: 'write', name: 'Напиши', min: 1, desc: 'Введення французького слова за значенням і шаблоном', svg: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>' },
+    { id: 'dictation', name: 'Диктант', min: 1, desc: 'Сприйняття на слух та написання французьких слів', svg: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>' },
+    { id: 'context', name: 'У контексті', min: 4, desc: 'Заповнення пропуску у французькому реченні-прикладі', svg: '<path d="M4 6h16"/><path d="M4 12h6"/><rect x="12" y="10" width="8" height="4" rx="1"/><path d="M4 18h14"/>' },
+    { id: 'synonyms', name: 'Синоніми', min: 4, desc: 'Пошук близького за значенням французького слова', svg: '<path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/>' },
+    { id: 'pairs', name: 'Пари', min: 5, desc: '2 раунди по 5 пар на час: слово та його значення', svg: '<rect x="3" y="4" width="7" height="6" rx="1"/><rect x="14" y="4" width="7" height="6" rx="1"/><rect x="3" y="14" width="7" height="6" rx="1"/><rect x="14" y="14" width="7" height="6" rx="1"/><path d="M10 7h4"/><path d="M10 17h4"/>' },
+    { id: 'blitz', name: 'Бліц', min: 4, desc: '60 секунд швидкої перевірки «Так / Ні»', svg: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>' },
+    { id: 'crossword', name: 'Кросворд', min: 4, desc: 'Сітка до 12×12 на основі вашого словника', svg: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/>' },
+    { id: 'anagram', name: 'Анаграма', min: 1, desc: 'Складання слова з перемішаних літер', svg: '<rect x="3" y="8" width="5" height="8" rx="1"/><rect x="9.5" y="8" width="5" height="8" rx="1"/><rect x="16" y="8" width="5" height="8" rx="1"/>' }
+  ];
+
+  /* =========================================================
+   * 6. НАВІГАЦІЯ ТА РЕНДЕР
+   * ========================================================= */
+  let currentTab = 'study';
+  let activeSessionCleanup = null;
+
+  function cleanupSession() {
+    if (typeof activeSessionCleanup === 'function') {
+      activeSessionCleanup();
+      activeSessionCleanup = null;
+    }
+  }
+
+  function updateNavBadge() {
+    const el = document.getElementById('navWordCount');
+    if (el) el.textContent = state.words.length;
+    const btnUk = document.getElementById('btnModeUkFr');
+    const btnFr = document.getElementById('btnModeFrFr');
+    if (btnUk && btnFr) {
+      btnUk.classList.toggle('active', state.settings.langMode === 'UK_FR');
+      btnFr.classList.toggle('active', state.settings.langMode === 'FR_FR');
+    }
+  }
+
+  function switchTab(tab) {
+    cleanupSession();
+    currentTab = tab;
+    document.querySelectorAll('.nav-tab').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    renderCurrentTab();
+  }
+
+  function renderCurrentTab() {
+    cleanupSession();
+    updateNavBadge();
+    const main = document.getElementById('mainView');
+    if (!main) return;
+    if (currentTab === 'study') renderStudyDashboard(main);
+    else if (currentTab === 'words') renderWordsTab(main);
+    else if (currentTab === 'settings') renderSettingsTab(main);
+  }
+
+  /* =========================================================
+   * 7. ГОЛОВНИЙ ЕКРАН («ВЧИТИ»)
+   * ========================================================= */
+  function renderStudyDashboard(container) {
+    if (state.words.length === 0) {
+      container.innerHTML = `
+        <section class="index-card empty-state">
+          <h2 class="empty-title">Ваша скринька слів порожня</h2>
+          <p class="empty-desc">Вставте «код слів», надісланий викладачем, або додайте перші французькі вирази власноруч, щоб розпочати інтервальне повторення.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+            <button type="button" class="btn btn-primary" id="btnEmptyAddCode">Додати з коду</button>
+            <button type="button" class="btn" id="btnEmptyAddWord">Додати слово</button>
+          </div>
+        </section>
+      `;
+      container.querySelector('#btnEmptyAddCode').addEventListener('click', openAddCodeModal);
+      container.querySelector('#btnEmptyAddWord').addEventListener('click', () => openWordFormModal());
+      return;
+    }
+
+    const availableTopics = Array.from(new Set(state.words.map(w => w.src).filter(Boolean))).sort();
+    const currentFocus = state.settings.focusTopic || 'all';
+    const pool = getActiveWordsPool();
+
+    const queues = getDueAndNewQueues();
+    const dueTotal = queues.combined.length;
+
+    const counts = { new: 0, learn: 0, know: 0, master: 0 };
+    pool.forEach(w => { counts[getWordStatus(w)]++; });
+    const total = pool.length || 1;
+
+    // Прогноз повторень
+    const daysForecast = [];
+    const dayNames = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const baseMs = startOfToday.getTime();
+
+    for (let d = 0; d < 7; d++) {
+      const start = baseMs + d * DAY_MS;
+      const end = start + DAY_MS;
+      let cnt = 0;
+      pool.forEach(w => {
+        if (w.r > 0) {
+          if (d === 0 && w.due <= end) cnt++;
+          else if (d > 0 && w.due > start && w.due <= end) cnt++;
+        }
+      });
+      const dt = new Date(start);
+      daysForecast.push({
+        label: d === 0 ? 'Сьог' : dayNames[dt.getDay()],
+        count: cnt
+      });
+    }
+    const maxForecast = Math.max(1, ...daysForecast.map(f => f.count));
+
+    container.innerHTML = `
+      <div class="hero-grid">
+        <div class="topic-focus-bar">
+          <label for="selDashboardTopic" style="font-weight:600;">Фокус на темі:</label>
+          <select id="selDashboardTopic" class="topic-focus-select" aria-label="Вибір теми для тренування">
+            <option value="all" ${currentFocus === 'all' ? 'selected' : ''}>🌟 Усі теми разом (${state.words.length})</option>
+            ${availableTopics.map(t => {
+              const c = state.words.filter(w => w.src === t).length;
+              return `<option value="${escapeHtml(t)}" ${currentFocus === t ? 'selected' : ''}>📁 ${escapeHtml(t)} (${c})</option>`;
+            }).join('')}
+          </select>
+        </div>
+
+        <section class="index-card">
+          <div class="hero-top">
+            <div class="due-counter">
+              <span class="due-label">До повторення сьогодні</span>
+              <span class="due-number">${dueTotal}</span>
+            </div>
+            <button type="button" class="btn btn-primary" id="btnMainReview" style="min-width:170px; font-size:1.05rem;">
+              Повторити
+            </button>
+          </div>
+          <div class="hero-stats">
+            <div class="stat-item">
+              <span class="stat-val">${queues.newToday.length} / ${state.settings.newLimit}</span>
+              <span class="stat-lbl">Нових на сьогодні</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-val">${state.stats.streak} дн</span>
+              <span class="stat-lbl">Серія поспіль</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-val">${state.stats.answersToday}</span>
+              <span class="stat-lbl">Відповідей за день</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel-card">
+          <div class="section-label">Словниковий запас (${pool.length})</div>
+          <div class="segment-bar" role="img" aria-label="Розподіл слів за статусами">
+            <div class="seg-part" style="width:${(counts.new / total) * 100}%; background:var(--st-new);"></div>
+            <div class="seg-part" style="width:${(counts.learn / total) * 100}%; background:var(--st-learn);"></div>
+            <div class="seg-part" style="width:${(counts.know / total) * 100}%; background:var(--st-know);"></div>
+            <div class="seg-part" style="width:${(counts.master / total) * 100}%; background:var(--st-master);"></div>
+          </div>
+          <div class="segment-legend">
+            <div class="legend-item"><span class="legend-dot" style="background:var(--st-new);"></span><span>Нові</span><span class="legend-count">${counts.new}</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--st-learn);"></span><span>Вчу</span><span class="legend-count">${counts.learn}</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--st-know);"></span><span>Знаю</span><span class="legend-count">${counts.know}</span></div>
+            <div class="legend-item"><span class="legend-dot" style="background:var(--st-master);"></span><span>Засвоєно</span><span class="legend-count">${counts.master}</span></div>
+          </div>
+        </section>
+
+        <section class="panel-card">
+          <div class="section-label">Прогноз повторень на 7 днів</div>
+          <div class="forecast-chart">
+            ${daysForecast.map(f => {
+              const h = Math.round((f.count / maxForecast) * 100);
+              return `
+                <div class="forecast-col">
+                  <span class="forecast-val">${f.count}</span>
+                  <div class="forecast-bar-wrap">
+                    <div class="forecast-bar" style="height:${f.count > 0 ? Math.max(8, h) : 0}%;"></div>
+                  </div>
+                  <span class="forecast-day">${f.label}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </section>
+
+        <section>
+          <div class="section-label">Навчальні режими</div>
+          <div class="modes-grid">
+            ${MODES_META.map(m => {
+              const unavailDictation = (m.id === 'dictation' && !speechSupported);
+              const desc = unavailDictation ? 'Тимчасово недоступний (браузер не підтримує Web Speech API)' : m.desc;
+              return `
+                <button type="button" class="mode-tile ${unavailDictation ? 'disabled' : ''}" data-mode="${m.id}">
+                  <div class="mode-icon-box">
+                    <svg class="icon" viewBox="0 0 24 24">${m.svg}</svg>
+                  </div>
+                  <div>
+                    <div class="mode-title">${m.name}</div>
+                    <div class="mode-desc">${desc}</div>
+                  </div>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </section>
+      </div>
+    `;
+
+    container.querySelector('#selDashboardTopic').addEventListener('change', e => {
+      state.settings.focusTopic = e.target.value;
+      saveState();
+      renderStudyDashboard(container);
+    });
+
+    container.querySelector('#btnMainReview').addEventListener('click', () => startMode('cards'));
+    container.querySelectorAll('.mode-tile').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const modeId = btn.dataset.mode;
+        if (modeId === 'dictation' && !speechSupported) {
+          showToast('Режим «Диктант» тимчасово недоступний без підтримки Web Speech API.');
+          return;
+        }
+        startMode(modeId);
+      });
+    });
+  }
+
+  /* =========================================================
+   * 8. ЗАПУСК РЕЖИМІВ
+   * ========================================================= */
+  function startMode(modeId) {
+    cleanupSession();
+    const main = document.getElementById('mainView');
+    if (!main) return;
+
+    const meta = MODES_META.find(m => m.id === modeId);
+    if (!meta) return;
+
+    const pool = getActiveWordsPool();
+    const topicLabel = state.settings.focusTopic !== 'all' ? ` (тема «${state.settings.focusTopic}»)` : '';
+
+    if (modeId === 'synonyms') {
+      const withSyn = pool.filter(w => Array.isArray(w.syn) && w.syn.length > 0);
+      if (withSyn.length < 1 || pool.length < 4) {
+        renderInsufficientWords(main, meta.name, Math.max(1 - withSyn.length, 4 - pool.length),
+          `Для режиму «Синоніми» потрібно щонайменше 4 слова у словнику${topicLabel} та принаймні 1 слово із синонімами (syn).`);
+        return;
+      }
+    } else if (modeId === 'context') {
+      const withEx = pool.filter(w => Boolean(w.ex && w.ex.trim()));
+      if (withEx.length < 1 || pool.length < 4) {
+        renderInsufficientWords(main, meta.name, Math.max(1 - withEx.length, 4 - pool.length),
+          `Для режиму «У контексті» потрібно щонайменше 4 слова у словнику${topicLabel} та принаймні 1 слово із прикладом (ex).`);
+        return;
+      }
+    } else if (pool.length < meta.min) {
+      renderInsufficientWords(main, meta.name, meta.min - pool.length,
+        `Для старту режиму «${meta.name}» потрібно щонайменше ${meta.min} сл.${topicLabel}`);
+      return;
+    }
+
+    switch (modeId) {
+      case 'cards': runCardsMode(main); break;
+      case 'choice': runChoiceMode(main); break;
+      case 'write': runWriteMode(main); break;
+      case 'dictation': runDictationMode(main); break;
+      case 'context': runContextMode(main); break;
+      case 'synonyms': runSynonymsMode(main); break;
+      case 'pairs': runPairsMode(main); break;
+      case 'blitz': runBlitzMode(main); break;
+      case 'crossword': runCrosswordMode(main); break;
+      case 'anagram': runAnagramMode(main); break;
+    }
+  }
+
+  function renderInsufficientWords(container, modeName, missingCount, explanation) {
+    container.innerHTML = `
+      <section class="index-card empty-state">
+        <h2 class="empty-title">Недостатньо слів для режиму «${escapeHtml(modeName)}»</h2>
+        <p class="empty-desc">${escapeHtml(explanation)} Бракує ще слів: <strong>${missingCount}</strong>.</p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+          <button type="button" class="btn btn-primary" id="btnInsuffAdd">Додати з коду</button>
+          <button type="button" class="btn" id="btnInsuffBack">До режимів</button>
+        </div>
+      </section>
+    `;
+    container.querySelector('#btnInsuffAdd').addEventListener('click', openAddCodeModal);
+    container.querySelector('#btnInsuffBack').addEventListener('click', () => renderCurrentTab());
+  }
+
+  function renderRoundSummary(container, modeId, results, extraHeaderHtml = '') {
+    cleanupSession();
+    const okCount = results.filter(r => r.ok).length;
+    container.innerHTML = `
+      <section class="index-card">
+        <div class="session-header">
+          <h2 style="font-family:var(--font-fr); font-size:1.35rem;">Підсумок раунду</h2>
+          <span class="session-progress">${okCount} / ${results.length}</span>
+        </div>
+        ${extraHeaderHtml}
+        <div class="summary-list">
+          ${results.map(r => `
+            <div class="summary-row">
+              <div>
+                <strong style="font-family:var(--font-fr);">${escapeHtml(r.word.fr)}</strong>
+                <span style="color:var(--text-muted); margin-left:8px;">— ${escapeHtml(getPromptText(r.word))}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                ${speakerBtnHtml(r.word.fr, 'Озвучити слово')}
+                <span class="${r.ok ? 'mark-ok' : 'mark-err'}">${r.ok ? '✓' : '✗'}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
+          <button type="button" class="btn btn-primary" id="btnSummaryAgain">Ще раунд</button>
+          <button type="button" class="btn" id="btnSummaryBack">До режимів</button>
+        </div>
+      </section>
+    `;
+    container.querySelector('#btnSummaryAgain').addEventListener('click', () => startMode(modeId));
+    container.querySelector('#btnSummaryBack').addEventListener('click', () => renderCurrentTab());
+  }
+
+  /* =========================================================
+   * РЕЖИМ 1: КАРТКИ
+   * ========================================================= */
+  function runCardsMode(container, forceRandom = false) {
+    const queues = getDueAndNewQueues();
+    let deck = queues.combined.slice();
+
+    if (deck.length === 0 && !forceRandom) {
+      container.innerHTML = `
+        <section class="index-card empty-state">
+          <h2 class="empty-title">Усі заплановані слова на сьогодні повторено</h2>
+          <p class="empty-desc">Ви можете закріпити 10 випадкових слів або обрати інший тренувальний режим.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+            <button type="button" class="btn btn-primary" id="btnRandom10">Закріпити 10 випадкових</button>
+            <button type="button" class="btn" id="btnBackModes">До режимів</button>
+          </div>
+        </section>
+      `;
+      container.querySelector('#btnRandom10').addEventListener('click', () => runCardsMode(container, true));
+      container.querySelector('#btnBackModes').addEventListener('click', () => renderCurrentTab());
+      return;
+    }
+
+    if (forceRandom) {
+      deck = shuffle(getActiveWordsPool()).slice(0, 10);
+    }
+
+    const totalInitial = deck.length;
+    let completedCount = 0;
+    let revealed = false;
+    const summaryMap = new Map();
+
+    function renderCard() {
+      if (deck.length === 0) {
+        renderRoundSummary(container, 'cards', Array.from(summaryMap.values()));
+        return;
+      }
+      const word = deck[0];
+      const pAgain = previewNextInterval(word, 'again');
+      const pHard = previewNextInterval(word, 'hard');
+      const pGood = previewNextInterval(word, 'good');
+      const pEasy = previewNextInterval(word, 'easy');
+
+      const showBothUkAndDef = (state.settings.langMode === 'UK_FR' && word.uk && word.def);
+
+      container.innerHTML = `
+        <div class="session-header">
+          <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
+          <span class="session-progress">Картки · ${Math.min(completedCount + 1, totalInitial)} / ${totalInitial} (у черзі: ${deck.length})</span>
+        </div>
+        <section class="index-card">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+            <div>
+              <div class="study-word-title">${escapeHtml(word.fr)}</div>
+              <div class="study-pos">${escapeHtml(word.pos || '')} ${word.src ? `· ${escapeHtml(word.src)}` : ''}</div>
+            </div>
+            ${speakerBtnHtml(word.fr, 'Озвучити слово')}
+          </div>
+
+          ${!revealed ? `
+            <button type="button" class="btn btn-primary" id="btnRevealCard" style="width:100%; margin-top:18px;">
+              Показати значення (Enter)
+            </button>
+          ` : `
+            <hr class="study-divider">
+            <div class="study-meaning">${escapeHtml(getPromptText(word))}</div>
+            ${showBothUkAndDef ? `<div class="study-def">${escapeHtml(word.def)}</div>` : ''}
+            ${word.ex ? `
+              <div class="study-example">
+                <span>${highlightBracketExample(word.ex, word.fr)}</span>
+                ${speakerBtnHtml(word.ex, 'Озвучити приклад')}
+              </div>
+            ` : ''}
+            ${word.syn && word.syn.length ? `
+              <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">
+                Синоніми: <strong>${escapeHtml(word.syn.join(', '))}</strong>
+              </div>
+            ` : ''}
+            <div class="grade-grid">
+              <button type="button" class="grade-btn grade-again" data-grade="again">
+                <span class="g-name">1 · Знову</span>
+                <span class="g-time">${pAgain.label}</span>
+              </button>
+              <button type="button" class="grade-btn grade-hard" data-grade="hard">
+                <span class="g-name">2 · Важко</span>
+                <span class="g-time">${pHard.label}</span>
+              </button>
+              <button type="button" class="grade-btn grade-good" data-grade="good">
+                <span class="g-name">3 · Добре</span>
+                <span class="g-time">${pGood.label}</span>
+              </button>
+              <button type="button" class="grade-btn grade-easy" data-grade="easy">
+                <span class="g-name">4 · Легко</span>
+                <span class="g-time">${pEasy.label}</span>
+              </button>
+            </div>
+          `}
+        </section>
+      `;
+
+      container.querySelector('#btnExitMode').addEventListener('click', () => renderCurrentTab());
+      const revBtn = container.querySelector('#btnRevealCard');
+      if (revBtn) {
+        revBtn.addEventListener('click', () => {
+          revealed = true;
+          renderCard();
+        });
+      }
+      container.querySelectorAll('[data-grade]').forEach(btn => {
+        btn.addEventListener('click', () => gradeCurrent(btn.dataset.grade));
+      });
+    }
+
+    function gradeCurrent(grade) {
+      const word = deck.shift();
+      if (!word) return;
+      applySM2Grade(word, grade);
+      if (!summaryMap.has(word.id)) {
+        summaryMap.set(word.id, { word, ok: grade !== 'again' });
+      }
+      if (grade === 'again') {
+        deck.push(word);
+      } else {
+        completedCount++;
+      }
+      revealed = false;
+      renderCard();
+    }
+
+    function onKey(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (!revealed && e.key === 'Enter') {
+        e.preventDefault();
+        revealed = true;
+        renderCard();
+      } else if (revealed) {
+        if (e.key === '1') gradeCurrent('again');
+        else if (e.key === '2') gradeCurrent('hard');
+        else if (e.key === '3' || e.key === 'Enter') gradeCurrent('good');
+        else if (e.key === '4') gradeCurrent('easy');
+      }
+    }
+
+    window.addEventListener('keydown', onKey);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onKey);
+    renderCard();
+  }
+
+  /* =========================================================
+   * РЕЖИМ 2: ВИБІР
+   * ========================================================= */
+  function runChoiceMode(container) {
+    const questions = pickStudyWords(10);
+    let idx = 0;
+    let answered = false;
+    const results = [];
+    let currentOptions = [];
+
+    function buildQuestion() {
+      const word = questions[idx];
+      const reverse = (idx % 2 === 1);
+      const distractors = shuffle(getActiveWordsPool().filter(w => w.id !== word.id)).slice(0, 3);
+      currentOptions = shuffle([word, ...distractors]);
+      answered = false;
+      renderQuestion(word, reverse);
+    }
+
+    function renderQuestion(word, reverse, chosenId = null) {
+      container.innerHTML = `
+        <div class="session-header">
+          <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
+          <span class="session-progress">Вибір · ${idx + 1} / ${questions.length}</span>
+        </div>
+        <section class="index-card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div>
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">
+                ${reverse ? 'Оберіть французьке слово за значенням:' : 'Оберіть правильне значення слова:'}
+              </div>
+              <div class="${reverse ? 'study-meaning' : 'study-word-title'}">
+                ${escapeHtml(reverse ? getPromptText(word) : word.fr)}
+              </div>
+            </div>
+            ${!reverse ? speakerBtnHtml(word.fr, 'Озвучити слово') : ''}
+          </div>
+          <div class="options-grid">
+            ${currentOptions.map((opt, i) => {
+              let cls = '';
+              if (answered) {
+                if (opt.id === word.id) cls = 'correct';
+                else if (opt.id === chosenId) cls = 'wrong';
+              }
+              const text = reverse ? opt.fr : getPromptText(opt);
+              return `
+                <button type="button" class="option-btn ${cls}" data-opt="${opt.id}" ${answered ? 'disabled' : ''}>
+                  <span class="option-key">${i + 1}</span>
+                  <span style="${reverse ? 'font-family:var(--font-fr); font-weight:600;' : ''}">${escapeHtml(text)}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+          ${answered ? `
+            <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center;">
+              <div>${speakerBtnHtml(word.fr, 'Озвучити відповідь')}</div>
+              <button type="button" class="btn btn-primary" id="btnNextQ">Далі (Enter)</button>
+            </div>
+          ` : ''}
+        </section>
+      `;
+
+      container.querySelector('#btnExitMode').addEventListener('click', () => renderCurrentTab());
+      container.querySelectorAll('[data-opt]').forEach(btn => {
+        btn.addEventListener('click', () => selectAnswer(btn.dataset.opt));
+      });
+      const nextBtn = container.querySelector('#btnNextQ');
+      if (nextBtn) nextBtn.addEventListener('click', nextStep);
+    }
+
+    function selectAnswer(optId) {
+      if (answered) return;
+      answered = true;
+      const word = questions[idx];
+      const reverse = (idx % 2 === 1);
+      const isOk = (optId === word.id);
+      handleMiniGameResult(word, isOk);
+      results.push({ word, ok: isOk });
+      renderQuestion(word, reverse, optId);
+    }
+
+    function nextStep() {
+      if (!answered) return;
+      idx++;
+      if (idx >= questions.length) {
+        renderRoundSummary(container, 'choice', results);
+      } else {
+        buildQuestion();
+      }
+    }
+
+    function onKey(e) {
+      if (!answered && ['1', '2', '3', '4'].includes(e.key)) {
+        const i = Number(e.key) - 1;
+        if (currentOptions[i]) selectAnswer(currentOptions[i].id);
+      } else if (answered && e.key === 'Enter') {
+        e.preventDefault();
+        nextStep();
+      }
+    }
+
+    window.addEventListener('keydown', onKey);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onKey);
+    buildQuestion();
+  }
+
+  /* =========================================================
+   * РЕЖИМ 3: НАПИШИ (Із чіткими пробілами між словами)
+   * ========================================================= */
+  function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      }
+    }
+    return dp[m][n];
+  }
+
+  function evaluateWrittenAnswer(inputRaw, targetRaw) {
+    const inp = String(inputRaw || '').trim().toLowerCase();
+    const tgt = String(targetRaw || '').trim().toLowerCase();
+    if (!inp) return 'wrong';
+    if (inp === tgt) return 'exact';
+    if (stripDiacritics(inp) === stripDiacritics(tgt)) return 'almost';
+    if (tgt.length >= 3 && levenshtein(inp, tgt) === 1) return 'almost';
+    return 'wrong';
+  }
+
+  function buildMaskTemplate(fr, revealedCount) {
+    let seenLetters = 0;
+    const words = String(fr || '').trim().split(/\s+/);
+    return words.map(w => {
+      const chars = Array.from(w).map(ch => {
+        if (ch === '-' || ch === "'" || ch === '’') return `<span>${escapeHtml(ch)}</span>`;
+        seenLetters++;
+        const display = seenLetters <= revealedCount ? escapeHtml(ch) : '_';
+        return `<span>${display}</span>`;
+      }).join('');
+      return `<span class="template-word">${chars}</span>`;
+    }).join('');
+  }
+
+  function runWriteMode(container) {
+    const questions = pickStudyWords(10);
+    let idx = 0;
+    let hintCount = 0;
+    let checkedState = null;
+    let lastTyped = '';
+    const results = [];
+
+    function renderWrite() {
+      const word = questions[idx];
+      const maskHtml = buildMaskTemplate(word.fr, hintCount);
+      const wordCount = String(word.fr || '').trim().split(/\s+/).filter(Boolean).length;
+
+      container.innerHTML = `
+        <div class="session-header">
+          <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
+          <span class="session-progress">Напиши · ${idx + 1} / ${questions.length}</span>
+        </div>
+        <section class="index-card">
+          <div class="study-meaning">${escapeHtml(getPromptText(word))}</div>
+          <div class="study-pos">
+            ${escapeHtml(word.pos || '')}
+            ${wordCount > 1 ? `<span class="badge" style="margin-left:6px; font-style:normal;">Слів у виразі: ${wordCount}</span>` : ''}
+          </div>
+          <div class="template-mask">${maskHtml}</div>
+
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <input type="text" id="writeInput" class="input" placeholder="Введіть слово або вираз французькою…" value="${escapeHtml(lastTyped)}" autocomplete="off" autocapitalize="off" spellcheck="false" ${checkedState ? 'disabled' : ''}>
+          </div>
+
+          ${!checkedState ? `
+            <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-primary" id="btnCheckWrite">Перевірити (Enter)</button>
+              <button type="button" class="btn" id="btnHintLetter">Підказка (+1 літера)</button>
+            </div>
+          ` : `
+            <div class="feedback-box ${checkedState === 'exact' ? 'ok' : (checkedState === 'almost' ? 'almost' : 'err')}">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                <div>
+                  ${checkedState === 'exact' ? 'Бездоганно!' : (checkedState === 'almost' ? 'Майже правильно! Зверніть увагу на правопис або діакритику:' : 'Неправильно. Правильна відповідь:')}
+                  <div style="font-family:var(--font-fr); font-size:1.25rem; font-weight:700; margin-top:4px;">${escapeHtml(word.fr)}</div>
+                </div>
+                ${speakerBtnHtml(word.fr, 'Озвучити слово')}
+              </div>
+            </div>
+            <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+              <button type="button" class="btn btn-primary" id="btnNextWrite">Далі (Enter)</button>
+            </div>
+          `}
+        </section>
+      `;
+
+      container.querySelector('#btnExitMode').addEventListener('click', () => renderCurrentTab());
+      const inp = container.querySelector('#writeInput');
+      if (inp && !checkedState) {
+        inp.focus();
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            checkCurrent(inp.value);
+          }
+        });
+      }
+
+      const checkBtn = container.querySelector('#btnCheckWrite');
+      if (checkBtn) checkBtn.addEventListener('click', () => checkCurrent(inp ? inp.value : ''));
+
+      const hintBtn = container.querySelector('#btnHintLetter');
+      if (hintBtn) {
+        hintBtn.addEventListener('click', () => {
+          if (inp) lastTyped = inp.value;
+          hintCount++;
+          renderWrite();
+        });
+      }
+
+      const nextBtn = container.querySelector('#btnNextWrite');
+      if (nextBtn) nextBtn.addEventListener('click', advance);
+    }
+
+    function checkCurrent(val) {
+      if (checkedState) return;
+      lastTyped = val;
+      const word = questions[idx];
+      checkedState = evaluateWrittenAnswer(val, word.fr);
+      const isOk = (checkedState === 'exact' || checkedState === 'almost');
+      handleMiniGameResult(word, isOk);
+      results.push({ word, ok: isOk });
+      renderWrite();
+    }
+
+    function advance() {
+      if (!checkedState) return;
+      idx++;
+      hintCount = 0;
+      checkedState = null;
+      lastTyped = '';
+      if (idx >= questions.length) {
+        renderRoundSummary(container, 'write', results);
+      } else {
+        renderWrite();
+      }
+    }
+
+    function onKey(e) {
+      if (checkedState && e.key === 'Enter') {
+        e.preventDefault();
+        advance();
+      }
+    }
+
+    window.addEventListener('keydown', onKey);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onKey);
+    renderWrite();
+  }
+
+  /* =========================================================
+   * РЕЖИМ 4: ДИКТАНТ
+   * ========================================================= */
+  function runDictationMode(container) {
+    const questions = pickStudyWords(10);
+    let idx = 0;
+    let showMeaningHint = false;
+    let checkedState = null;
+    let lastTyped = '';
+    const results = [];
+
+    function renderDictation(autoPlay = false) {
+      const word = questions[idx];
+      if (autoPlay) speakFrench(word.fr, 1.0);
+
+      container.innerHTML = `
+        <div class="session-header">
+          <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
+          <span class="session-progress">Диктант · ${idx + 1} / ${questions.length}</span>
+        </div>
+        <section class="index-card">
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+            <button type="button" class="btn btn-primary" id="btnListenNormal">Слухати</button>
+            <button type="button" class="btn" id="btnListenSlow">Повільно</button>
+            ${!showMeaningHint ? `<button type="button" class="btn" id="btnDictHint">Підказка (значення)</button>` : ''}
+          </div>
+
+          ${showMeaningHint ? `
+            <div style="margin-bottom:12px; padding:8px 12px; background:var(--bg-elevated); border-radius:4px;">
+              Значення: <strong>${escapeHtml(getPromptText(word))}</strong>
+            </div>
+          ` : ''}
+
+          <input type="text" id="dictInput" class="input" placeholder="Напишіть почутий вираз французькою…" value="${escapeHtml(lastTyped)}" autocomplete="off" autocapitalize="off" spellcheck="false" ${checkedState ? 'disabled' : ''}>
+
+          ${!checkedState ? `
+            <div style="margin-top:12px;">
+              <button type="button" class="btn btn-primary" id="btnCheckDict">Перевірити (Enter)</button>
+            </div>
+          ` : `
+            <div class="feedback-box ${checkedState === 'exact' ? 'ok' : (checkedState === 'almost' ? 'almost' : 'err')}">
+              <div>
+                ${checkedState === 'exact' ? 'Бездоганно!' : (checkedState === 'almost' ? 'Майже правильно:' : 'Помилка. Правильне написання:')}
+                <div style="font-family:var(--font-fr); font-size:1.25rem; font-weight:700; margin-top:4px;">
+                  ${escapeHtml(word.fr)} — <span style="font-weight:400;">${escapeHtml(getPromptText(word))}</span>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+              <button type="button" class="btn btn-primary" id="btnNextDict">Далі (Enter)</button>
+            </div>
+          `}
+        </section>
+      `;
+
+      container.querySelector('#btnExitMode').addEventListener('click', () => renderCurrentTab());
+      container.querySelector('#btnListenNormal').addEventListener('click', () => speakFrench(word.fr, 1.0));
+      container.querySelector('#btnListenSlow').addEventListener('click', () => speakFrench(word.fr, 0.65));
+
+      const hintBtn = container.querySelector('#btnDictHint');
+      const inp = container.querySelector('#dictInput');
+      if (hintBtn) {
+        hintBtn.addEventListener('click', () => {
+          if (inp) lastTyped = inp.value;
+          showMeaningHint = true;
+          renderDictation(false);
+        });
+      }
+
+      if (inp && !checkedState) {
+        inp.focus();
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            checkDict(inp.value);
+          }
+        });
+      }
+
+      const checkBtn = container.querySelector('#btnCheckDict');
+      if (checkBtn) checkBtn.addEventListener('click', () => checkDict(inp ? inp.value : ''));
+
+      const nextBtn = container.querySelector('#btnNextDict');
+      if (nextBtn) nextBtn.addEventListener('click', nextDict);
+    }
+
+    function checkDict(val) {
+      if (checkedState) return;
+      lastTyped = val;
+      const word = questions[idx];
+      checkedState = evaluateWrittenAnswer(val, word.fr);
+      const isOk = (checkedState === 'exact' || checkedState === 'almost');
+      handleMiniGameResult(word, isOk);
+      results.push({ word, ok: isOk });
+      renderDictation(false);
+    }
+
+    function nextDict() {
+      if (!checkedState) return;
+      idx++;
+      showMeaningHint = false;
+      checkedState = null;
+      lastTyped = '';
+      if (idx >= questions.length) {
+        renderRoundSummary(container, 'dictation', results);
+      } else {
+        renderDictation(true);
+      }
+    }
+
+    function onKey(e) {
+      if (checkedState && e.key === 'Enter') {
+        e.preventDefault();
+        nextDict();
+      }
+    }
+
+    window.addEventListener('keydown', onKey);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onKey);
+    renderDictation(true);
+  }
+
+  /* =========================================================
+   * РЕЖИМ 5: У КОНТЕКСТІ
+   * ========================================================= */
+  function runContextMode(container) {
+    const questions = pickStudyWords(10, w => Boolean(w.ex && w.ex.trim()));
+    let idx = 0;
+    let answered = false;
+    let currentOptions = [];
+    const results = [];
+
+    function setupQ() {
+      const word = questions[idx];
+      const distractors = shuffle(getActiveWordsPool().filter(w => w.id !== word.id)).slice(0, 3);
+      currentOptions = shuffle([word, ...distractors]);
+      answered = false;
+      renderContext(word);
+    }
+
+    function renderContext(word, chosenId = null) {
+      container.innerHTML = `
+        <div class="session-header">
+          <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
+          <span class="session-progress">У контексті · ${idx + 1} / ${questions.length}</span>
+        </div>
+        <section class="index-card">
+          <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:8px;">
+            Доповніть речення відповідним словом (${escapeHtml(getPromptText(word))}):
+          </div>
+          <div class="study-example" style="font-size:1.1rem;">
+            <span>${answered ? highlightBracketExample(word.ex, word.fr) : maskBracketExample(word.ex, word.fr)}</span>
+            ${answered ? speakerBtnHtml(word.ex, 'Озвучити повне речення') : ''}
+          </div>
+          <div class="options-grid">
+            ${currentOptions.map((opt, i) => {
+              let cls = '';
+              if (answered) {
+                if (opt.id === word.id) cls = 'correct';
+                else if (opt.id === chosenId) cls = 'wrong';
+              }
+              return `
+                <button type="button" class="option-btn ${cls}" data-opt="${opt.id}" ${answered ? 'disabled' : ''}>
+                  <span class="option-key">${i + 1}</span>
+                  <span style="font-family:var(--font-fr); font-weight:600;">${escapeHtml(opt.fr)}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+          ${answered ? `
+            <div style="margin-top:14px; display:flex; justify-content:flex-end;">
+              <button type="button" class="btn btn-primary" id="btnNextCtx">Далі (Enter)</button>
+            </div>
+          ` : ''}
+        </section>
+      `;
+
+      container.querySelector('#btnExitMode').addEventListener('click', () => renderCurrentTab());
+      container.querySelectorAll('[data-opt]').forEach(btn => {
+        btn.addEventListener('click', () => choose(btn.dataset.opt));
+      });
+      const nextBtn = container.querySelector('#btnNextCtx');
+      if (nextBtn) nextBtn.addEventListener('click', nextStep);
+    }
+
+    function choose(optId) {
+      if (answered) return;
+      answered = true;
+      const word = questions[idx];
+      const isOk = (optId === word.id);
+      handleMiniGameResult(word, isOk);
+      results.push({ word, ok: isOk });
+      renderContext(word, optId);
+      if (speechSupported) speakFrench(word.ex, 1.0);
+    }
+
+    function nextStep() {
+      if (!answered) return;
+      idx++;
+      if (idx >= questions.length) {
+        renderRoundSummary(container, 'context', results);
+      } else {
+        setupQ();
+      }
+    }
+
+    function onKey(e) {
+      if (!answered && ['1', '2', '3', '4'].includes(e.key)) {
+        const opt = currentOptions[Number(e.key) - 1];
+        if (opt) choose(opt.id);
+      } else if (answered && e.key === 'Enter') {
+        e.preventDefault();
+        nextStep();
+      }
+    }
+
+    window.addEventListener('keydown', onKey);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onKey);
+    setupQ();
+  }
+
+  /* =========================================================
+   * РЕЖИМ 6: СИНОНІМИ
+   * ========================================================= */
+  function runSynonymsMode(container) {
+    const questions = pickStudyWords(10, w => Array.isArray(w.syn) && w.syn.length > 0);
+    let idx = 0;
+    let answered = false;
+    let currentOptions = [];
+    let targetSyn = '';
+    const results = [];
+
+    function setupSyn() {
+      const word = questions[idx];
+      targetSyn = word.syn[0];
+      const distractorPool = getActiveWordsPool()
+        .filter(w => w.id !== word.id)
+        .map(w => (w.syn && w.syn[0]) ? w.syn[0] : w.fr)
+        .filter(s => s.toLowerCase() !== targetSyn.toLowerCase());
+      const uniqueDistractors = Array.from(new Set(distractorPool));
+      const picked = shuffle(uniqueDistractors).slice(0, 3);
+      currentOptions = shuffle([targetSyn, ...picked]);
+      answered = false;
+      renderSyn(word);
+    }
+
+    function renderSyn(word, chosenVal = null) {
+      container.innerHTML = `
+        <div class="session-header">
+          <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
+          <span class="session-progress">Синоніми · ${idx + 1} / ${questions.length}</span>
+        </div>
+        <section class="index-card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px;">Оберіть синонім до виразу:</div>
+              <div class="study-word-title">${escapeHtml(word.fr)}</div>
+              <div style="color:var(--text-muted); font-size:0.9rem;">${escapeHtml(getPromptText(word))}</div>
+            </div>
+            ${speakerBtnHtml(word.fr, 'Озвучити слово')}
+          </div>
+          <div class="options-grid">
+            ${currentOptions.map((opt, i) => {
+              let cls = '';
+              if (answered) {
+                if (opt === targetSyn) cls = 'correct';
+                else if (opt === chosenVal) cls = 'wrong';
+              }
+              return `
+                <button type="button" class="option-btn ${cls}" data-syn="${escapeHtml(opt)}" ${answered ? 'disabled' : ''}>
+                  <span class="option-key">${i + 1}</span>
+                  <span style="font-family:var(--font-fr); font-weight:600;">${escapeHtml(opt)}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+          ${answered ? `
+            <div style="margin-top:14px; display:flex; justify-content:flex-end;">
+              <button type="button" class="btn btn-primary" id="btnNextSyn">Далі (Enter)</button>
+            </div>
+          ` : ''}
+        </section>
+      `;
+
+      container.querySelector('#btnExitMode').addEventListener('click', () => renderCurrentTab());
+      container.querySelectorAll('[data-syn]').forEach(btn => {
+        btn.addEventListener('click', () => selectSyn(btn.dataset.syn));
+      });
+      const nextBtn = container.querySelector('#btnNextSyn');
+      if (nextBtn) nextBtn.addEventListener('click', nextStep);
+    }
+
+    function selectSyn(val) {
+      if (answered) return;
+      answered = true;
+      const word = questions[idx];
+      const isOk = (val === targetSyn);
+      handleMiniGameResult(word, isOk);
+      results.push({ word, ok: isOk });
+      renderSyn(word, val);
+    }
+
+    function nextStep() {
+      if (!answered) return;
+      idx++;
+      if (idx >= questions.length) {
+        renderRoundSummary(container, 'synonyms', results);
+      } else {
+        setupSyn();
+      }
+    }
+
+    function onKey(e) {
+      if (!answered && ['1', '2', '3', '4'].includes(e.key)) {
+        const val = currentOptions[Number(e.key) - 1];
+        if (val !== undefined) selectSyn(val);
+      } else if (answered && e.key === 'Enter') {
+        e.preventDefault();
+        nextStep();
+      }
+    }
+
+    window.addEventListener('keydown', onKey);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onKey);
+    setupSyn();
+  }
+
+  /* =========================================================
+   * РЕЖИМ 7: ПАРИ
+   * ========================================================= */
+  function runPairsMode(container) {
+    const selectedPool = pickStudyWords(10);
+    const rounds = [selectedPool.slice(0, 5)];
+    if (selectedPool.length >= 10) {
+      rounds.push(selectedPool.slice(5, 10));
+    } else {
+      rounds.push(shuffle(getActiveWordsPool()).slice(0, 5));
+    }
+
+    let roundIdx = 0;
+    let startTime = Date.now();
+    let elapsedSec = 0;
+    const mistakeIds = new Set();
+    const allResults = [];
+
+    let leftCol = [];
+    let rightCol = [];
+    let matchedIds = new Set();
+    let selLeft = null;
+    let selRight = null;
+
+    const timerInterval = setInterval(() => {
+      elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+      const tEl = container.querySelector('#pairsTimer');
+      if (tEl) tEl.textContent = `${elapsedSec} с`;
+    }, 500);
+
+    activeSessionCleanup = () => clearInterval(timerInterval);
+
+    function startRound() {
+      const batch = rounds[roundIdx];
+      leftCol = shuffle(batch.slice());
+      rightCol = shuffle(batch.slice());
+      matchedIds = new Set();
+      selLeft = null;
+      selRight = null;
+      renderPairs();
+    }
+
+    function renderPairs() {
+      container.innerHTML = `
+        <div class="session-header">
+          <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
+          <span class="session-progress">Пари · Раунд ${roundIdx + 1} / ${rounds.length} · <span id="pairsTimer">${elapsedSec} с</span></span>
+        </div>
+        <section class="index-card">
+          <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">З'єднайте французький вираз та його значення:</div>
+          <div class="pairs-columns">
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              ${leftCol.map(w => `
+                <button type="button" class="pair-card ${matchedIds.has(w.id) ? 'matched' : ''} ${selLeft === w.id ? 'selected' : ''}" data-left="${w.id}">
+                  <span style="font-family:var(--font-fr); font-weight:600;">${escapeHtml(w.fr)}</span>
+                </button>
+              `).join('')}
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              ${rightCol.map(w => `
+                <button type="button" class="pair-card ${matchedIds.has(w.id) ? 'matched' : ''} ${selRight === w.id ? 'selected' : ''}" data-right="${w.id}">
+                  <span>${escapeHtml(getPromptText(w))}</span>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        </section>
+      `;
+
+      container.querySelector('#btnExitMode').addEventListener('click', () => renderCurrentTab());
+      container.querySelectorAll('[data-left]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selLeft = btn.dataset.left;
+          checkPairMatch();
+        });
+      });
+      container.querySelectorAll('[data-right]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selRight = btn.dataset.right;
+          checkPairMatch();
+        });
+      });
+    }
+
+    function checkPairMatch() {
+      if (!selLeft || !selRight) {
+        renderPairs();
+        return;
+      }
+      if (selLeft === selRight) {
+        matchedIds.add(selLeft);
+        const w = rounds[roundIdx].find(item => item.id === selLeft);
+        if (w && speechSupported) speakFrench(w.fr, 1.0);
+        selLeft = null;
+        selRight = null;
+
+        if (matchedIds.size === rounds[roundIdx].length) {
+          rounds[roundIdx].forEach(word => {
+            const ok = !mistakeIds.has(word.id);
+            handleMiniGameResult(word, ok);
+            allResults.push({ word, ok });
+          });
+          roundIdx++;
+          if (roundIdx >= rounds.length) {
+            clearInterval(timerInterval);
+            renderRoundSummary(container, 'pairs', allResults,
+              `<div style="margin-bottom:10px; font-family:var(--font-mono); font-size:0.9rem;">Час проходження: <strong>${elapsedSec} с</strong></div>`);
+            return;
+          } else {
+            startRound();
+            return;
+          }
+        }
+        renderPairs();
+      } else {
+        mistakeIds.add(selLeft);
+        mistakeIds.add(selRight);
+        selLeft = null;
+        selRight = null;
+        renderPairs();
+        showToast('Не збігається, спробуйте ще раз', 1200);
+      }
+    }
+
+    startRound();
+  }
+
+  /* =========================================================
+   * РЕЖИМ 8: БЛІЦ (60 секунд)
+   * ========================================================= */
+  function runBlitzMode(container) {
+    const pool = getActiveWordsPool();
+    let timeLeft = 60;
+    let score = 0;
+    const results = [];
+    let currentPair = null;
+
+    function nextChallenge() {
+      const word = pool[Math.floor(Math.random() * pool.length)];
+      const isTrue = Math.random() < 0.5;
+      let shownWord = word;
+      if (!isTrue) {
+        const others = pool.filter(w => w.id !== word.id);
+        shownWord = others[Math.floor(Math.random() * others.length)] || word;
+      }
+      currentPair = {
+        word,
+        shownMeaning: getPromptText(shownWord),
+        isMatch: shownWord.id === word.id
+      };
+      renderBlitz();
+    }
+
+    function renderBlitz() {
+      container.innerHTML = `
+        <div class="session-header">
+          <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
+          <span class="session-progress">Бліц · <span id="blitzTimer">${timeLeft} с</span> · Рахунок: ${score}</span>
+        </div>
+        <section class="index-card" style="text-align:center;">
+          <div class="study-word-title">${escapeHtml(currentPair.word.fr)}</div>
+          <hr class="study-divider">
+          <div class="study-meaning" style="margin-bottom:20px;">${escapeHtml(currentPair.shownMeaning)}</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <button type="button" class="btn btn-danger" id="btnBlitzNo">← Ні (Неправильно)</button>
+            <button type="button" class="btn btn-primary" id="btnBlitzYes">Так (Правильно) →</button>
+          </div>
+        </section>
+      `;
+
+      container.querySelector('#btnExitMode').addEventListener('click', () => renderCurrentTab());
+      container.querySelector('#btnBlitzNo').addEventListener('click', () => answerBlitz(false));
+      container.querySelector('#btnBlitzYes').addEventListener('click', () => answerBlitz(true));
+    }
+
+    function answerBlitz(userSaysMatch) {
+      const ok = (userSaysMatch === currentPair.isMatch);
+      if (ok) {
+        score++;
+        if (score > (state.stats.blitzBest || 0)) {
+          state.stats.blitzBest = score;
+        }
+      }
+      handleMiniGameResult(currentPair.word, ok);
+      results.push({ word: currentPair.word, ok });
+      nextChallenge();
+    }
+
+    const interval = setInterval(() => {
+      timeLeft--;
+      const tEl = container.querySelector('#blitzTimer');
+      if (tEl) tEl.textContent = `${timeLeft} с`;
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        renderRoundSummary(container, 'blitz', results,
+          `<div style="margin-bottom:10px; font-family:var(--font-mono);">Рахунок: <strong>${score}</strong> · Рекорд: <strong>${state.stats.blitzBest || 0}</strong></div>`);
+      }
+    }, 1000);
+
+    function onKey(e) {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); answerBlitz(false); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); answerBlitz(true); }
+    }
+
+    window.addEventListener('keydown', onKey);
+    activeSessionCleanup = () => {
+      clearInterval(interval);
+      window.removeEventListener('keydown', onKey);
+    };
+
+    nextChallenge();
+  }
+
+  /* =========================================================
+   * РЕЖИМ 9: КРОСВОРД (Адаптований до виразів)
+   * ========================================================= */
+  const FR_STOPWORDS = new Set([
+    'un', 'une', 'le', 'la', 'les', 'de', 'des', 'du', 'dans', 'en', 'et', 'ou',
+    'pour', 'par', 'sur', 'avec', 'sans', 'sous', 'vers', 'chez', 'aux', 'au',
+    'se', 'sa', 'son', 'ses', 'leur', 'leurs', 'ce', 'cet', 'cette', 'ces',
+    'mon', 'ton', 'ma', 'ta', 'mes', 'tes', 'nos', 'vos', 'qui', 'que', 'quoi',
+    'plus', 'moins', 'tres', 'pas', 'ne', 'ni', 'y', 'a'
+  ]);
+
+  function extractCrosswordEntry(w) {
+    const rawFr = String(w.fr || '').trim();
+    const fullClean = stripFrenchArticles(rawFr)
+      .replace(/-/g, '')
+      .replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]/gi, '')
+      .toLowerCase();
+
+    if (fullClean.length >= 3 && fullClean.length <= 12) {
+      return { word: w, clean: fullClean, clueExtra: '' };
+    }
+
+    // Якщо це довгий вираз — беремо найдовше змістове слово
+    const tokens = rawFr
+      .replace(/[’‘]/g, "'")
+      .split(/[\s\-']+/)
+      .map(t => ({
+        orig: t,
+        clean: t.toLowerCase().replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]/gi, '')
+      }))
+      .filter(t => t.clean.length >= 3 && t.clean.length <= 12 && !FR_STOPWORDS.has(stripDiacritics(t.clean)));
+
+    if (tokens.length > 0) {
+      tokens.sort((a, b) => b.clean.length - a.clean.length);
+      const chosen = tokens[0];
+      const maskedPhrase = rawFr.replace(new RegExp(chosen.orig.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'), '[…]');
+      return { word: w, clean: chosen.clean, clueExtra: maskedPhrase };
+    }
+
+    if (fullClean.length > 12) {
+      return { word: w, clean: fullClean.slice(0, 12), clueExtra: rawFr };
+    }
+    return null;
+  }
+
+  function generateCrosswordPuzzle() {
+    const GRID_SIZE = 12;
+    const candidates = shuffle(getActiveWordsPool())
+      .map(w => extractCrosswordEntry(w))
+      .filter(Boolean);
+
+    const grid = Array.from({ length: GRID_SIZE }, () => new Array(GRID_SIZE).fill(null));
+    const placed = [];
+
+    function canPlace(str, r, c, dir) {
+      const len = str.length;
+      if (dir === 'H') {
+        if (c < 0 || c + len > GRID_SIZE || r < 0 || r >= GRID_SIZE) return false;
+        if (c > 0 && grid[r][c - 1] !== null) return false;
+        if (c + len < GRID_SIZE && grid[r][c + len] !== null) return false;
+        let intersections = 0;
+        for (let i = 0; i < len; i++) {
+          const cur = grid[r][c + i];
+          if (cur !== null) {
+            if (cur !== str[i]) return false;
+            intersections++;
+          } else {
+            if (r > 0 && grid[r - 1][c + i] !== null) return false;
+            if (r + 1 < GRID_SIZE && grid[r + 1][c + i] !== null) return false;
+          }
+        }
+        return intersections;
+      } else {
+        if (r < 0 || r + len > GRID_SIZE || c < 0 || c >= GRID_SIZE) return false;
+        if (r > 0 && grid[r - 1][c] !== null) return false;
+        if (r + len < GRID_SIZE && grid[r + len][c] !== null) return false;
+        let intersections = 0;
+        for (let i = 0; i < len; i++) {
+          const cur = grid[r + i][c];
+          if (cur !== null) {
+            if (cur !== str[i]) return false;
+            intersections++;
+          } else {
+            if (c > 0 && grid[r + i][c - 1] !== null) return false;
+            if (c + 1 < GRID_SIZE && grid[r + i][c + 1] !== null) return false;
+          }
+        }
+        return intersections;
+      }
+    }
+
+    function putWord(item, r, c, dir) {
+      const str = item.clean;
+      for (let i = 0; i < str.length; i++) {
+        if (dir === 'H') grid[r][c + i] = str[i];
+        else grid[r + i][c] = str[i];
+      }
+      placed.push({ ...item, r, c, dir });
+    }
+
+    if (candidates.length > 0) {
+      const first = candidates.shift();
+      const startRow = Math.floor(GRID_SIZE / 2);
+      const startCol = Math.max(0, Math.floor((GRID_SIZE - first.clean.length) / 2));
+      putWord(first, startRow, startCol, 'H');
+    }
+
+    for (const cand of candidates) {
+      if (placed.length >= 9) break;
+      let isPlaced = false;
+      for (let i = 0; i < cand.clean.length && !isPlaced; i++) {
+        const ch = cand.clean[i];
+        for (const p of placed) {
+          const nextDir = p.dir === 'H' ? 'V' : 'H';
+          for (let j = 0; j < p.clean.length; j++) {
+            if (p.clean[j] === ch) {
+              const r = p.dir === 'H' ? p.r - i : p.r + j;
+              const c = p.dir === 'H' ? p.c + j : p.c - i;
+              const res = canPlace(cand.clean, r, c, nextDir);
+              if (res !== false && res >= 1) {
+                putWord(cand, r, c, nextDir);
+                isPlaced = true;
+                break;
+              }
+            }
+          }
+          if (isPlaced) break;
+        }
+      }
+    }
+
+    // Якщо мало перетинів — заповнюємо вільні рядки
+    for (const cand of candidates) {
+      if (placed.length >= 6) break;
+      if (placed.some(p => p.word.id === cand.word.id)) continue;
+      let done = false;
+      for (let r = 0; r < GRID_SIZE && !done; r++) {
+        for (let c = 0; c <= GRID_SIZE - cand.clean.length && !done; c++) {
+          if (canPlace(cand.clean, r, c, 'H') !== false) {
+            putWord(cand, r, c, 'H');
+            done = true;
+          }
+        }
+      }
+    }
+
+    placed.forEach((p, idx) => { p.num = idx + 1; });
+    return { grid, placed, size: GRID_SIZE };
+  }
+
+  function runCrosswordMode(container) {
+    const puzzle = generateCrosswordPuzzle();
+    const { grid, placed, size } = puzzle;
+    let activeDir = 'H';
+    let lastFocused = null;
+
+    const numMap = {};
+    placed.forEach(p => {
+      const key = `${p.r},${p.c}`;
+      numMap[key] = numMap[key] ? `${numMap[key]}/${p.num}` : String(p.num);
+    });
+
+    const across = placed.filter(p => p.dir === 'H');
+    const down = placed.filter(p => p.dir === 'V');
+
+    container.innerHTML = `
+      <div class="session-header">
+        <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
+        <span class="session-progress">Кросворд · Слів: ${placed.length}</span>
+      </div>
+      <section class="index-card cw-wrapper">
+        <div class="cw-grid" style="grid-template-columns: repeat(${size}, 1fr);">
+          ${grid.map((row, r) => row.map((cell, c) => {
+            if (cell === null) return `<div class="cw-cell empty"></div>`;
+            const n = numMap[`${r},${c}`] || '';
+            return `
+              <div class="cw-cell">
+                ${n ? `<span class="cw-num">${n}</span>` : ''}
+                <input type="text" maxlength="1" data-r="${r}" data-c="${c}" data-ans="${cell}" aria-label="Клітинка ${r + 1},${c + 1}">
+              </div>
+            `;
+          }).join('')).join('')}
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+          <button type="button" class="btn btn-primary" id="btnCwCheck">Перевірити</button>
+          <button type="button" class="btn" id="btnCwHint">Підказати літеру</button>
+          <button type="button" class="btn" id="btnCwReveal">Відповіді</button>
+          <button type="button" class="btn" id="btnCwFinish">Завершити раунд</button>
+        </div>
+
+        <div class="cw-clues">
+          <div>
+            <div class="section-label">По горизонталі</div>
+            ${across.length ? across.map(p => `
+              <div class="cw-clue-item" data-focus="${p.r},${p.c},H">
+                <strong>${p.num}.</strong> ${escapeHtml(getPromptText(p.word))}
+                ${p.clueExtra ? `<span style="font-family:var(--font-fr); color:var(--text-muted); font-style:italic;"> (${escapeHtml(p.clueExtra)})</span>` : ''}
+                <span class="badge">${p.clean.length} літ.</span>
+              </div>
+            `).join('') : '<div style="color:var(--text-muted);">—</div>'}
+          </div>
+          <div>
+            <div class="section-label">По вертикалі</div>
+            ${down.length ? down.map(p => `
+              <div class="cw-clue-item" data-focus="${p.r},${p.c},V">
+                <strong>${p.num}.</strong> ${escapeHtml(getPromptText(p.word))}
+                ${p.clueExtra ? `<span style="font-family:var(--font-fr); color:var(--text-muted); font-style:italic;"> (${escapeHtml(p.clueExtra)})</span>` : ''}
+                <span class="badge">${p.clean.length} літ.</span>
+              </div>
+            `).join('') : '<div style="color:var(--text-muted);">—</div>'}
+          </div>
+        </div>
+      </section>
+    `;
+
+    container.querySelector('#btnExitMode').addEventListener('click', () => renderCurrentTab());
+
+    function getInput(r, c) {
+      return container.querySelector(`input[data-r="${r}"][data-c="${c}"]`);
+    }
+
+    container.querySelectorAll('.cw-clue-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const [r, c, dir] = el.dataset.focus.split(',');
+        activeDir = dir;
+        const inp = getInput(Number(r), Number(c));
+        if (inp) inp.focus();
+      });
+    });
+
+    container.querySelectorAll('.cw-cell input').forEach(inp => {
+      inp.addEventListener('focus', () => { lastFocused = inp; });
+      inp.addEventListener('input', () => {
+        inp.classList.remove('cw-ok', 'cw-err');
+        if (inp.value) {
+          const r = Number(inp.dataset.r);
+          const c = Number(inp.dataset.c);
+          const next = activeDir === 'H' ? getInput(r, c + 1) : getInput(r + 1, c);
+          if (next) next.focus();
+        }
+      });
+      inp.addEventListener('keydown', e => {
+        const r = Number(inp.dataset.r);
+        const c = Number(inp.dataset.c);
+        if (e.key === 'Backspace' && !inp.value) {
+          const prev = activeDir === 'H' ? getInput(r, c - 1) : getInput(r - 1, c);
+          if (prev) prev.focus();
+        } else if (e.key === 'ArrowRight') { activeDir = 'H'; const n = getInput(r, c + 1); if (n) n.focus(); }
+        else if (e.key === 'ArrowLeft') { activeDir = 'H'; const n = getInput(r, c - 1); if (n) n.focus(); }
+        else if (e.key === 'ArrowDown') { activeDir = 'V'; const n = getInput(r + 1, c); if (n) n.focus(); }
+        else if (e.key === 'ArrowUp') { activeDir = 'V'; const n = getInput(r - 1, c); if (n) n.focus(); }
+      });
+    });
+
+    container.querySelector('#btnCwCheck').addEventListener('click', () => {
+      container.querySelectorAll('.cw-cell input').forEach(inp => {
+        const val = stripDiacritics(inp.value.trim().toLowerCase());
+        const ans = stripDiacritics(inp.dataset.ans.toLowerCase());
+        if (!val) return;
+        if (val === ans) {
+          inp.classList.add('cw-ok');
+          inp.classList.remove('cw-err');
+        } else {
+          inp.classList.add('cw-err');
+          inp.classList.remove('cw-ok');
+        }
+      });
+    });
+
+    container.querySelector('#btnCwHint').addEventListener('click', () => {
+      const target = (lastFocused && !lastFocused.value)
+        ? lastFocused
+        : Array.from(container.querySelectorAll('.cw-cell input')).find(i => i.value.toLowerCase() !== i.dataset.ans);
+      if (target) {
+        target.value = target.dataset.ans;
+        target.classList.add('cw-ok');
+        target.focus();
+      }
+    });
+
+    container.querySelector('#btnCwReveal').addEventListener('click', () => {
+      container.querySelectorAll('.cw-cell input').forEach(inp => {
+        inp.value = inp.dataset.ans;
+        inp.classList.add('cw-ok');
+        inp.classList.remove('cw-err');
+      });
+    });
+
+    container.querySelector('#btnCwFinish').addEventListener('click', () => {
+      const summary = placed.map(p => {
+        let wordOk = true;
+        for (let i = 0; i < p.clean.length; i++) {
+          const r = p.dir === 'H' ? p.r : p.r + i;
+          const c = p.dir === 'H' ? p.c + i : p.c;
+          const inp = getInput(r, c);
+          const v = stripDiacritics((inp ? inp.value : '').toLowerCase());
+          const a = stripDiacritics(p.clean[i].toLowerCase());
+          if (v !== a) wordOk = false;
+        }
+        handleMiniGameResult(p.word, wordOk);
+        return { word: p.word, ok: wordOk };
+      });
+      renderRoundSummary(container, 'crossword', summary);
+    });
+  }
+
+  /* =========================================================
+   * РЕЖИМ 10: АНАГРАМА
+   * ========================================================= */
+  function runAnagramMode(container) {
+    const questions = pickStudyWords(10);
+    let idx = 0;
+    let pool = [];
+    let pickedIndices = [];
+    let usedHintError = false;
+    let finishedWord = false;
+    const results = [];
+
+    function setupAnagram() {
+      const word = questions[idx];
+      const chars = Array.from(word.fr);
+      pool = shuffle(chars.map((ch, i) => ({ ch, i })));
+      pickedIndices = [];
+      usedHintError = false;
+      finishedWord = false;
+      renderAnagram();
+    }
+
+    function renderAnagram() {
+      const word = questions[idx];
+      container.innerHTML = `
+        <div class="session-header">
+          <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
+          <span class="session-progress">Анаграма · ${idx + 1} / ${questions.length}</span>
+        </div>
+        <section class="index-card">
+          <div class="study-meaning">${escapeHtml(getPromptText(word))}</div>
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">Складіть французький вираз із літер:</div>
+
+          <div class="anagram-slots">
+            ${pickedIndices.map((pi, pos) => `
+              <button type="button" class="letter-tile" data-unpick="${pos}">${escapeHtml(pool[pi].ch)}</button>
+            `).join('')}
+          </div>
+
+          <div class="anagram-pool">
+            ${pool.map((item, pi) => {
+              const used = pickedIndices.includes(pi);
+              return `<button type="button" class="letter-tile ${used ? 'used' : ''}" data-pick="${pi}">${escapeHtml(item.ch)}</button>`;
+            }).join('')}
+          </div>
+
+          ${!finishedWord ? `
+            <div style="display:flex; gap:8px; margin-top:12px;">
+              <button type="button" class="btn" id="btnAnaHelp">Допомога (+1 літера)</button>
+              <button type="button" class="btn" id="btnAnaReset">Очистити</button>
+            </div>
+          ` : `
+            <div class="feedback-box ok" style="display:flex; align-items:center; justify-content:space-between;">
+              <div>Складено: <strong style="font-family:var(--font-fr); font-size:1.15rem;">${escapeHtml(word.fr)}</strong></div>
+              ${speakerBtnHtml(word.fr, 'Озвучити слово')}
+            </div>
+            <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+              <button type="button" class="btn btn-primary" id="btnNextAna">Далі (Enter)</button>
+            </div>
+          `}
+        </section>
+      `;
+
+      container.querySelector('#btnExitMode').addEventListener('click', () => renderCurrentTab());
+      container.querySelectorAll('[data-pick]').forEach(btn => {
+        btn.addEventListener('click', () => pickTile(Number(btn.dataset.pick)));
+      });
+      container.querySelectorAll('[data-unpick]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (finishedWord) return;
+          pickedIndices.splice(Number(btn.dataset.unpick), 1);
+          renderAnagram();
+        });
+      });
+
+      const helpBtn = container.querySelector('#btnAnaHelp');
+      if (helpBtn) {
+        helpBtn.addEventListener('click', () => {
+          const targetChars = Array.from(word.fr);
+          while (pickedIndices.length > 0) {
+            const curStr = pickedIndices.map(pi => pool[pi].ch).join('');
+            if (word.fr.toLowerCase().startsWith(curStr.toLowerCase())) break;
+            pickedIndices.pop();
+          }
+          const nextChar = targetChars[pickedIndices.length];
+          if (nextChar !== undefined) {
+            const foundIdx = pool.findIndex((item, pi) => !pickedIndices.includes(pi) && item.ch.toLowerCase() === nextChar.toLowerCase());
+            if (foundIdx !== -1) pickTile(foundIdx);
+          }
+        });
+      }
+
+      const resetBtn = container.querySelector('#btnAnaReset');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          pickedIndices = [];
+          renderAnagram();
+        });
+      }
+
+      const nextBtn = container.querySelector('#btnNextAna');
+      if (nextBtn) nextBtn.addEventListener('click', nextWord);
+    }
+
+    function pickTile(pi) {
+      if (finishedWord || pickedIndices.includes(pi)) return;
+      pickedIndices.push(pi);
+      const word = questions[idx];
+      if (pickedIndices.length === pool.length) {
+        const attempt = pickedIndices.map(i => pool[i].ch).join('').toLowerCase();
+        if (attempt === word.fr.toLowerCase()) {
+          finishedWord = true;
+          handleMiniGameResult(word, !usedHintError);
+          results.push({ word, ok: !usedHintError });
+          if (speechSupported) speakFrench(word.fr, 1.0);
+        } else {
+          usedHintError = true;
+          showToast('Порядок літер неправильний. Спробуйте ще раз.');
+          pickedIndices = [];
+        }
+      }
+      renderAnagram();
+    }
+
+    function nextWord() {
+      if (!finishedWord) return;
+      idx++;
+      if (idx >= questions.length) {
+        renderRoundSummary(container, 'anagram', results);
+      } else {
+        setupAnagram();
+      }
+    }
+
+    function onKey(e) {
+      if (finishedWord && e.key === 'Enter') {
+        e.preventDefault();
+        nextWord();
+        return;
+      }
+      if (!finishedWord) {
+        if (e.key === 'Backspace') {
+          pickedIndices.pop();
+          renderAnagram();
+        } else if (e.key.length === 1) {
+          const ch = stripDiacritics(e.key.toLowerCase());
+          const found = pool.findIndex((item, pi) =>
+            !pickedIndices.includes(pi) && stripDiacritics(item.ch.toLowerCase()) === ch
+          );
+          if (found !== -1) pickTile(found);
+        }
+      }
+    }
+
+    window.addEventListener('keydown', onKey);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onKey);
+    setupAnagram();
+  }
+
+  /* =========================================================
+   * 9. ВКЛАДКА «СЛОВА» ТА МОДАЛЬНІ ВІКНА
+   * ========================================================= */
+  let wordSearchQuery = '';
+  let wordFilterStatus = 'all';
+  let wordFilterSrc = 'all';
+  let confirmingDeleteId = null;
+  let confirmingTopicDelete = false;
+
+  function renderWordsTab(container) {
+    const sources = Array.from(new Set(state.words.map(w => w.src).filter(Boolean))).sort();
+    const canBulkDeleteTopic = (wordFilterSrc !== 'all');
+    const topicWordCount = canBulkDeleteTopic ? state.words.filter(w => w.src === wordFilterSrc).length : 0;
+
+    container.innerHTML = `
+      <section class="panel-card">
+        <div class="words-toolbar">
+          <button type="button" class="btn btn-primary" id="btnAddCode">Додати з коду</button>
+          <button type="button" class="btn" id="btnAddSingle">+ Слово</button>
+          <button type="button" class="btn" id="btnAddList">Списком</button>
+          ${canBulkDeleteTopic ? `
+            ${!confirmingTopicDelete ? `
+              <button type="button" class="btn btn-danger btn-sm" id="btnAskDeleteTopic" style="margin-left:auto;">
+                Видалити тему «${escapeHtml(wordFilterSrc)}» (${topicWordCount})
+              </button>
+            ` : `
+              <span class="inline-confirm" style="margin-left:auto;">
+                <button type="button" class="btn btn-sm btn-danger" id="btnConfirmDeleteTopic">Точно видалити всі ${topicWordCount} сл.?</button>
+                <button type="button" class="btn btn-sm" id="btnCancelDeleteTopic">Скасувати</button>
+              </span>
+            `}
+          ` : ''}
+        </div>
+
+        <div class="filters-bar">
+          <input type="search" id="inpWordSearch" class="input" placeholder="Пошук виразу або перекладу…" value="${escapeHtml(wordSearchQuery)}">
+          <select id="selFilterStatus" class="select" aria-label="Фільтр за статусом">
+            <option value="all" ${wordFilterStatus === 'all' ? 'selected' : ''}>Усі статуси (${state.words.length})</option>
+            <option value="new" ${wordFilterStatus === 'new' ? 'selected' : ''}>Нове</option>
+            <option value="learn" ${wordFilterStatus === 'learn' ? 'selected' : ''}>Вчу</option>
+            <option value="know" ${wordFilterStatus === 'know' ? 'selected' : ''}>Знаю</option>
+            <option value="master" ${wordFilterStatus === 'master' ? 'selected' : ''}>Засвоєно</option>
+          </select>
+          <select id="selFilterSrc" class="select" aria-label="Фільтр за темою">
+            <option value="all" ${wordFilterSrc === 'all' ? 'selected' : ''}>Усі теми (${sources.length})</option>
+            ${sources.map(s => `<option value="${escapeHtml(s)}" ${wordFilterSrc === s ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+          </select>
+        </div>
+
+        <div id="wordsListContainer" class="word-list"></div>
+      </section>
+    `;
+
+    container.querySelector('#btnAddCode').addEventListener('click', openAddCodeModal);
+    container.querySelector('#btnAddSingle').addEventListener('click', () => openWordFormModal());
+    container.querySelector('#btnAddList').addEventListener('click', openAddListModal);
+
+    const askTopicBtn = container.querySelector('#btnAskDeleteTopic');
+    if (askTopicBtn) {
+      askTopicBtn.addEventListener('click', () => {
+        confirmingTopicDelete = true;
+        renderWordsTab(container);
+      });
+    }
+
+    const cancelTopicBtn = container.querySelector('#btnCancelDeleteTopic');
+    if (cancelTopicBtn) {
+      cancelTopicBtn.addEventListener('click', () => {
+        confirmingTopicDelete = false;
+        renderWordsTab(container);
+      });
+    }
+
+    const confirmTopicBtn = container.querySelector('#btnConfirmDeleteTopic');
+    if (confirmTopicBtn) {
+      confirmTopicBtn.addEventListener('click', () => {
+        const deletedTopic = wordFilterSrc;
+        state.words = state.words.filter(w => w.src !== deletedTopic);
+        if (state.settings.focusTopic === deletedTopic) {
+          state.settings.focusTopic = 'all';
+        }
+        wordFilterSrc = 'all';
+        confirmingTopicDelete = false;
+        saveState();
+        showToast(`Усі слова з теми «${deletedTopic}» видалено`);
+        renderWordsTab(container);
+      });
+    }
+
+    const searchInp = container.querySelector('#inpWordSearch');
+    searchInp.addEventListener('input', e => {
+      wordSearchQuery = e.target.value;
+      renderWordsListOnly(container.querySelector('#wordsListContainer'));
+    });
+
+    container.querySelector('#selFilterStatus').addEventListener('change', e => {
+      wordFilterStatus = e.target.value;
+      renderWordsListOnly(container.querySelector('#wordsListContainer'));
+    });
+
+    container.querySelector('#selFilterSrc').addEventListener('change', e => {
+      wordFilterSrc = e.target.value;
+      confirmingTopicDelete = false;
+      renderWordsTab(container);
+    });
+
+    renderWordsListOnly(container.querySelector('#wordsListContainer'));
+  }
+
+  function renderWordsListOnly(listEl) {
+    if (!listEl) return;
+    const filtered = state.words.filter(w => {
+      if (wordFilterStatus !== 'all' && getWordStatus(w) !== wordFilterStatus) return false;
+      if (wordFilterSrc !== 'all' && w.src !== wordFilterSrc) return false;
+      if (wordSearchQuery.trim()) {
+        const q = wordSearchQuery.trim().toLowerCase();
+        return w.fr.toLowerCase().includes(q) ||
+          (w.uk || '').toLowerCase().includes(q) ||
+          (w.def || '').toLowerCase().includes(q);
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `<div style="padding:24px; text-align:center; color:var(--text-muted);">Виразів за вашим запитом не знайдено.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = filtered.map(w => {
+      const st = getWordStatus(w);
+      const isDel = (confirmingDeleteId === w.id);
+      const dueLabel = formatDueDate(w);
+      const formattedAdded = w.added ? w.added.split('-').slice(1).reverse().join('.') : '';
+      return `
+        <article class="word-item" data-status="${st}">
+          <div class="word-item-header">
+            <div class="word-fr-line">
+              <span class="word-fr">${escapeHtml(w.fr)}</span>
+              ${w.pos ? `<span class="word-pos">(${escapeHtml(w.pos)})</span>` : ''}
+            </div>
+            <div class="word-badges-row">
+              <span class="badge">${getStatusLabel(st)}</span>
+              ${w.src ? `<span class="badge">${escapeHtml(w.src)}</span>` : ''}
+              ${dueLabel ? `<span class="badge">${dueLabel}</span>` : ''}
+            </div>
+          </div>
+          <div class="word-meaning">${escapeHtml(getPromptText(w))}</div>
+          ${w.ex ? `<div style="font-family:var(--font-fr); font-size:0.9rem; color:var(--text-muted);">${highlightBracketExample(w.ex, w.fr)}</div>` : ''}
+          <div class="word-item-actions">
+            <span>Повторень: ${w.r || 0}${formattedAdded ? ` · Додано: ${formattedAdded}` : ''}</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              ${speakerBtnHtml(w.fr, 'Озвучити слово')}
+              <button type="button" class="btn btn-sm" data-edit="${w.id}">Редагувати</button>
+              ${!isDel ? `
+                <button type="button" class="btn btn-sm" data-askdel="${w.id}">Видалити</button>
+              ` : `
+                <span class="inline-confirm">
+                  <button type="button" class="btn btn-sm btn-danger" data-confirmdel="${w.id}">Так, видалити</button>
+                  <button type="button" class="btn btn-sm" data-canceldel="${w.id}">Скасувати</button>
+                </span>
+              `}
+            </div>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('[data-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const w = state.words.find(item => item.id === btn.dataset.edit);
+        if (w) openWordFormModal(w);
+      });
+    });
+
+    listEl.querySelectorAll('[data-askdel]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        confirmingDeleteId = btn.dataset.askdel;
+        renderWordsListOnly(listEl);
+      });
+    });
+
+    listEl.querySelectorAll('[data-canceldel]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        confirmingDeleteId = null;
+        renderWordsListOnly(listEl);
+      });
+    });
+
+    listEl.querySelectorAll('[data-confirmdel]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.words = state.words.filter(item => item.id !== btn.dataset.confirmdel);
+        confirmingDeleteId = null;
+        saveState();
+        renderWordsTab(document.getElementById('mainView'));
+        showToast('Слово видалено');
+      });
+    });
+  }
+
+  /* Модальні вікна */
+  function openModal(html) {
+    const backdrop = document.getElementById('modalBackdrop');
+    const content = document.getElementById('modalContent');
+    content.innerHTML = html;
+    backdrop.classList.add('open');
+  }
+
+  function closeModal() {
+    const backdrop = document.getElementById('modalBackdrop');
+    backdrop.classList.remove('open');
+  }
+
+  function parseTolerantWordsJson(rawText) {
+    let text = String(rawText || '').trim();
+    if (!text) throw new Error('Поле порожнє. Вставте JSON-масив слів.');
+
+    const firstBracket = text.indexOf('[');
+    const lastBracket = text.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+      text = text.slice(firstBracket, lastBracket + 1);
+    } else if (text.startsWith('{') && text.endsWith('}')) {
+      text = `[${text}]`;
+    } else {
+      throw new Error('Не знайдено JSON-масиву у квадратних дужках [ ... ]. Перевірте скопійований код.');
+    }
+
+    text = text
+      .replace(/[“”«»„‟]/g, '"')
+      .replace(/,\s*([\]}])/g, '$1');
+
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (err) {
+      throw new Error('Помилка розбору JSON: перевірте цілісність лапок та дужок.');
+    }
+
+    if (!Array.isArray(parsed)) {
+      throw new Error('Очікувався масив об’єктів слів.');
+    }
+    return parsed;
+  }
+
+  function openAddCodeModal() {
+    const sample = `[{"fr":"vivre dans la précarité","uk":"жити в скрутних умовах","def":"être pauvre, vivre dans des conditions matérielles instables","ex":"Un nombre croissant d'étudiants [vivent dans la précarité].","syn":["être dans le besoin"],"pos":"locution verbale","src":"Précarité étudiante","added":"2026-10-27"},{"fr":"joindre les deux bouts","uk":"зводити кінці з кінцями","def":"avoir assez d'argent pour subvenir à ses besoins","ex":"Avec 600 euros par mois, il est difficile de [joindre les deux bouts].","syn":["boucler son budget"],"pos":"expression figée","src":"Précarité étudiante","added":"2026-10-27"},{"fr":"cumuler études et petit boulot","uk":"поєднувати навчання з підробітком","def":"travailler en plus de la fac","ex":"Elle [cumule études et petit boulot] pour payer son loyer.","syn":["travailler à côté"],"pos":"locution verbale","src":"Précarité étudiante","added":"2026-10-27"},{"fr":"décrocher une bourse","uk":"отримати стипендію (з зусиллям)","def":"obtenir une aide financière après des démarches","ex":"Grâce à ses résultats, il a [décroché une bourse] au mérite.","syn":["obtenir une bourse"],"pos":"locution verbale","src":"Précarité étudiante","added":"2026-10-27"},{"fr":"se loger à un prix abordable","uk":"знайти житло за доступною ціною","def":"trouver un logement convenable sans loyer excessif","ex":"À Paris, [se loger à un prix abordable] relève du miracle.","syn":["trouver un logement"],"pos":"locution verbale","src":"Précarité étudiante","added":"2026-10-27"},{"fr":"renoncer à des soins","uk":"відмовлятися від лікування","def":"ne pas aller chez le médecin par manque d'argent","ex":"Faute de mutuelle, certains étudiants [renoncent à des soins].","syn":["se priver de soins"],"pos":"locution verbale","src":"Précarité étudiante","added":"2026-10-27"}]`;
+
+    openModal(`
+      <h2 id="modalTitle" style="font-family:var(--font-fr); font-size:1.25rem;">Додати слова з коду</h2>
+      <p style="font-size:0.85rem; color:var(--text-muted);">
+        Вставте надісланий JSON-масив виразів. Застосунок автоматично виправить лапки та дужки.
+      </p>
+      <textarea id="inpCodeJson" class="textarea" rows="7" placeholder='[{"fr":"vivre dans la précarité","uk":"жити в скрутних умовах",...}]'></textarea>
+      <div id="codeErrorMsg" style="color:var(--danger); font-size:0.85rem; display:none;"></div>
+      <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:6px;">
+        <button type="button" class="btn btn-sm" id="btnInsertDemo">Демо: Précarité (6 слів)</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn" id="btnModalCancel">Скасувати</button>
+          <button type="button" class="btn btn-primary" id="btnModalSubmit">Імпортувати</button>
+        </div>
+      </div>
+    `);
+
+    const ta = document.getElementById('inpCodeJson');
+    const errEl = document.getElementById('codeErrorMsg');
+
+    document.getElementById('btnInsertDemo').addEventListener('click', () => {
+      ta.value = sample;
+      errEl.style.display = 'none';
+    });
+    document.getElementById('btnModalCancel').addEventListener('click', closeModal);
+    document.getElementById('btnModalSubmit').addEventListener('click', () => {
+      try {
+        const arr = parseTolerantWordsJson(ta.value);
+        const { addedCount, updatedCount } = upsertWords(arr);
+        if (addedCount === 0 && updatedCount === 0) {
+          throw new Error('Жодного валідного слова не знайдено.');
+        }
+        closeModal();
+        showToast(`Додано: ${addedCount}, оновлено: ${updatedCount}`);
+        renderCurrentTab();
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.style.display = 'block';
+      }
+    });
+  }
+
+  function openWordFormModal(editWord = null) {
+    const isEdit = Boolean(editWord);
+    openModal(`
+      <h2 id="modalTitle" style="font-family:var(--font-fr); font-size:1.25rem;">
+        ${isEdit ? 'Редагувати вираз' : 'Додати вираз'}
+      </h2>
+      <div class="form-row">
+        <label for="fFr">Слово або вираз (fr) *</label>
+        <input id="fFr" class="input" type="text" value="${escapeHtml(editWord ? editWord.fr : '')}" placeholder="наприклад: joindre les deux bouts">
+      </div>
+      <div class="form-row">
+        <label for="fUk">Переклад українською (uk) *</label>
+        <input id="fUk" class="input" type="text" value="${escapeHtml(editWord ? editWord.uk : '')}" placeholder="наприклад: зводити кінці з кінцями">
+      </div>
+      <div class="form-row">
+        <label for="fDef">Тлумачення французькою (def)</label>
+        <input id="fDef" class="input" type="text" value="${escapeHtml(editWord ? editWord.def : '')}" placeholder="avoir assez d'argent pour subvenir...">
+      </div>
+      <div class="form-row">
+        <label for="fEx">Приклад (ex) — виділіть вираз у [квадратні дужки]</label>
+        <input id="fEx" class="input" type="text" value="${escapeHtml(editWord ? editWord.ex : '')}" placeholder="Il est difficile de [joindre les deux bouts].">
+      </div>
+      <div class="form-row">
+        <label for="fSyn">Синоніми через кому (syn)</label>
+        <input id="fSyn" class="input" type="text" value="${escapeHtml(editWord && editWord.syn ? editWord.syn.join(', ') : '')}" placeholder="boucler son budget">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <div class="form-row">
+          <label for="fPos">Частина мови / рід (pos)</label>
+          <input id="fPos" class="input" type="text" value="${escapeHtml(editWord ? editWord.pos : '')}" placeholder="expression figée">
+        </div>
+        <div class="form-row">
+          <label for="fSrc">Тема / урок (src)</label>
+          <input id="fSrc" class="input" type="text" value="${escapeHtml(editWord ? editWord.src : '')}" placeholder="Précarité">
+        </div>
+      </div>
+      <div id="wordFormErr" style="color:var(--danger); font-size:0.85rem; display:none;"></div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+        <button type="button" class="btn" id="btnModalCancel">Скасувати</button>
+        <button type="button" class="btn btn-primary" id="btnModalSave">Зберегти</button>
+      </div>
+    `);
+
+    document.getElementById('btnModalCancel').addEventListener('click', closeModal);
+    document.getElementById('btnModalSave').addEventListener('click', () => {
+      const fr = document.getElementById('fFr').value.trim();
+      const uk = document.getElementById('fUk').value.trim();
+      const def = document.getElementById('fDef').value.trim();
+      const ex = document.getElementById('fEx').value.trim();
+      const syn = document.getElementById('fSyn').value.split(',').map(s => s.trim()).filter(Boolean);
+      const pos = document.getElementById('fPos').value.trim();
+      const src = document.getElementById('fSrc').value.trim() || 'Загальні';
+
+      if (!fr || (!uk && !def)) {
+        const err = document.getElementById('wordFormErr');
+        err.textContent = 'Заповніть французький вираз та переклад (або тлумачення).';
+        err.style.display = 'block';
+        return;
+      }
+
+      if (isEdit) {
+        editWord.fr = fr;
+        editWord.id = makeWordId(fr);
+        editWord.uk = uk;
+        editWord.def = def;
+        editWord.ex = ex;
+        editWord.syn = syn;
+        editWord.pos = pos;
+        editWord.src = src;
+        saveState();
+        closeModal();
+        showToast('Вираз оновлено');
+        renderCurrentTab();
+      } else {
+        const { addedCount, updatedCount } = upsertWords([{ fr, uk, def, ex, syn, pos, src, added: todayStr() }]);
+        closeModal();
+        showToast(`Додано: ${addedCount}, оновлено: ${updatedCount}`);
+        renderCurrentTab();
+      }
+    });
+  }
+
+  function openAddListModal() {
+    openModal(`
+      <h2 id="modalTitle" style="font-family:var(--font-fr); font-size:1.25rem;">Додати слова списком</h2>
+      <p style="font-size:0.85rem; color:var(--text-muted);">
+        Вводьте по одному виразу на рядок, переклад через тире (наприклад: <code>gare — вокзал</code>).
+      </p>
+      <div class="form-row">
+        <label for="inpListSrc">Підпис теми / уроку</label>
+        <input id="inpListSrc" class="input" type="text" value="Тема ${todayStr()}" placeholder="Тема">
+      </div>
+      <textarea id="inpListLines" class="textarea" rows="7" placeholder="joindre les deux bouts — зводити кінці з кінцями&#10;vivre dans la précarité — жити в скрутних умовах"></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+        <button type="button" class="btn" id="btnModalCancel">Скасувати</button>
+        <button type="button" class="btn btn-primary" id="btnModalImportList">Додати</button>
+      </div>
+    `);
+
+    document.getElementById('btnModalCancel').addEventListener('click', closeModal);
+    document.getElementById('btnModalImportList').addEventListener('click', () => {
+      const src = document.getElementById('inpListSrc').value.trim() || 'Список';
+      const lines = document.getElementById('inpListLines').value.split(/\r?\n/);
+      const items = [];
+      for (const line of lines) {
+        const parts = line.split(/\s+[-–—]\s+|\s*[-–—]\s*/);
+        if (parts.length >= 2) {
+          const fr = parts[0].trim();
+          const uk = parts.slice(1).join(' — ').trim();
+          if (fr && uk) items.push({ fr, uk, src, added: todayStr() });
+        }
+      }
+      if (items.length === 0) {
+        showToast('Не знайдено рядків у форматі «вираз — переклад».');
+        return;
+      }
+      const { addedCount, updatedCount } = upsertWords(items);
+      closeModal();
+      showToast(`Додано: ${addedCount}, оновлено: ${updatedCount}`);
+      renderCurrentTab();
+    });
+  }
+
+  /* =========================================================
+   * 10. РЕЗЕРВНЕ КОПІЮВАННЯ (WB1z: / WB10:)
+   * ========================================================= */
+  function uint8ToBase64(bytes) {
+    let binary = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  function base64ToUint8(b64) {
+    const binary = atob(b64.trim());
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  }
+
+  async function generateBackupCode() {
+    const jsonStr = JSON.stringify(state);
+    if (typeof CompressionStream !== 'undefined') {
+      try {
+        const enc = new TextEncoder().encode(jsonStr);
+        const cs = new CompressionStream('gzip');
+        const writer = cs.writable.getWriter();
+        writer.write(enc);
+        writer.close();
+        const buf = await new Response(cs.readable).arrayBuffer();
+        return 'WB1z:' + uint8ToBase64(new Uint8Array(buf));
+      } catch (e) {}
+    }
+    const enc = new TextEncoder().encode(jsonStr);
+    return 'WB10:' + uint8ToBase64(enc);
+  }
+
+  async function decodeBackupCode(codeStr) {
+    const clean = String(codeStr || '').trim();
+    if (clean.startsWith('WB1z:')) {
+      if (typeof DecompressionStream === 'undefined') {
+        throw new Error('Ваш браузер не підтримує DecompressionStream.');
+      }
+      const bytes = base64ToUint8(clean.slice(5));
+      const ds = new DecompressionStream('gzip');
+      const writer = ds.writable.getWriter();
+      writer.write(bytes);
+      writer.close();
+      const buf = await new Response(ds.readable).arrayBuffer();
+      const json = new TextDecoder().decode(buf);
+      return JSON.parse(json);
+    } else if (clean.startsWith('WB10:')) {
+      const bytes = base64ToUint8(clean.slice(5));
+      const json = new TextDecoder().decode(bytes);
+      return JSON.parse(json);
+    } else {
+      throw new Error('Код повинен починатися з WB1z: або WB10:.');
+    }
+  }
+
+  function smartMergeBackup(incoming) {
+    if (!incoming || !Array.isArray(incoming.words)) {
+      throw new Error('Некоректна структура резервної копії.');
+    }
+    let added = 0;
+    let merged = 0;
+
+    for (const inc of incoming.words) {
+      if (!inc || !inc.fr) continue;
+      const normKey = stripFrenchArticles(inc.fr);
+      const idKey = makeWordId(inc.fr);
+      const local = state.words.find(w =>
+        makeWordId(w.fr) === idKey || stripFrenchArticles(w.fr) === normKey
+      );
+
+      if (!local) {
+        state.words.push(createWordRecord(inc));
+        added++;
+      } else {
+        const incT = Number(inc.t || 0);
+        const locT = Number(local.t || 0);
+        if (incT > locT) {
+          Object.assign(local, createWordRecord(inc));
+          merged++;
+        } else {
+          if (!local.uk && inc.uk) local.uk = inc.uk;
+          if (!local.def && inc.def) local.def = inc.def;
+          if (!local.ex && inc.ex) local.ex = inc.ex;
+        }
+      }
+    }
+
+    if (incoming.stats) {
+      state.stats.streak = Math.max(state.stats.streak || 0, incoming.stats.streak || 0);
+      state.stats.blitzBest = Math.max(state.stats.blitzBest || 0, incoming.stats.blitzBest || 0);
+    }
+    if (incoming.settings) {
+      state.settings = Object.assign({}, state.settings, incoming.settings);
+      applyTheme();
+    }
+
+    saveState();
+    return { added, merged };
+  }
+
+  /* =========================================================
+   * 11. ВКЛАДКА «НАЛАШТУВАННЯ»
+   * ========================================================= */
+  function renderSettingsTab(container) {
+    refreshVoices();
+    container.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <section class="panel-card setting-group">
+          <div class="section-label">Навчання та інтерфейс</div>
+
+          <div class="setting-row">
+            <div>
+              <div style="font-weight:600;">Ліміт нових слів на день</div>
+              <div style="font-size:0.8125rem; color:var(--text-muted);">Черга формується від останніх уроків до ранніх</div>
+            </div>
+            <select id="selNewLimit" class="select" style="width:auto; min-width:110px;">
+              ${[5, 10, 15, 20].map(n => `<option value="${n}" ${state.settings.newLimit === n ? 'selected' : ''}>${n} слів</option>`).join('')}
+            </select>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <div style="font-weight:600;">Тема оформлення</div>
+              <div style="font-size:0.8125rem; color:var(--text-muted);">Французький папір Séyès (світла) або нічний кабінет (темна)</div>
+            </div>
+            <select id="selTheme" class="select" style="width:auto; min-width:140px;">
+              <option value="auto" ${state.settings.theme === 'auto' ? 'selected' : ''}>Системна</option>
+              <option value="light" ${state.settings.theme === 'light' ? 'selected' : ''}>Світла</option>
+              <option value="dark" ${state.settings.theme === 'dark' ? 'selected' : ''}>Темна</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="panel-card setting-group">
+          <div class="section-label">Озвучення (Web Speech API)</div>
+          ${speechSupported ? `
+            <div class="setting-row">
+              <div>
+                <div style="font-weight:600;">Французький голос (fr-FR / fr-CA)</div>
+                <div style="font-size:0.8125rem; color:var(--text-muted);">Доступні голоси вашої операційної системи</div>
+              </div>
+              <select id="selVoice" class="select" style="max-width:260px;">
+                <option value="">Автоматичний вибір (fr)</option>
+                ${frenchVoices.map(v => `<option value="${escapeHtml(v.voiceURI)}" ${state.settings.voiceURI === v.voiceURI ? 'selected' : ''}>${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <button type="button" class="btn" id="btnTestSound">Перевірити звук</button>
+            </div>
+          ` : `
+            <div style="color:var(--warning); font-size:0.9rem;">
+              Ваш браузер не підтримує Web Speech API.
+            </div>
+          `}
+        </section>
+
+        <section class="panel-card setting-group">
+          <div class="section-label">Синхронізація та резервна копія</div>
+          <p style="font-size:0.85rem; color:var(--text-muted);">
+            Скопіюйте стиснений рядок (<code>WB1z:</code> або <code>WB10:</code>) для легкого перенесення прогресу між телефоном і ноутбуком.
+          </p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn btn-primary" id="btnGenBackup">Отримати код резервної копії</button>
+            <button type="button" class="btn" id="btnCopyBackup">Скопіювати в буфер</button>
+          </div>
+          <textarea id="taBackupOut" class="textarea" rows="3" readonly placeholder="Натисніть «Отримати код резервної копії»…"></textarea>
+
+          <hr class="study-divider">
+          <div style="font-weight:600; font-size:0.95rem;">Відновити з коду (розумне об'єднання)</div>
+          <textarea id="taBackupIn" class="textarea" rows="3" placeholder="Вставте код WB1z:... або WB10:..."></textarea>
+          <div>
+            <button type="button" class="btn btn-primary" id="btnRestoreBackup">Відновити з коду</button>
+          </div>
+        </section>
+      </div>
+    `;
+
+    container.querySelector('#selNewLimit').addEventListener('change', e => {
+      state.settings.newLimit = Number(e.target.value);
+      saveState();
+      showToast('Ліміт збережено');
+    });
+
+    container.querySelector('#selTheme').addEventListener('change', e => {
+      state.settings.theme = e.target.value;
+      applyTheme();
+      saveState();
+    });
+
+    if (speechSupported) {
+      const voiceSel = container.querySelector('#selVoice');
+      if (voiceSel) {
+        voiceSel.addEventListener('change', e => {
+          state.settings.voiceURI = e.target.value;
+          saveState();
+        });
+      }
+      const testBtn = container.querySelector('#btnTestSound');
+      if (testBtn) {
+        testBtn.addEventListener('click', () => {
+          speakFrench('Bonjour ! Bienvenue dans votre boîte à mots.', 1.0);
+        });
+      }
+    }
+
+    const outTa = container.querySelector('#taBackupOut');
+    container.querySelector('#btnGenBackup').addEventListener('click', async () => {
+      try {
+        outTa.value = await generateBackupCode();
+        showToast('Код бекапу згенеровано');
+      } catch (e) {
+        showToast('Помилка створення бекапу');
+      }
+    });
+
+    container.querySelector('#btnCopyBackup').addEventListener('click', async () => {
+      if (!outTa.value) {
+        outTa.value = await generateBackupCode();
+      }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(outTa.value);
+          showToast('Код скопійовано в буфер');
+        } else {
+          outTa.focus();
+          outTa.select();
+          document.execCommand('copy');
+          showToast('Код виділено та скопійовано');
+        }
+      } catch (e) {
+        outTa.focus();
+        outTa.select();
+        showToast('Натисніть Ctrl+C / Cmd+C для копіювання');
+      }
+    });
+
+    container.querySelector('#btnRestoreBackup').addEventListener('click', async () => {
+      const raw = container.querySelector('#taBackupIn').value;
+      try {
+        const data = await decodeBackupCode(raw);
+        const { added, merged } = smartMergeBackup(data);
+        showToast(`Відновлено! Додано нових: ${added}, оновлено: ${merged}`);
+        renderSettingsTab(container);
+      } catch (err) {
+        showToast(err.message || 'Не вдалося відновити дані');
+      }
+    });
+  }
+
+  /* =========================================================
+   * 12. ГЛОБАЛЬНІ ПОДІЇ ТА СТАРТ
+   * ========================================================= */
+  document.addEventListener('click', e => {
+    const speakBtn = e.target.closest('.js-speak-btn');
+    if (speakBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const txt = decodeURIComponent(speakBtn.dataset.speak || '');
+      speakFrench(txt, 1.0);
+    }
+    if (e.target.id === 'modalBackdrop') {
+      closeModal();
+    }
+  });
+
+  document.querySelectorAll('.nav-tab').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  document.getElementById('btnModeUkFr').addEventListener('click', () => {
+    state.settings.langMode = 'UK_FR';
+    saveState();
+    renderCurrentTab();
+  });
+
+  document.getElementById('btnModeFrFr').addEventListener('click', () => {
+    state.settings.langMode = 'FR_FR';
+    saveState();
+    renderCurrentTab();
+  });
+
+  loadState();
+  renderCurrentTab();
+})();
+</script>
+</body>
+</html>
