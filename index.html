@@ -2979,6 +2979,8 @@ svg.icon {
     const pool = getActiveWordsPool();
     let timeLeft = 60;
     let score = 0;
+    let wrongCount = 0;
+    let lastFeedback = null;
     const results = [];
     let currentPair = null;
 
@@ -2996,16 +2998,35 @@ svg.icon {
         isMatch: shownWord.id === word.id
       };
       renderBlitz();
+      
+      if (lastFeedback) {
+        setTimeout(() => {
+          const fbEl = container.querySelector('#blitzFeedback');
+          if (fbEl) fbEl.style.opacity = '0';
+        }, 600);
+      }
     }
 
     function renderBlitz() {
+      let feedbackHtml = '';
+      if (lastFeedback === 'ok') {
+        feedbackHtml = `<div id="blitzFeedback" style="position:absolute; top:12px; right:16px; color:var(--success); font-weight:700; transition: opacity 0.4s; font-size:0.9rem;">✓ Правильно</div>`;
+      } else if (lastFeedback === 'err') {
+        feedbackHtml = `<div id="blitzFeedback" style="position:absolute; top:12px; right:16px; color:var(--danger); font-weight:700; transition: opacity 0.4s; font-size:0.9rem;">✗ Помилка</div>`;
+      }
+
       container.innerHTML = `
         <div class="session-header">
           <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
-          <span class="session-progress">Бліц · <span id="blitzTimer">${timeLeft} с</span> · Рахунок: ${score}</span>
+          <span class="session-progress" style="display:flex; align-items:center; gap:8px;">
+            Бліц · <span id="blitzTimer">${timeLeft} с</span> · 
+            <span style="color:var(--success); font-weight:600;">✓ ${score}</span> 
+            <span style="color:var(--danger); font-weight:600;">✗ ${wrongCount}</span>
+          </span>
         </div>
-        <section class="index-card" style="text-align:center;">
-          <div class="study-word-title">${escapeHtml(currentPair.word.fr)}</div>
+        <section class="index-card" style="text-align:center; position:relative;">
+          ${feedbackHtml}
+          <div class="study-word-title" style="margin-top:8px;">${escapeHtml(currentPair.word.fr)}</div>
           <hr class="study-divider">
           <div class="study-meaning" style="margin-bottom:20px;">${escapeHtml(currentPair.shownMeaning)}</div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
@@ -3024,9 +3045,13 @@ svg.icon {
       const ok = (userSaysMatch === currentPair.isMatch);
       if (ok) {
         score++;
+        lastFeedback = 'ok';
         if (score > (state.stats.blitzBest || 0)) {
           state.stats.blitzBest = score;
         }
+      } else {
+        wrongCount++;
+        lastFeedback = 'err';
       }
       handleMiniGameResult(currentPair.word, ok);
       results.push({ word: currentPair.word, ok });
@@ -3040,7 +3065,7 @@ svg.icon {
       if (timeLeft <= 0) {
         clearInterval(interval);
         renderRoundSummary(container, 'blitz', results,
-          `<div style="margin-bottom:10px; font-family:var(--font-mono);">Рахунок: <strong>${score}</strong> · Рекорд: <strong>${state.stats.blitzBest || 0}</strong></div>`);
+          `<div style="margin-bottom:10px; font-family:var(--font-mono);">Рахунок: <span style="color:var(--success)">✓ ${score}</span> / <span style="color:var(--danger)">✗ ${wrongCount}</span> · Рекорд: <strong>${state.stats.blitzBest || 0}</strong></div>`);
       }
     }, 1000);
 
