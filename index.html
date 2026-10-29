@@ -291,7 +291,9 @@
     <script>
         const SUPABASE_URL = 'https://oxcpvcbvxmiszseckdcd.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_DAiE12czwiINHefrIYMyrg_brCfYWs-';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // Виправлено ініціалізацію клієнта
+        const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const ADMIN_EMAIL = 'nikita.francais@gmail.com'; 
         
@@ -300,21 +302,24 @@
         let currentWordIndex = 0;
         let sessionCorrect = 0;
         let sessionWrong = 0;
-        
-        // Відмінювання
         let currentVerbData = null;
 
         async function checkSession() {
-            const { data: { session }, error } = await supabase.auth.getSession();
-            if (session) {
-                currentUser = session.user;
-                if (currentUser.email === ADMIN_EMAIL) {
-                    showScreen('teacher-screen');
+            try {
+                const { data: { session }, error } = await sbClient.auth.getSession();
+                if (session) {
+                    currentUser = session.user;
+                    if (currentUser.email === ADMIN_EMAIL) {
+                        showScreen('teacher-screen');
+                    } else {
+                        showScreen('app-screen');
+                        loadStudentWords();
+                    }
                 } else {
-                    showScreen('app-screen');
-                    loadStudentWords();
+                    showScreen('auth-screen');
                 }
-            } else {
+            } catch (err) {
+                console.error(err);
                 showScreen('auth-screen');
             }
         }
@@ -324,25 +329,27 @@
             if (!email) return alert('Введіть email');
             
             const btn = document.getElementById('login-btn');
-            btn.innerText = 'Відправка...'; btn.disabled = true;
+            btn.innerText = 'Відправка...';
+            btn.disabled = true;
 
-            const { error } = await supabase.auth.signInWithOtp({
+            const { error } = await sbClient.auth.signInWithOtp({
                 email: email,
                 options: { emailRedirectTo: window.location.href }
             });
 
             if (error) {
                 alert('Помилка: ' + error.message);
-                btn.innerText = 'Отримати посилання'; btn.disabled = false;
+                btn.innerText = 'Отримати посилання для входу';
+                btn.disabled = false;
             } else {
-                document.getElementById('auth-msg').innerText = '✅ Посилання надіслано! Перевірте пошту.';
+                document.getElementById('auth-msg').innerText = '✅ Посилання надіслано! Перевірте пошту (і папку Спам).';
                 document.getElementById('auth-msg').style.display = 'block';
                 btn.style.display = 'none';
             }
         }
 
         async function signOut() {
-            await supabase.auth.signOut();
+            await sbClient.auth.signOut();
             window.location.reload();
         }
 
@@ -360,22 +367,21 @@
                     def: w.def || '',
                     ex: w.ex || '',
                     syn: w.syn || [],
-                    conj: w.conj || null, // Зберігаємо відмінювання, якщо є
+                    conj: w.conj || null,
                     status: 'new'
                 }));
 
-                const { error } = await supabase.from('cards').insert(recordsToInsert);
+                const { error } = await sbClient.from('cards').insert(recordsToInsert);
                 if (error) throw error;
                 alert(`✅ Успішно додано ${recordsToInsert.length} слів!`);
                 document.getElementById('json-code').value = '';
-                
             } catch (err) {
                 alert('Помилка формату коду: ' + err.message);
             }
         }
 
         async function loadStudentWords() {
-            const { data, error } = await supabase
+            const { data, error } = await sbClient
                 .from('cards').select('*').eq('user_email', currentUser.email)
                 .order('created_at', { ascending: false });
 
@@ -407,16 +413,14 @@
             document.getElementById('blitz-fr').innerText = w.fr;
             document.getElementById('blitz-uk').innerText = w.uk;
 
-            // Логіка відмінювання
             const conjBtn = document.getElementById('btn-show-conj');
             const conjBox = document.getElementById('conj-box');
-            conjBox.classList.remove('open'); // Закриваємо панель при новому слові
+            conjBox.classList.remove('open');
             
             if (w.conj && w.conj.tenses) {
                 currentVerbData = w.conj;
                 conjBtn.style.display = 'inline-flex';
                 conjBtn.innerHTML = `<span>📖</span> Відмінювання <b>${w.conj.verb || ''}</b>`;
-                // Одразу рендеримо Présent у фоні
                 switchTense('present');
             } else {
                 currentVerbData = null;
@@ -430,31 +434,34 @@
             const feedback = document.getElementById('feedback');
 
             if (isCorrect) {
-                sessionCorrect++; document.getElementById('count-correct').innerText = `✓ ${sessionCorrect}`;
-                feedback.innerText = '✓ Правильно'; feedback.className = 'feedback-toast bg-green show';
+                sessionCorrect++;
+                document.getElementById('count-correct').innerText = `✓ ${sessionCorrect}`;
+                feedback.innerText = '✓ Правильно';
+                feedback.className = 'feedback-toast bg-green show';
             } else {
-                sessionWrong++; document.getElementById('count-wrong').innerText = `✗ ${sessionWrong}`;
-                feedback.innerText = '✗ Помилка'; feedback.className = 'feedback-toast bg-red show';
+                sessionWrong++;
+                document.getElementById('count-wrong').innerText = `✗ ${sessionWrong}`;
+                feedback.innerText = '✗ Помилка';
+                feedback.className = 'feedback-toast bg-red show';
             }
             setTimeout(() => { feedback.classList.remove('show'); }, 800);
             
-            supabase.from('cards').update({ status: isCorrect ? 'learned' : 'review' }).eq('id', currentCard.id).then();
+            sbClient.from('cards').update({ status: isCorrect ? 'learned' : 'review' }).eq('id', currentCard.id).then();
             showBlitzWord(currentWordIndex + 1);
         }
 
-        // Керування панеллю відмінювання
         function toggleConjugation() {
             document.getElementById('conj-box').classList.toggle('open');
         }
 
         function switchTense(tenseKey, event) {
-            if(event) {
+            if (event) {
                 document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
                 event.target.classList.add('active');
             } else {
                 document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
                 const defaultBtn = document.querySelector(`.tab-btn[data-tense="${tenseKey}"]`);
-                if(defaultBtn) defaultBtn.classList.add('active');
+                if (defaultBtn) defaultBtn.classList.add('active');
             }
             
             const container = document.getElementById('tense-content');
@@ -470,7 +477,7 @@
             }
 
             const forms = currentVerbData.tenses[tenseKey];
-            if(!forms) { container.innerHTML = 'Форми відсутні'; return; }
+            if (!forms) { container.innerHTML = 'Форми відсутні'; return; }
             
             container.innerHTML = `
                 <div class="forms-grid">
@@ -482,15 +489,20 @@
 
         function showScreen(screenId) {
             ['auth-screen', 'teacher-screen', 'app-screen'].forEach(id => {
-                document.getElementById(id).style.display = id === screenId ? 'block' : 'none';
+                const el = document.getElementById(id);
+                if (el) el.style.display = id === screenId ? 'block' : 'none';
             });
         }
+
         function showTab(tabId) {
             document.getElementById('tab-learn').style.display = tabId === 'learn' ? 'block' : 'none';
             document.getElementById('tab-list').style.display = tabId === 'list' ? 'block' : 'none';
         }
 
-        supabase.auth.onAuthStateChange((event, session) => { if (event === 'SIGNED_IN') checkSession(); });
+        sbClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN') checkSession();
+        });
+
         checkSession();
     </script>
 </body>
