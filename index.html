@@ -116,6 +116,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 .input { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); color: var(--text-main); font-size: 0.95rem; margin-bottom: 12px; box-sizing: border-box; }
 .select { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); color: var(--text-main); font-size: 0.9375rem; }
+.textarea { width: 100%; min-height: 120px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); color: var(--text-main); font-size: 0.85rem; font-family: var(--font-mono); resize: vertical; box-sizing: border-box; }
 
 /* ДАШБОРД */
 .topic-focus-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; background: var(--bg-elevated); border-radius: var(--radius); border: 1px solid var(--border); font-size: 0.875rem; margin-bottom: 16px; }
@@ -394,6 +395,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       if(!word.dbId) return;
       await sbClient.from('cards').update({ iv: word.iv, ef: word.ef, r: word.r, l: word.l, due: word.due, t: word.t, status: getWordStatus(word) }).eq('id', word.dbId);
   }
+  
+  async function updateWordInCloud(word) {
+    if(!word.dbId) return;
+    await sbClient.from('cards').update({ fr: word.fr, uk: word.uk, def: word.def, ex: word.ex, syn: word.syn, pos: word.pos, src: word.src }).eq('id', word.dbId);
+  }
 
   // 3. ДОПОМІЖНІ ФУНКЦІЇ ТА SM-2
   function todayStr(ts = Date.now()) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
@@ -422,6 +428,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   function getCleanPosForWrite(posStr) {
     if (!posStr) return '';
     return String(posStr).replace(/\s*\([^)]*\)/g, '').trim();
+  }
+  
+  // Прибираємо артиклі для кнопок у режимі Контексту, щоб не плутати з артиклями в реченні
+  function getContextOptionText(fr) {
+    return String(fr).replace(/^(le |la |les |un |une |des |l'|d'|se |s')/i, '');
   }
 
   function getPromptText(word) { return state.settings.langMode === 'FR_FR' ? (word.def || word.uk || '—') : (word.uk || word.def || '—'); }
@@ -510,12 +521,33 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   function escapeHtml(str) { return String(str??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function highlightBracketExample(ex, wordFr) { if(!ex)return''; const safe=escapeHtml(ex); return /\[.+?\]/.test(safe) ? safe.replace(/\[(.+?)\]/g,'<span class="hl-word">$1</span>') : safe; }
 
-  window.toggleConjugation = function() { document.getElementById('conj-box').classList.toggle('open'); }
-  window.switchTense = function(tenseKey, event) {
-      if (event) { document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); event.target.classList.add('active'); }
-      const container = document.getElementById('tense-content'); if (!currentVerbData) return;
-      if (tenseKey === 'pc') { container.innerHTML = `<div class="passe-compose-banner"><div><b>Допоміжне дієслово:</b> ${currentVerbData.auxiliary||'avoir'}</div><div><b>Participe passé:</b> <span style="font-family:'JetBrains Mono'; font-weight:600;">${currentVerbData.participe_passe||''}</span></div></div>`; return; }
-      const forms = currentVerbData.tenses[tenseKey]; if (!forms) return;
+  window.toggleConjugation = function(btn) { 
+      const box = btn.nextElementSibling;
+      if(box && box.classList.contains('conj-box')) box.classList.toggle('open'); 
+  }
+  window.switchTense = function(tenseKey, event, containerId = 'tense-content') {
+      let container, box;
+      if (event) {
+          box = event.target.closest('.conj-box');
+          if (box) {
+              box.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+              event.target.classList.add('active');
+              container = box.querySelector('.tense-content') || box.querySelector('#tense-content');
+              if (container && container.dataset.vid) {
+                  const w = state.words.find(x => x.id === container.dataset.vid);
+                  if (w && w.conj) currentVerbData = w.conj;
+              }
+          }
+      }
+      if (!container) container = document.getElementById(containerId);
+      if (!container || !currentVerbData) return;
+
+      if (tenseKey === 'pc') { 
+          container.innerHTML = `<div class="passe-compose-banner"><div><b>Допоміжне дієслово:</b> ${currentVerbData.auxiliary||'avoir'}</div><div><b>Participe passé:</b> <span style="font-family:'JetBrains Mono'; font-weight:600;">${currentVerbData.participe_passe||''}</span></div></div>`; 
+          return; 
+      }
+      const forms = currentVerbData.tenses[tenseKey]; 
+      if (!forms) return;
       container.innerHTML = `<div class="forms-grid">${forms.map(item => `<div class="form-row-c"><span class="pronoun">${item.p}</span><span><b>${item.v}</b></span></div>`).join('')}</div>`;
   }
 
@@ -538,7 +570,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   function switchTab(tab) { cleanupSession(); currentTab = tab; document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab)); renderCurrentTab(); }
   function renderCurrentTab() { cleanupSession(); updateNavBadge(); const main = document.getElementById('mainView'); if (!main) return; if (currentTab === 'study') renderStudyDashboard(main); else if (currentTab === 'words') renderWordsTab(main); else if (currentTab === 'settings') renderSettingsTab(main); }
 
-  // 5. ДАШБОРД (Виправлено згідно з пунктом 1)
+  // 5. ДАШБОРД
   function renderStudyDashboard(container) {
     if (state.words.length === 0) { container.innerHTML = `<section class="index-card empty-state"><h2 class="empty-title">Ваша скринька слів порожня</h2><p class="empty-desc">Викладач ще не додав вам слів для вивчення.</p></section>`; return; }
     const availableTopics = Array.from(new Set(state.words.map(w => w.src).filter(Boolean))).sort();
@@ -660,7 +692,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             ${speakerBtnHtml(w.fr)}
           </div>
           ${hasC ? `
-            <button type="button" class="btn-toggle-conj" onclick="toggleConjugation()">📖 Відмінювання</button>
+            <button type="button" class="btn-toggle-conj" onclick="toggleConjugation(this)">📖 Відмінювання</button>
             <div class="conj-box" id="conj-box">
               <div class="tabs-nav">
                 <button type="button" class="tab-btn active" onclick="switchTense('present',event)">Présent</button>
@@ -670,7 +702,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
                 <button type="button" class="tab-btn" onclick="switchTense('conditionnel',event)">Conditionnel</button>
                 <button type="button" class="tab-btn" onclick="switchTense('subjonctif',event)">Subjonctif</button>
               </div>
-              <div id="tense-content"></div>
+              <div id="tense-content" class="tense-content" data-vid="${w.id}"></div>
             </div>
           ` : ''}
           ${!revealed ? `
@@ -689,7 +721,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             </div>
           `}
         </section>`;
-      if (hasC) switchTense('present');
+      if (hasC) {
+        currentVerbData = w.conj; 
+        switchTense('present');
+      }
       container.querySelector('#btnExit').addEventListener('click', renderCurrentTab);
       if (!revealed) {
         container.querySelector('#btnRev').addEventListener('click', () => { revealed = true; renderCard(); });
@@ -724,7 +759,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 2. РЕЖИМ ВИБІР (Виправлено згідно з пунктом 9 та стабільними шрифтами)
+   * 2. РЕЖИМ ВИБІР
    * ========================================================= */
   function runChoiceMode(container){
     const qs=pickStudyWords(10); let idx=0; let ansd=false; const res=[]; let opts=[];
@@ -762,17 +797,61 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 3. РЕЖИМ НАПИШИ (Виправлено підказку +1 літера, без qqn/qqch та з правильними шрифтами)
+   * 3. РЕЖИМ НАПИШИ
    * ========================================================= */
-  function evalWrite(inputRaw, fullFr){
-    const cleanTarget = getTestableFr(fullFr);
-    const a = stripDiacritics(String(inputRaw||'').trim().toLowerCase().replace(/[’‘]/g, "'"));
-    const bClean = stripDiacritics(cleanTarget.toLowerCase().replace(/[’‘]/g, "'"));
-    const bFull = stripDiacritics(String(fullFr||'').trim().toLowerCase().replace(/[’‘]/g, "'"));
-    if (!a) return 'err';
-    const rawLower = String(inputRaw||'').trim().toLowerCase().replace(/[’‘]/g, "'");
-    if (rawLower === cleanTarget.toLowerCase().replace(/[’‘]/g, "'") || rawLower === String(fullFr||'').trim().toLowerCase().replace(/[’‘]/g, "'")) return 'ok';
-    if (a === bClean || a === bFull) return 'almost';
+  function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+      }
+    }
+    return dp[m][n];
+  }
+
+  function evaluateWrittenAnswer(inputRaw, targetRaw) {
+    const inp = stripDiacritics(String(inputRaw || '').trim().toLowerCase().replace(/[’‘]/g, "'"));
+    const cleanTarget = getTestableFr(targetRaw);
+    const tgtClean = stripDiacritics(cleanTarget.toLowerCase().replace(/[’‘]/g, "'"));
+    const tgtFull = stripDiacritics(String(targetRaw || '').trim().toLowerCase().replace(/[’‘]/g, "'"));
+
+    let validTargets = [tgtClean, tgtFull];
+
+    if (cleanTarget.includes('/')) {
+      const match = cleanTarget.match(/^(.*?)\b(\S+)\s*\/\s*(\S+)$/);
+      if (match) {
+        validTargets.push(stripDiacritics(`${match[1]}${match[3]} / ${match[2]}`.toLowerCase().trim()));
+        validTargets.push(stripDiacritics(`${match[1]}${match[3]}/${match[2]}`.toLowerCase().trim()));
+      }
+      const parts = cleanTarget.split('/');
+      if (parts.length === 2) {
+          validTargets.push(stripDiacritics(`${parts[1].trim()} / ${parts[0].trim()}`.toLowerCase()));
+      }
+    }
+
+    if (!inp) return 'wrong';
+
+    if (validTargets.includes(inp)) {
+        const rawLower = String(inputRaw || '').trim().toLowerCase().replace(/[’‘]/g, "'");
+        const exactTargets = [
+            cleanTarget.toLowerCase().replace(/[’‘]/g, "'"),
+            String(targetRaw || '').trim().toLowerCase().replace(/[’‘]/g, "'")
+        ];
+        if (cleanTarget.includes('/')) {
+           const m = cleanTarget.match(/^(.*?)\b(\S+)\s*\/\s*(\S+)$/);
+           if(m) exactTargets.push(`${m[1]}${m[3]} / ${m[2]}`.trim().toLowerCase());
+        }
+        if (exactTargets.includes(rawLower)) return 'ok';
+        return 'almost';
+    }
+
+    for (const t of validTargets) {
+        if (t.length >= 4 && levenshtein(inp, t) <= 1) return 'almost';
+    }
     return 'err';
   }
 
@@ -782,7 +861,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     return words.map(word => {
       const charsHtml = Array.from(word).map(c => {
         if (c === '-' || c === "'" || c === '’' || c === '?' || c === '!' || c === '/' || c === '+') {
-          return `<span class="template-char-revealed">${escapeHtml(c)}</span>`;
+          return `<span class="template-char-revealed" style="color:var(--text-main); border:none;">${escapeHtml(c)}</span>`;
         }
         seenLetters++;
         if (seenLetters <= revealedCount) {
@@ -838,7 +917,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 4. РЕЖИМ ДИКТАНТ (Виправлено без qqn/qqch при введенні)
+   * 4. РЕЖИМ ДИКТАНТ
    * ========================================================= */
   function runDictationMode(container){
     const qs=pickStudyWords(10); let idx=0; let chk=null; let last=''; let showHint=false; const res=[];
@@ -872,7 +951,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 5. РЕЖИМ У КОНТЕКСТІ (Виправлено згідно з пунктом 6)
+   * 5. РЕЖИМ У КОНТЕКСТІ
    * ========================================================= */
   function runContextMode(container){
     const qs=pickStudyWords(10, w=>Boolean(w.ex)); if(qs.length<4){alert('Мало слів із прикладами (ex)'); renderCurrentTab(); return;}
@@ -888,7 +967,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <div class="instruction-text">Доповніть речення відповідним словом (${escapeHtml(getPromptText(w))}):</div>
         <div class="study-example"><span>${ansd?highlightBracketExample(w.ex,w.fr):escapeHtml(w.ex).replace(/\[.+?\]/g,'<span class="hl-word">[ … ]</span>')}</span>${ansd?speakerBtnHtml(w.ex):''}</div>
         <div class="options-grid">
-          ${opts.map((o,i)=>{ let cls=''; if(ansd){if(o.id===w.id)cls='correct';else if(o.id===chId)cls='wrong';} return `<button class="option-btn ${cls}" data-opt="${o.id}" ${ansd?'disabled':''}><span class="option-key">${i+1}</span><span style="font-family:var(--font-fr);font-weight:700;">${escapeHtml(o.fr)}</span></button>`;}).join('')}
+          ${opts.map((o,i)=>{ let cls=''; if(ansd){if(o.id===w.id)cls='correct';else if(o.id===chId)cls='wrong';} return `<button class="option-btn ${cls}" data-opt="${o.id}" ${ansd?'disabled':''}><span class="option-key">${i+1}</span><span style="font-family:var(--font-fr);font-weight:700;">${escapeHtml(getContextOptionText(o.fr))}</span></button>`;}).join('')}
         </div>
         ${ansd?`<button class="btn btn-primary" id="bNx" style="margin-top:14px;float:right;">Далі</button>`:''}
       </section>`;
@@ -900,7 +979,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 6. РЕЖИМ СИНОНІМИ (Виправлено згідно з пунктом 11)
+   * 6. РЕЖИМ СИНОНІМИ
    * ========================================================= */
   function runSynonymsMode(container){
     const qs=pickStudyWords(10, w=>w.syn&&w.syn.length>0); if(qs.length<1){alert('Немає слів із синонімами'); renderCurrentTab(); return;}
@@ -919,7 +998,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           ${speakerBtnHtml(w.fr)}
         </div>
         <div class="options-grid">
-          ${opts.map((o,i)=>{ let cls=''; if(ansd){if(o===tSyn)cls='correct';else if(o===ch)cls='wrong';} return `<button class="option-btn ${cls}" data-s="${escapeHtml(o)}" ${ansd?'disabled':''}><span class="option-key">${i+1}</span><span style="font-family:var(--font-fr);font-weight:700;">${escapeHtml(o)}</span></button>`;}).join('')}
+          ${opts.map((o,i)=>{ let cls=''; if(ansd){if(o===tSyn)cls='correct';else if(o===ch)cls='wrong';} return `<button class="option-btn ${cls}" data-s="${escapeHtml(o)}" ${ansd?'disabled':''}><span class="option-key">${i+1}</span><span class="opt-fr">${escapeHtml(o)}</span></button>`;}).join('')}
         </div>
         ${ansd?`<button class="btn btn-primary" id="bNx" style="margin-top:14px;float:right;">Далі</button>`:''}
       </section>`;
@@ -931,7 +1010,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 7. РЕЖИМ ПАРИ (Виправлено згідно з пунктом 7)
+   * 7. РЕЖИМ ПАРИ
    * ========================================================= */
   function runPairsMode(container){
     const pool=pickStudyWords(10); if(pool.length<5){alert('Потрібно мінімум 5 слів'); renderCurrentTab(); return;}
@@ -963,7 +1042,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 8. РЕЖИМ БЛІЦ (Виправлено згідно з пунктом 12)
+   * 8. РЕЖИМ БЛІЦ
    * ========================================================= */
   function runBlitzMode(container) {
     const pool = getActiveWordsPool(); let time = 60; let score = 0; const results = []; let cur = null;
@@ -993,14 +1072,14 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 9. РЕЖИМ КРОСВОРД (Виправлено: очищено від qqn/qqch)
+   * 9. РЕЖИМ КРОСВОРД
    * ========================================================= */
   const CW_STOPWORDS = new Set(['qqn', 'qqch', 'qch', 'qn', 'taille', 'pointure', 'adjectif', 'nom', 'un', 'une', 'le', 'la', 'les', 'des']);
   function extractCrosswordEntry(w) {
     const rawFr = getTestableFr(w.fr);
-    const fullClean = rawFr.replace(/^(le |la |les |un |une |l'|se |s')/i, '').replace(/-/g, '').replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]/gi, '').toLowerCase();
+    const fullClean = rawFr.replace(/^(le |la |les |un |une |l'|se |s')/i, '').replace(/[-'’]/g, '').replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]/gi, '').toLowerCase();
     if (fullClean.length >= 3 && fullClean.length <= 12) return { word: w, clean: fullClean, clueExtra: '' };
-    const tokens = rawFr.replace(/[’‘]/g, "'").split(/[\s\-']+/).map(t => ({ orig: t, clean: t.toLowerCase().replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]/gi, '') })).filter(t => t.clean.length >= 3 && t.clean.length <= 12 && !CW_STOPWORDS.has(t.clean));
+    const tokens = rawFr.replace(/[’‘]/g, "'").split(/[\s\-']+/).map(t => ({ orig: t, clean: t.toLowerCase().replace(/[-'’]/g, '').replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]/gi, '') })).filter(t => t.clean.length >= 3 && t.clean.length <= 12 && !CW_STOPWORDS.has(t.clean));
     if (tokens.length > 0) {
       tokens.sort((a, b) => b.clean.length - a.clean.length);
       const chosen = tokens[0];
@@ -1130,7 +1209,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 10. РЕЖИМ АНАГРАМА (Виправлено: без qqn/qqch, зі збереженням керування à/de/pour)
+   * 10. РЕЖИМ АНАГРАМА
    * ========================================================= */
   function runAnagramMode(container) {
     const questions = pickStudyWords(10); let idx = 0; let pool = []; let pickedIndices = []; let finishedWord = false; const results = [];
@@ -1206,30 +1285,17 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     setupAnagram();
   }
 
-  // 11. СЛОВА ТА НАЛАШТУВАННЯ (Виправлено згідно з пунктом 2)
+  // === СЛОВА ТА МОДАЛЬНІ ВІКНА ===
   function renderWordsTab(container) {
     const sources = Array.from(new Set(state.words.map(w => w.src).filter(Boolean))).sort();
     container.innerHTML = `
-      <section class="panel-card">
-        <h3 style="font-family:var(--font-fr); margin-bottom:16px;">Мої слова (${state.words.length})</h3>
-        <div class="words-toolbar">
-          <button type="button" class="btn btn-primary" onclick="alert('Додавати слова з коду можна лише через панель викладача або кнопку на головному екрані')">Додати з коду</button>
-          <button type="button" class="btn" onclick="alert('Додавання вручну тимчасово вимкнено')">+ Слово</button>
-          <button type="button" class="btn" onclick="alert('Додавання списком тимчасово вимкнено')">Списком</button>
-        </div>
-        <div class="filters-bar">
-          <input type="search" id="inpWordSearch" class="input" placeholder="Пошук виразу або перекладу…">
-          <select id="selFilterStatus" class="select">
-            <option value="all">Усі статуси</option><option value="new">Нове</option><option value="learn">Вчу</option><option value="know">Знаю</option><option value="master">Засвоєно</option>
-          </select>
-          <select id="selFilterSrc" class="select">
-            <option value="all">Усі теми</option>
-            ${sources.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}
-          </select>
-        </div>
+      <section class="panel-card"><h3 style="font-family:var(--font-fr); margin-bottom:12px;">Мої слова (${state.words.length})</h3>
+        <div class="words-toolbar"><button type="button" class="btn btn-primary" onclick="alert('Додавати слова з коду можна лише через панель викладача або кнопку на головному екрані')">Додати з коду</button><button type="button" class="btn" id="btnAddSingle">+ Слово</button><button type="button" class="btn" onclick="alert('Додавання списком тимчасово вимкнено')">Списком</button></div>
+        <div class="filters-bar"><input type="search" id="inpWordSearch" class="input" placeholder="Пошук виразу або перекладу…"><select id="selFilterStatus" class="select"><option value="all">Усі статуси</option><option value="new">Нове</option><option value="learn">Вчу</option><option value="know">Знаю</option><option value="master">Засвоєно</option></select><select id="selFilterSrc" class="select"><option value="all">Усі теми</option>${sources.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select></div>
         <div id="wordsListContainer" class="word-list"></div>
       </section>`;
       
+      container.querySelector('#btnAddSingle').addEventListener('click', () => openWordFormModal());
       const listEl = container.querySelector('#wordsListContainer');
       function renderList() {
         const query = (container.querySelector('#inpWordSearch').value || '').trim().toLowerCase();
@@ -1246,19 +1312,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           const st = getWordStatus(w); const d = formatDueDate(w);
           const hasC = w.conj && w.conj.tenses;
           return `<article class="word-item" data-status="${st}">
-            <div class="word-item-header">
-              <div class="word-fr-line"><span class="word-fr">${escapeHtml(w.fr)}</span> ${w.pos ? `<span class="word-pos">(${escapeHtml(w.pos)})</span>` : ''}</div>
-              <div class="word-badges-row"><span class="badge">${getStatusLabel(st)}</span> ${w.src ? `<span class="badge">${escapeHtml(w.src)}</span>` : ''} ${d ? `<span class="badge">${d}</span>` : ''}</div>
-            </div>
+            <div class="word-item-header"><div class="word-fr-line"><span class="word-fr">${escapeHtml(w.fr)}</span> ${w.pos ? `<span class="word-pos">(${escapeHtml(w.pos)})</span>` : ''}</div><div class="word-badges-row"><span class="badge">${getStatusLabel(st)}</span> ${w.src ? `<span class="badge">${escapeHtml(w.src)}</span>` : ''} ${d ? `<span class="badge">${d}</span>` : ''}</div></div>
             <div class="word-meaning">${escapeHtml(getPromptText(w))}</div>
             ${w.ex ? `<div style="font-family:var(--font-fr); font-size:0.95rem; background:var(--bg-elevated); padding:8px; border-radius:4px;">${highlightBracketExample(w.ex, w.fr)}</div>` : ''}
-            ${hasC ? `<button class="btn-toggle-conj" style="width:fit-content;" onclick="switchTense('present'); this.nextElementSibling.classList.toggle('open');">📖 Відмінювання</button><div class="conj-box"><div class="tabs-nav"><button class="tab-btn active" onclick="switchTense('present',event)">Présent</button><button class="tab-btn" onclick="switchTense('pc',event)">Passé composé</button><button class="tab-btn" onclick="switchTense('imparfait',event)">Imparfait</button><button class="tab-btn" onclick="switchTense('futur',event)">Futur simple</button><button class="tab-btn" onclick="switchTense('conditionnel',event)">Conditionnel</button><button class="tab-btn" onclick="switchTense('subjonctif',event)">Subjonctif</button></div><div id="tense-content" data-vid="${w.id}"></div></div>` : ''}
-            <div class="word-item-actions">
-              <span>Повторень: ${w.r || 0} ${w.added ? `· Додано: ${w.added}` : ''}</span>
-              <div style="display:flex;gap:6px;">${speakerBtnHtml(w.fr)}<button class="btn btn-sm">Редагувати</button><button class="btn btn-sm">Видалити</button></div>
-            </div>
+            ${hasC ? `<button type="button" class="btn-toggle-conj" style="width:fit-content; margin-top:10px; margin-bottom:0;" onclick="toggleConjugation(this); switchTense('present', null, 'tense-${w.id}');">📖 Відмінювання</button><div class="conj-box" style="margin-top:10px;"><div class="tabs-nav"><button class="tab-btn active" onclick="switchTense('present',event)">Présent</button><button class="tab-btn" onclick="switchTense('pc',event)">Passé composé</button><button class="tab-btn" onclick="switchTense('imparfait',event)">Imparfait</button><button class="tab-btn" onclick="switchTense('futur',event)">Futur simple</button><button class="tab-btn" onclick="switchTense('conditionnel',event)">Conditionnel</button><button class="tab-btn" onclick="switchTense('subjonctif',event)">Subjonctif</button></div><div id="tense-${w.id}" class="tense-content" data-vid="${w.id}"></div></div>` : ''}
+            <div class="word-item-actions"><span>Повторень: ${w.r || 0} ${w.added ? `· Додано: ${w.added.split('-').slice(1).reverse().join('.')}` : ''}</span><div style="display:flex;gap:6px;">${speakerBtnHtml(w.fr)}<button type="button" class="btn btn-sm" data-edit="${w.id}">Редагувати</button><button type="button" class="btn btn-sm" data-askdel="${w.id}">Видалити</button></div></div>
           </article>`;
         }).join('');
+        listEl.querySelectorAll('[data-edit]').forEach(btn => { btn.addEventListener('click', () => { const w = state.words.find(item => item.id === btn.dataset.edit); if (w) openWordFormModal(w); }); });
+        listEl.querySelectorAll('[data-askdel]').forEach(btn => { btn.addEventListener('click', () => { if(confirm('Видалити слово?')) { state.words = state.words.filter(item => item.id !== btn.dataset.askdel); saveLocalStats(); sbClient.from('cards').delete().eq('id', btn.dataset.askdel).then(); showToast('Слово видалено'); renderList(); } }); });
       }
       container.querySelector('#inpWordSearch').addEventListener('input', renderList);
       container.querySelector('#selFilterStatus').addEventListener('change', renderList);
@@ -1266,107 +1328,67 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       renderList();
   }
 
+  function openModal(html) {
+    const backdrop = document.getElementById('modalBackdrop');
+    const content = document.getElementById('modalContent');
+    content.innerHTML = html;
+    backdrop.classList.add('open');
+  }
+
+  function closeModal() {
+    const backdrop = document.getElementById('modalBackdrop');
+    backdrop.classList.remove('open');
+  }
+  
+  function openWordFormModal(editWord = null) {
+    const isEdit = Boolean(editWord);
+    openModal(`
+      <h2 id="modalTitle" style="font-family:var(--font-fr); font-size:1.25rem;">${isEdit ? 'Редагувати вираз' : 'Додати вираз'}</h2>
+      <div class="form-row"><label for="fFr">Слово або вираз (fr) *</label><input id="fFr" class="input" type="text" value="${escapeHtml(editWord ? editWord.fr : '')}"></div>
+      <div class="form-row"><label for="fUk">Переклад українською (uk) *</label><input id="fUk" class="input" type="text" value="${escapeHtml(editWord ? editWord.uk : '')}"></div>
+      <div class="form-row"><label for="fDef">Тлумачення французькою (def)</label><input id="fDef" class="input" type="text" value="${escapeHtml(editWord ? editWord.def : '')}"></div>
+      <div class="form-row"><label for="fEx">Приклад (ex) — виділіть вираз у [квадратні дужки]</label><input id="fEx" class="input" type="text" value="${escapeHtml(editWord ? editWord.ex : '')}"></div>
+      <div class="form-row"><label for="fSyn">Синоніми через кому (syn)</label><input id="fSyn" class="input" type="text" value="${escapeHtml(editWord && editWord.syn ? editWord.syn.join(', ') : '')}"></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;"><div class="form-row"><label for="fPos">Частина мови (pos)</label><input id="fPos" class="input" type="text" value="${escapeHtml(editWord ? editWord.pos : '')}"></div><div class="form-row"><label for="fSrc">Тема (src)</label><input id="fSrc" class="input" type="text" value="${escapeHtml(editWord ? editWord.src : '')}"></div></div>
+      <div id="wordFormErr" style="color:var(--danger); font-size:0.85rem; display:none;"></div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;"><button type="button" class="btn" id="btnModalCancel">Скасувати</button><button type="button" class="btn btn-primary" id="btnModalSave">Зберегти</button></div>
+    `);
+    document.getElementById('btnModalCancel').addEventListener('click', closeModal);
+    document.getElementById('btnModalSave').addEventListener('click', () => {
+      const fr = document.getElementById('fFr').value.trim(); const uk = document.getElementById('fUk').value.trim(); const def = document.getElementById('fDef').value.trim(); const ex = document.getElementById('fEx').value.trim(); const syn = document.getElementById('fSyn').value.split(',').map(s => s.trim()).filter(Boolean); const pos = document.getElementById('fPos').value.trim(); const src = document.getElementById('fSrc').value.trim() || 'Загальні';
+      if (!fr || (!uk && !def)) { document.getElementById('wordFormErr').textContent = 'Заповніть французький вираз та переклад'; document.getElementById('wordFormErr').style.display = 'block'; return; }
+      if (isEdit) {
+        editWord.fr = fr; editWord.uk = uk; editWord.def = def; editWord.ex = ex; editWord.syn = syn; editWord.pos = pos; editWord.src = src;
+        saveLocalStats(); updateWordInCloud(editWord);
+        closeModal(); showToast('Вираз оновлено'); renderCurrentTab();
+      } else {
+        // Додавання нових слів для користувача зараз йде через Supabase Insert, але тут спрощена логіка
+        closeModal(); alert("Додавання нових слів працює через Панель викладача");
+      }
+    });
+  }
+
+  // === НАЛАШТУВАННЯ ===
   function renderSettingsTab(container) {
     refreshVoices();
     container.innerHTML = `
       <div style="display:flex; flex-direction:column; gap:16px;">
-        <section class="panel-card setting-group">
-          <div class="section-label">Навчання та інтерфейс</div>
-          <div class="setting-row">
-            <div>
-              <div style="font-weight:600;">Ліміт нових слів на день</div>
-              <div style="font-size:0.8125rem; color:var(--text-muted);">Кількість нових карток на одну сесію</div>
-            </div>
-            <select id="selNewLimit" class="select" style="width:auto; min-width:120px;">
-              ${[5, 10, 15, 20].map(n => `<option value="${n}" ${state.settings.newLimit === n ? 'selected' : ''}>${n} слів</option>`).join('')}
-            </select>
-          </div>
-          <div class="setting-row">
-            <div>
-              <div style="font-weight:600;">Тема оформлення</div>
-              <div style="font-size:0.8125rem; color:var(--text-muted);">Французький папір Séyès (світла) або темна</div>
-            </div>
-            <select id="selTheme" class="select" style="width:auto; min-width:140px;">
-              <option value="auto" ${state.settings.theme==='auto'?'selected':''}>Системна</option>
-              <option value="light" ${state.settings.theme==='light'?'selected':''}>Світла</option>
-              <option value="dark" ${state.settings.theme==='dark'?'selected':''}>Темна</option>
-            </select>
-          </div>
-        </section>
-
-        <section class="panel-card setting-group">
-          <div class="section-label">Озвучення (Web Speech API)</div>
-          ${speechSupported ? `
-            <div class="setting-row">
-              <div>
-                <div style="font-weight:600;">Французький голос (жіночий / чоловічий)</div>
-                <div style="font-size:0.8125rem; color:var(--text-muted);">Оберіть голос вашої системи (наприклад, Audrey, Amélie або Thomas)</div>
-              </div>
-              <select id="selVoice" class="select" style="max-width:280px;">
-                <option value="">Автоматичний вибір (найкращий доступний fr)</option>
-                ${frenchVoices.map(v => `<option value="${escapeHtml(v.voiceURI)}" ${state.settings.voiceURI === v.voiceURI ? 'selected' : ''}>${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`).join('')}
-              </select>
-            </div>
-            <div>
-              <button type="button" class="btn" id="btnTestSound">🔊 Перевірити обраний голос</button>
-            </div>
-          ` : `
-            <div style="color:var(--warning); font-size:0.9rem;">Ваш браузер не підтримує синтез мовлення Web Speech API.</div>
-          `}
+        <section class="panel-card setting-group"><div class="section-label">Навчання та інтерфейс</div><div class="setting-row"><div><div style="font-weight:600;">Ліміт нових слів на день</div></div><select id="selNewLimit" class="select" style="width:auto; min-width:120px;">${[5, 10, 15, 20].map(n => `<option value="${n}" ${state.settings.newLimit === n ? 'selected' : ''}>${n} слів</option>`).join('')}</select></div><div class="setting-row"><div><div style="font-weight:600;">Тема оформлення</div></div><select id="selTheme" class="select" style="width:auto; min-width:140px;"><option value="auto" ${state.settings.theme==='auto'?'selected':''}>Системна</option><option value="light" ${state.settings.theme==='light'?'selected':''}>Світла</option><option value="dark" ${state.settings.theme==='dark'?'selected':''}>Темна</option></select></div></section>
+        <section class="panel-card setting-group"><div class="section-label">Озвучення (Web Speech API)</div>
+          ${speechSupported ? `<div class="setting-row"><div><div style="font-weight:600;">Французький голос</div><div style="font-size:0.8125rem; color:var(--text-muted);">Оберіть голос системи (Audrey, Amélie, Thomas тощо)</div></div><select id="selVoice" class="select" style="max-width:280px;"><option value="">Автоматичний вибір (найкращий доступний fr)</option>${frenchVoices.map(v => `<option value="${escapeHtml(v.voiceURI)}" ${state.settings.voiceURI === v.voiceURI ? 'selected' : ''}>${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`).join('')}</select></div><div><button type="button" class="btn" id="btnTestSound">🔊 Перевірити обраний голос</button></div>` : `<div style="color:var(--warning); font-size:0.9rem;">Ваш браузер не підтримує синтез мовлення.</div>`}
         </section>
       </div>`;
-
-    container.querySelector('#selNewLimit').addEventListener('change', e => {
-      state.settings.newLimit = Number(e.target.value);
-      saveLocalStats();
-      showToast('Ліміт нових слів збережено');
-    });
-
-    container.querySelector('#selTheme').addEventListener('change', e => {
-      state.settings.theme = e.target.value;
-      applyTheme();
-      saveLocalStats();
-    });
-
+    container.querySelector('#selTheme').addEventListener('change', e => { state.settings.theme = e.target.value; applyTheme(); saveLocalStats(); });
+    container.querySelector('#selNewLimit').addEventListener('change', e => { state.settings.newLimit = Number(e.target.value); saveLocalStats(); });
     if (speechSupported) {
-      const voiceSel = container.querySelector('#selVoice');
-      if (voiceSel) {
-        voiceSel.addEventListener('change', e => {
-          state.settings.voiceURI = e.target.value;
-          saveLocalStats();
-          showToast('Голос озвучення збережено');
-        });
-      }
-      const testBtn = container.querySelector('#btnTestSound');
-      if (testBtn) {
-        testBtn.addEventListener('click', () => {
-          speakFrench('Bonjour ! Bienvenue dans votre boîte à mots.', 1.0);
-        });
-      }
+      container.querySelector('#selVoice').addEventListener('change', e => { state.settings.voiceURI = e.target.value; saveLocalStats(); showToast('Голос озвучення збережено'); });
+      container.querySelector('#btnTestSound').addEventListener('click', () => { speakFrench('Bonjour ! Bienvenue dans votre boîte à mots.', 1.0); });
     }
   }
 
-  // Запуск і глобальні слухачі
-  document.addEventListener('click', e => { const sb = e.target.closest('.js-speak-btn'); if (sb) { e.preventDefault(); e.stopPropagation(); speakFrench(decodeURIComponent(sb.dataset.speak||'')); } });
   document.querySelectorAll('.nav-tab').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   document.getElementById('btnModeUkFr').addEventListener('click', () => { state.settings.langMode = 'UK_FR'; saveLocalStats(); renderCurrentTab(); });
   document.getElementById('btnModeFrFr').addEventListener('click', () => { state.settings.langMode = 'FR_FR'; saveLocalStats(); renderCurrentTab(); });
-
-  // Допоміжна функція відмінювання для вкладки слів
-  const originalSwitchTense = window.switchTense;
-  window.switchTense = function(tenseKey, event) {
-    if (event) {
-      const box = event.target.closest('.conj-box');
-      if(box) {
-         box.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-         event.target.classList.add('active');
-         const tc = box.querySelector('#tense-content');
-         // У вкладці слів потрібна повна логіка отримання даних дієслова (для простоти тут викликаємо базову функцію, якщо currentVerbData задано)
-      }
-    }
-    originalSwitchTense(tenseKey, event);
-  };
-
 </script>
 </body>
 </html>
