@@ -111,7 +111,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
 .btn-danger { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
 .btn-sm { min-height: 38px; padding: 4px 10px; font-size: 0.8125rem; }
-.btn-icon { min-width: 42px; min-height: 42px; padding: 8px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.btn-icon { min-width: 42px; min-height: 42px; padding: 8px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .btn-icon:hover { background: var(--bg-elevated); color: var(--accent); }
 svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 .input { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); color: var(--text-main); font-size: 0.95rem; margin-bottom: 12px; box-sizing: border-box; }
@@ -242,7 +242,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .cw-clue-item:hover { background: var(--bg-elevated); }
 
 /* СЛОВА */
-.words-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.words-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
 .filters-bar { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 14px; }
 @media (min-width: 540px) { .filters-bar { grid-template-columns: 1.6fr 1fr 1fr; } }
 .word-list { display: flex; flex-direction: column; gap: 10px; }
@@ -257,7 +257,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .word-badges-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
 .badge { font-size: 0.72rem; font-family: var(--font-mono); padding: 2px 7px; border-radius: 4px; background: var(--bg-elevated); color: var(--text-muted); }
 .word-meaning { font-size: 0.98rem; color: var(--accent); font-weight: 600; }
-.word-item-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 1px dashed var(--border-subtle); font-size: 0.78rem; color: var(--text-muted); }
+.word-item-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 1px dashed var(--border-subtle); font-size: 0.78rem; color: var(--text-muted); flex-wrap: wrap; }
+.inline-confirm { display: inline-flex; align-items: center; gap: 6px; }
 
 /* МОДАЛКИ ТА ТОСТИ */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
@@ -272,11 +273,14 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .summary-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: var(--bg-elevated); border-radius: 4px; font-size: 0.9rem; }
 .mark-ok { color: var(--success); font-family: var(--font-mono); font-weight: 700; }
 .mark-err { color: var(--danger); font-family: var(--font-mono); font-weight: 700; }
+.empty-state { text-align: center; padding: 38px 20px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.empty-title { font-family: var(--font-fr); font-size: 1.45rem; font-weight: 600; }
+.empty-desc { color: var(--text-muted); max-width: 460px; font-size: 0.9375rem; }
 </style>
 </head>
 <body>
 
-<!-- АВТОРИЗАЦІЯ (Прихована) -->
+<!-- АВТОРИЗАЦІЯ -->
 <div id="auth-screen" class="auth-wrapper" style="display:none;">
   <div class="auth-container">
     <div class="auth-logo">Boîte à Mots</div>
@@ -293,7 +297,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   <div class="auth-container" style="max-width:600px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h2 style="font-family:var(--font-fr);">Панель викладача 👨‍🏫</h2><button class="btn btn-sm" onclick="signOut()">Вийти</button></div>
     <input type="email" id="target-student-email" class="input" placeholder="Email учня">
-    <textarea id="json-code" class="teacher-textarea" placeholder="JSON код..."></textarea>
+    <textarea id="json-code" class="teacher-textarea" placeholder="Вставте JSON масив слів..."></textarea>
     <button onclick="addWordsToStudent()" class="btn btn-primary" style="width:100%;">Відправити слова</button>
   </div>
 </div>
@@ -317,13 +321,14 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   </nav>
   <main id="mainView"></main>
 </div>
+
 <div id="modalBackdrop" class="modal-backdrop">
   <div id="modalContent" class="modal-box"></div>
 </div>
 <div id="toastContainer" class="toast-container"></div>
 
 <script>
-  // 1. ІНІЦІАЛІЗАЦІЯ SUPABASE
+  // 1. ІНІЦІАЛІЗАЦІЯ SUPABASE ТА ЗМІННИХ СТАНУ
   const SUPABASE_URL = 'https://oxcpvcbvxmiszseckdcd.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_DAiE12czwiINHefrIYMyrg_brCfYWs-';
   const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -331,7 +336,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   
   let currentUser = null; 
   let currentVerbData = null;
-  const STORAGE_KEY = 'bam_app_data_cloud_v1';
+  let activeRoundState = null; // Стан для збереження прогресу при згортанні вкладки
+  const STORAGE_KEY = 'bam_app_data_cloud_v2';
+  const SESSION_PROGRESS_KEY = 'bam_active_session_v2';
   
   const defaultState = () => ({ 
     words: [], 
@@ -340,157 +347,482 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   });
   let state = defaultState();
 
+  // Нормалізація вхідного слова (підтримка старих та нових полів JSON, таких як context_quiz і conj)
+  function normalizeWordRow(row) {
+    let conjData = row.conj || row.conjugation || null;
+    let ctxQuiz = row.context_quiz || null;
+    if (!ctxQuiz && conjData && conjData.context_quiz) {
+      ctxQuiz = conjData.context_quiz;
+    }
+    const frText = String(row.fr || row.word || '').trim();
+    return {
+      dbId: row.id || row.dbId || null,
+      id: makeWordId(frText),
+      fr: frText,
+      uk: String(row.uk || row.translation || '').trim(),
+      def: String(row.def || '').trim(),
+      ex: String(row.ex || row.context || '').trim(),
+      context_translation: String(row.context_translation || '').trim(),
+      syn: Array.isArray(row.syn) ? row.syn : (Array.isArray(row.synonyms) ? row.synonyms : []),
+      conj: conjData,
+      context_quiz: ctxQuiz,
+      pos: String(row.pos || '').trim(),
+      src: String(row.src || 'Загальний').trim(),
+      added: row.added || todayStr(),
+      iv: Number(row.iv) || 0,
+      ef: Number(row.ef) || 2.5,
+      r: Number(row.r) || 0,
+      l: Number(row.l) || 0,
+      due: Number(row.due) || 0,
+      t: Number(row.t) || 0
+    };
+  }
+
   // 2. АВТОРИЗАЦІЯ ТА СИНХРОНІЗАЦІЯ
   async function checkSession() {
-      try {
-          const { data: { session }, error } = await sbClient.auth.getSession();
-          if (session) {
-              currentUser = session.user;
-              if (currentUser.email === ADMIN_EMAIL) {
-                  document.getElementById('teacher-screen').style.display = 'flex';
-              } else {
-                  document.getElementById('app-screen').style.display = 'flex';
-                  loadLocalStats(); loadStudentWords();
-              }
-          } else {
-              document.getElementById('auth-screen').style.display = 'flex';
-          }
-      } catch (err) { document.getElementById('auth-screen').style.display = 'flex'; }
+    try {
+      const { data: { session } } = await sbClient.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+        if (currentUser.email === ADMIN_EMAIL) {
+          document.getElementById('teacher-screen').style.display = 'flex';
+        } else {
+          document.getElementById('app-screen').style.display = 'flex';
+          loadLocalStats();
+          await loadStudentWords();
+        }
+      } else {
+        document.getElementById('auth-screen').style.display = 'flex';
+      }
+    } catch (err) {
+      document.getElementById('auth-screen').style.display = 'flex';
+    }
   }
 
   async function signInWithPassword() {
-      const email = document.getElementById('email-input').value.trim(); const password = document.getElementById('password-input').value;
-      const errEl = document.getElementById('auth-err');
-      if (!email || !password) { errEl.innerText = 'Введіть email та пароль'; errEl.style.display = 'block'; return; }
-      const btn = document.getElementById('login-btn'); btn.innerText = 'Вхід...'; btn.disabled = true; errEl.style.display = 'none';
-      const { error } = await sbClient.auth.signInWithPassword({ email, password });
-      if (error) { errEl.innerText = 'Помилка входу: перевірте пошту або пароль'; errEl.style.display = 'block'; btn.innerText = 'Увійти'; btn.disabled = false; } 
-      else { window.location.reload(); }
+    const email = document.getElementById('email-input').value.trim();
+    const password = document.getElementById('password-input').value;
+    const errEl = document.getElementById('auth-err');
+    if (!email || !password) {
+      errEl.innerText = 'Введіть email та пароль';
+      errEl.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('login-btn');
+    btn.innerText = 'Вхід...';
+    btn.disabled = true;
+    errEl.style.display = 'none';
+    const { error } = await sbClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      errEl.innerText = 'Помилка входу: перевірте пошту або пароль';
+      errEl.style.display = 'block';
+      btn.innerText = 'Увійти';
+      btn.disabled = false;
+    } else {
+      window.location.reload();
+    }
   }
 
-  async function signOut() { await sbClient.auth.signOut(); window.location.reload(); }
-  sbClient.auth.onAuthStateChange((event, session) => { if (event === 'SIGNED_IN') { document.getElementById('auth-screen').style.display = 'none'; checkSession(); } });
+  // Підтримка Enter на полях входу
+  ['email-input', 'password-input'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); signInWithPassword(); } });
+  });
+
+  async function signOut() {
+    clearActiveSessionProgress();
+    await sbClient.auth.signOut();
+    window.location.reload();
+  }
+
+  sbClient.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_IN') {
+      document.getElementById('auth-screen').style.display = 'none';
+      checkSession();
+    }
+  });
   checkSession();
 
+  function parseTolerantWordsJson(rawText) {
+    let text = String(rawText || '').trim();
+    if (!text) throw new Error('Поле порожнє. Вставте JSON-масив слів.');
+    const firstBracket = text.indexOf('[');
+    const lastBracket = text.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+      text = text.slice(firstBracket, lastBracket + 1);
+    } else if (text.startsWith('{') && text.endsWith('}')) {
+      text = `[${text}]`;
+    } else {
+      throw new Error('Не знайдено JSON-масиву у квадратних дужках [ ... ].');
+    }
+    text = text.replace(/[“”«»„‟]/g, '"').replace(/,\s*([\]}])/g, '$1');
+    const parsed = JSON.parse(text);
+    if (!Array.isArray(parsed)) throw new Error('Очікувався масив об’єктів слів.');
+    return parsed;
+  }
+
+  async function insertWordsBatchForEmail(email, wordsArray) {
+    const recordsToInsert = wordsArray.map(w => {
+      let conjPayload = w.conj || w.conjugation || null;
+      if (w.context_quiz) {
+        conjPayload = Object.assign({}, conjPayload || {}, { context_quiz: w.context_quiz });
+      }
+      return {
+        user_email: email,
+        fr: String(w.fr || w.word || '').trim(),
+        uk: String(w.uk || w.translation || '').trim(),
+        def: String(w.def || '').trim(),
+        ex: String(w.ex || w.context || '').trim(),
+        syn: Array.isArray(w.syn) ? w.syn : (Array.isArray(w.synonyms) ? w.synonyms : []),
+        conj: conjPayload,
+        pos: String(w.pos || '').trim(),
+        src: String(w.src || 'Загальний').trim(),
+        status: 'new',
+        iv: 0, ef: 2.5, r: 0, l: 0, due: 0, t: 0,
+        added: w.added || todayStr()
+      };
+    }).filter(r => r.fr && (r.uk || r.def));
+
+    if (recordsToInsert.length === 0) throw new Error('Не знайдено валідних карток для імпорту.');
+    const { data, error } = await sbClient.from('cards').insert(recordsToInsert).select();
+    if (error) throw error;
+    return data || recordsToInsert;
+  }
+
   async function addWordsToStudent() {
-      const email = document.getElementById('target-student-email').value.trim(); const code = document.getElementById('json-code').value.trim();
-      if (!email || !code) return alert('Заповніть пошту та вставте код');
-      try {
-          const wordsArray = JSON.parse(code);
-          const recordsToInsert = wordsArray.map(w => ({ user_email: email, fr: w.fr, uk: w.uk, def: w.def || '', ex: w.ex || '', syn: w.syn || [], conj: w.conj || null, pos: w.pos || '', src: w.src || 'Загальний', status: 'new', iv: 0, ef: 2.5, r: 0, l: 0, due: 0, t: 0, added: todayStr() }));
-          const { error } = await sbClient.from('cards').insert(recordsToInsert);
-          if (error) throw error; alert(`✅ Успішно додано ${recordsToInsert.length} слів учню ${email}!`); document.getElementById('json-code').value = '';
-      } catch (err) { alert('Помилка: ' + err.message); }
+    const email = document.getElementById('target-student-email').value.trim();
+    const code = document.getElementById('json-code').value.trim();
+    if (!email || !code) return alert('Заповніть пошту та вставте код');
+    try {
+      const wordsArray = parseTolerantWordsJson(code);
+      const inserted = await insertWordsBatchForEmail(email, wordsArray);
+      alert(`✅ Успішно додано ${inserted.length} слів учню ${email}!`);
+      document.getElementById('json-code').value = '';
+    } catch (err) {
+      alert('Помилка: ' + err.message);
+    }
   }
 
   async function loadStudentWords() {
-      const { data, error } = await sbClient.from('cards').select('*').eq('user_email', currentUser.email);
-      if (!error && data) {
-          state.words = data.map(row => ({ dbId: row.id, id: makeWordId(row.fr), fr: row.fr, uk: row.uk, def: row.def, ex: row.ex, syn: row.syn, conj: row.conj, pos: row.pos, src: row.src, added: row.added || '', iv: Number(row.iv)||0, ef: Number(row.ef)||2.5, r: Number(row.r)||0, l: Number(row.l)||0, due: Number(row.due)||0, t: Number(row.t)||0 }));
-          updateNavBadge(); renderCurrentTab();
+    if (!currentUser) return;
+    const { data, error } = await sbClient.from('cards').select('*').eq('user_email', currentUser.email);
+    if (!error && data) {
+      state.words = data.map(row => normalizeWordRow(row));
+      saveLocalStats();
+      updateNavBadge();
+      if (!tryRestoreActiveSession()) {
+        renderCurrentTab();
       }
+    } else {
+      updateNavBadge();
+      if (!tryRestoreActiveSession()) {
+        renderCurrentTab();
+      }
+    }
   }
 
   async function syncWordProgress(word) {
-      if(!word.dbId) return;
-      await sbClient.from('cards').update({ iv: word.iv, ef: word.ef, r: word.r, l: word.l, due: word.due, t: word.t, status: getWordStatus(word) }).eq('id', word.dbId);
+    saveLocalStats();
+    if (!word.dbId) return;
+    await sbClient.from('cards').update({
+      iv: word.iv, ef: word.ef, r: word.r, l: word.l, due: word.due, t: word.t, status: getWordStatus(word)
+    }).eq('id', word.dbId);
   }
   
   async function updateWordInCloud(word) {
-    if(!word.dbId) return;
-    await sbClient.from('cards').update({ fr: word.fr, uk: word.uk, def: word.def, ex: word.ex, syn: word.syn, pos: word.pos, src: word.src }).eq('id', word.dbId);
+    saveLocalStats();
+    if (!word.dbId) return;
+    await sbClient.from('cards').update({
+      fr: word.fr, uk: word.uk, def: word.def, ex: word.ex, syn: word.syn, pos: word.pos, src: word.src
+    }).eq('id', word.dbId);
   }
 
-  // 3. ДОПОМІЖНІ ФУНКЦІЇ ТА SM-2
-  function todayStr(ts = Date.now()) { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
-  function loadLocalStats() { try { const raw = window.localStorage.getItem(STORAGE_KEY); if (raw) { const p = JSON.parse(raw); state.settings = Object.assign(defaultState().settings, p.settings||{}); state.stats = Object.assign(defaultState().stats, p.stats||{}); } } catch (e) {} checkDailyRollover(); applyTheme(); }
-  function saveLocalStats() { checkDailyRollover(); try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings: state.settings, stats: state.stats })); } catch (e) {} }
-  function checkDailyRollover() { const today = todayStr(); if (state.stats.dailyDate !== today) { state.stats.dailyDate = today; state.stats.answersToday = 0; state.stats.newLearnedToday = 0; } }
-  function recordDailyActivity(wasNewWord) { checkDailyRollover(); const today = todayStr(); state.stats.answersToday += 1; if (wasNewWord) state.stats.newLearnedToday += 1; if (state.stats.lastStudyDate !== today) { const yesterday = todayStr(Date.now() - 86400000); if (state.stats.lastStudyDate === yesterday) state.stats.streak += 1; else state.stats.streak = 1; state.stats.lastStudyDate = today; } }
-  function applyTheme() { const root = document.documentElement; if (state.settings.theme === 'light' || state.settings.theme === 'dark') root.setAttribute('data-theme', state.settings.theme); else root.removeAttribute('data-theme'); }
-  function makeWordId(frText) { return String(frText||'').trim().toLowerCase().replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]+/g, '-').replace(/^-+|-+$/g, '') || 'mot'; }
-  function stripDiacritics(str) { return String(str||'').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/œ/g, 'oe').replace(/æ/g, 'ae'); }
+  // 3. ЗБЕРЕЖЕННЯ ТА ВІДНОВЛЕННЯ ПРОГРЕСУ СЕСІЇ (Пункт 5)
+  function saveActiveSessionProgress() {
+    if (!activeRoundState || currentTab !== 'study') return;
+    try {
+      sessionStorage.setItem(SESSION_PROGRESS_KEY, JSON.stringify(activeRoundState));
+    } catch (e) {}
+  }
+
+  function clearActiveSessionProgress() {
+    activeRoundState = null;
+    try {
+      sessionStorage.removeItem(SESSION_PROGRESS_KEY);
+    } catch (e) {}
+  }
+
+  function tryRestoreActiveSession() {
+    try {
+      const raw = sessionStorage.getItem(SESSION_PROGRESS_KEY);
+      if (!raw) return false;
+      const saved = JSON.parse(raw);
+      if (!saved || !saved.mode || state.words.length === 0) return false;
+      currentTab = 'study';
+      document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === 'study'));
+      startMode(saved.mode, saved);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      saveActiveSessionProgress();
+      saveLocalStats();
+    }
+  });
+  window.addEventListener('pagehide', () => {
+    saveActiveSessionProgress();
+    saveLocalStats();
+  });
+
+  // 4. ДОПОМІЖНІ ФУНКЦІЇ ТА SM-2
+  function todayStr(ts = Date.now()) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function loadLocalStats() {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        state.settings = Object.assign(defaultState().settings, p.settings || {});
+        state.stats = Object.assign(defaultState().stats, p.stats || {});
+        if (Array.isArray(p.wordsCache) && state.words.length === 0) {
+          state.words = p.wordsCache;
+        }
+      }
+    } catch (e) {}
+    checkDailyRollover();
+    applyTheme();
+  }
+  function saveLocalStats() {
+    checkDailyRollover();
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        settings: state.settings,
+        stats: state.stats,
+        wordsCache: state.words
+      }));
+    } catch (e) {}
+  }
+  function checkDailyRollover() {
+    const today = todayStr();
+    if (state.stats.dailyDate !== today) {
+      state.stats.dailyDate = today;
+      state.stats.answersToday = 0;
+      state.stats.newLearnedToday = 0;
+    }
+  }
+  function recordDailyActivity(wasNewWord) {
+    checkDailyRollover();
+    const today = todayStr();
+    state.stats.answersToday += 1;
+    if (wasNewWord) state.stats.newLearnedToday += 1;
+    if (state.stats.lastStudyDate !== today) {
+      const yesterday = todayStr(Date.now() - 86400000);
+      if (state.stats.lastStudyDate === yesterday) state.stats.streak += 1;
+      else state.stats.streak = 1;
+      state.stats.lastStudyDate = today;
+    }
+  }
+  function applyTheme() {
+    const root = document.documentElement;
+    if (state.settings.theme === 'light' || state.settings.theme === 'dark') root.setAttribute('data-theme', state.settings.theme);
+    else root.removeAttribute('data-theme');
+  }
+  function makeWordId(frText) {
+    return String(frText || '').trim().toLowerCase().replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]+/g, '-').replace(/^-+|-+$/g, '') || 'mot';
+  }
+  function stripDiacritics(str) {
+    return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/œ/g, 'oe').replace(/æ/g, 'ae');
+  }
   
-  // Очищення виразу від службових позначень (qqn, qqch, + taille тощо) зі збереженням керування (à, de, pour, en...)
+  // Очищення виразу від службових позначень у дужках та маркерів qqn/qqch зі збереженням керування
   function getTestableFr(frText) {
     let s = String(frText || '').trim();
     if (s.includes('≠')) s = s.split('≠')[0].trim();
-    // Прибираємо конструкції з плюсом на кінці: "+ taille", "+ pointure", "+ adjectif", "+ nom"
-    s = s.replace(/\s*\+\s*[a-zàâäéèêëîïôöùûüÿçœæ\s/]+$/i, '').trim();
+    // Прибираємо службові уточнення у дужках, напр. "vivre dans la précarité (vivre dans qqch)" -> "vivre dans la précarité"
+    s = s.replace(/\s*\([^)]*\)/g, '').trim();
+    // Прибираємо конструкції з плюсом на кінці: "+ taille", "+ pointure", "+ adjectif", "+ inf."
+    s = s.replace(/\s*\+\s*[a-zàâäéèêëîïôöùûüÿçœæ.\s/]+$/i, '').trim();
     // Прибираємо службові займенники-маркери qqn / qqch / qch / qn, але залишаємо прийменники перед ними
     s = s.replace(/\b(qqch|qqn|qch|qn)\b/gi, '').replace(/\s+/g, ' ').trim();
-    // Прибираємо трикрапки в кінці, якщо це шаблон типу "Vous l'avez en... ?"
+    // Прибираємо трикрапки в кінці
     s = s.replace(/\.\.\.\s*\??$/, '').trim();
     return s || String(frText || '').trim();
   }
 
-  // Маскування цільового слова у рядку pos для режиму «Напиши», щоб не підказувати відповідь у дужках
   function getCleanPosForWrite(posStr) {
     if (!posStr) return '';
     return String(posStr).replace(/\s*\([^)]*\)/g, '').trim();
   }
   
-  // Прибираємо артиклі для кнопок у режимі Контексту, щоб не плутати з артиклями в реченні
   function getContextOptionText(fr) {
-    return String(fr).replace(/^(le |la |les |un |une |des |l'|d'|se |s')/i, '');
+    let s = getTestableFr(fr);
+    return s.replace(/^(le |la |les |un |une |des |l'|d'|se |s')/i, '').trim();
   }
 
-  function getPromptText(word) { return state.settings.langMode === 'FR_FR' ? (word.def || word.uk || '—') : (word.uk || word.def || '—'); }
-  function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-  function formatDueDate(word) { if (!word.r || word.r === 0) return ''; const diff = word.due - Date.now(); if (diff <= 0) return 'Сьогодні'; const hours = Math.ceil(diff / (3600 * 1000)); if (hours < 24) return `Через ${hours} год`; return `Через ${Math.ceil(diff / 86400000)} дн`; }
+  function getPromptText(word) {
+    return state.settings.langMode === 'FR_FR' ? (word.def || word.uk || '—') : (word.uk || word.def || '—');
+  }
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+  function formatDueDate(word) {
+    if (!word.r || word.r === 0) return '';
+    const diff = word.due - Date.now();
+    if (diff <= 0) return 'Сьогодні';
+    const hours = Math.ceil(diff / (3600 * 1000));
+    if (hours < 24) return `Через ${hours} год`;
+    return `Через ${Math.ceil(diff / 86400000)} дн`;
+  }
   
   function showToast(msg) {
-      const container = document.getElementById('toastContainer');
-      const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
-      container.appendChild(el); setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 3000);
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    container.appendChild(el);
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 3000);
   }
 
   const DAY_MS = 86400000; const MIN_MS = 60000;
-  function getActiveWordsPool() { return (!state.settings.focusTopic || state.settings.focusTopic === 'all') ? state.words : state.words.filter(w => w.src === state.settings.focusTopic); }
-  function getWordStatus(word) { if (!word.r || word.r === 0) return 'new'; if (word.iv < 7) return 'learn'; if (word.iv < 30) return 'know'; return 'master'; }
-  function getStatusLabel(st) { return { 'new':'Нове', 'learn':'Вчу', 'know':'Знаю', 'master':'Засвоєно' }[st] || 'Нове'; }
+  function getActiveWordsPool() {
+    return (!state.settings.focusTopic || state.settings.focusTopic === 'all')
+      ? state.words
+      : state.words.filter(w => w.src === state.settings.focusTopic);
+  }
+  function getWordStatus(word) {
+    if (!word.r || word.r === 0) return 'new';
+    if (word.iv < 7) return 'learn';
+    if (word.iv < 30) return 'know';
+    return 'master';
+  }
+  function getStatusLabel(st) {
+    return { 'new':'Нове', 'learn':'Вчу', 'know':'Знаю', 'master':'Засвоєно' }[st] || 'Нове';
+  }
   
   function previewNextInterval(word, grade) {
-    const isInitial = (word.r === 0 || word.iv < 1); let ivDays = 0;
+    const isInitial = (word.r === 0 || word.iv < 1);
+    let ivDays = 0;
     if (grade === 'again') return { iv: 0, ms: 10 * MIN_MS, label: '10 хв' };
-    if (isInitial) { if (grade === 'hard') return { iv: 0.5, ms: 12 * 60 * MIN_MS, label: '12 год' }; if (grade === 'good') return { iv: 1, ms: DAY_MS, label: '1 дн' }; if (grade === 'easy') return { iv: 3, ms: 3 * DAY_MS, label: '3 дн' }; } 
-    else { const ef = word.ef || 2.5; if (grade === 'hard') ivDays = Math.min(365, word.iv * 1.2); if (grade === 'good') ivDays = Math.min(365, word.iv * ef); if (grade === 'easy') ivDays = Math.min(365, word.iv * ef * 1.3); return { iv: Math.max(1, Math.round(ivDays * 10) / 10), label: `${Math.round(Math.max(1, ivDays))} дн` }; }
+    if (isInitial) {
+      if (grade === 'hard') return { iv: 0.5, ms: 12 * 60 * MIN_MS, label: '12 год' };
+      if (grade === 'good') return { iv: 1, ms: DAY_MS, label: '1 дн' };
+      if (grade === 'easy') return { iv: 3, ms: 3 * DAY_MS, label: '3 дн' };
+    } else {
+      const ef = word.ef || 2.5;
+      if (grade === 'hard') ivDays = Math.min(365, word.iv * 1.2);
+      if (grade === 'good') ivDays = Math.min(365, word.iv * ef);
+      if (grade === 'easy') ivDays = Math.min(365, word.iv * ef * 1.3);
+      return { iv: Math.max(1, Math.round(ivDays * 10) / 10), label: `${Math.round(Math.max(1, ivDays))} дн` };
+    }
   }
 
   function applySM2Grade(word, grade) {
-    const now = Date.now(); const wasNew = (word.r === 0); const isInitial = (word.r === 0 || word.iv < 1); let ef = word.ef || 2.5; let iv = word.iv || 0;
-    if (grade === 'again') { iv = 0; ef = Math.max(1.3, ef - 0.2); word.l = (word.l || 0) + 1; word.due = now + 10 * MIN_MS; } 
-    else if (isInitial) { if (grade === 'hard') { iv = 0.5; word.due = now + 12 * 60 * MIN_MS; } else if (grade === 'good') { iv = 1; word.due = now + DAY_MS; } else if (grade === 'easy') { iv = 3; ef = Math.min(3.2, ef + 0.15); word.due = now + 3 * DAY_MS; } } 
-    else { if (grade === 'hard') { iv = Math.min(365, iv * 1.2); ef = Math.max(1.3, ef - 0.15); } else if (grade === 'good') { iv = Math.min(365, iv * ef); } else if (grade === 'easy') { iv = Math.min(365, iv * ef * 1.3); ef = Math.min(3.2, ef + 0.15); } iv = Math.round(iv * 100) / 100; word.due = now + iv * DAY_MS; }
+    const now = Date.now();
+    const wasNew = (word.r === 0);
+    const isInitial = (word.r === 0 || word.iv < 1);
+    let ef = word.ef || 2.5;
+    let iv = word.iv || 0;
+    if (grade === 'again') {
+      iv = 0; ef = Math.max(1.3, ef - 0.2); word.l = (word.l || 0) + 1; word.due = now + 10 * MIN_MS;
+    } else if (isInitial) {
+      if (grade === 'hard') { iv = 0.5; word.due = now + 12 * 60 * MIN_MS; }
+      else if (grade === 'good') { iv = 1; word.due = now + DAY_MS; }
+      else if (grade === 'easy') { iv = 3; ef = Math.min(3.2, ef + 0.15); word.due = now + 3 * DAY_MS; }
+    } else {
+      if (grade === 'hard') { iv = Math.min(365, iv * 1.2); ef = Math.max(1.3, ef - 0.15); }
+      else if (grade === 'good') { iv = Math.min(365, iv * ef); }
+      else if (grade === 'easy') { iv = Math.min(365, iv * ef * 1.3); ef = Math.min(3.2, ef + 0.15); }
+      iv = Math.round(iv * 100) / 100;
+      word.due = now + iv * DAY_MS;
+    }
     word.iv = iv; word.ef = Math.round(ef * 100) / 100; word.r = (word.r || 0) + 1; word.t = now;
-    recordDailyActivity(wasNew); saveLocalStats(); syncWordProgress(word);
+    recordDailyActivity(wasNew);
+    syncWordProgress(word);
   }
 
-  function handleMiniGameResult(word, isCorrect) { const now = Date.now(); if (!isCorrect) applySM2Grade(word, 'again'); else if (word.r === 0 || word.due <= now) applySM2Grade(word, 'good'); else { recordDailyActivity(false); saveLocalStats(); } }
-  function pickStudyWords(count=10, filterFn=null){ const pool = filterFn ? getActiveWordsPool().filter(filterFn) : getActiveWordsPool().slice(); const now = Date.now(); return [...shuffle(pool.filter(w=>w.r>0 && w.due<=now)), ...pool.filter(w=>w.r===0), ...shuffle(pool.filter(w=>w.r>0 && w.due>now))].slice(0,count); }
-  function getDueAndNewQueues() { checkDailyRollover(); const pool = getActiveWordsPool(); const now = Date.now(); const dueReview = pool.filter(w => w.r > 0 && w.due <= now).sort((a, b) => a.due - b.due); const newPool = pool.filter(w => w.r === 0); const newToday = newPool.slice(0, Math.max(0, state.settings.newLimit - state.stats.newLearnedToday)); return { dueReview, newToday, combined: [...dueReview, ...newToday] }; }
+  function handleMiniGameResult(word, isCorrect) {
+    const now = Date.now();
+    if (!isCorrect) applySM2Grade(word, 'again');
+    else if (word.r === 0 || word.due <= now) applySM2Grade(word, 'good');
+    else { recordDailyActivity(false); saveLocalStats(); }
+  }
+  function pickStudyWords(count = 10, filterFn = null) {
+    const pool = filterFn ? getActiveWordsPool().filter(filterFn) : getActiveWordsPool().slice();
+    const now = Date.now();
+    return [...shuffle(pool.filter(w => w.r > 0 && w.due <= now)), ...pool.filter(w => w.r === 0), ...shuffle(pool.filter(w => w.r > 0 && w.due > now))].slice(0, count);
+  }
+  function getDueAndNewQueues() {
+    checkDailyRollover();
+    const pool = getActiveWordsPool();
+    const now = Date.now();
+    const dueReview = pool.filter(w => w.r > 0 && w.due <= now).sort((a, b) => a.due - b.due);
+    const newPool = pool.filter(w => w.r === 0);
+    const newToday = newPool.slice(0, Math.max(0, state.settings.newLimit - state.stats.newLearnedToday));
+    return { dueReview, newToday, combined: [...dueReview, ...newToday] };
+  }
 
-  // 4. ОЗВУЧЕННЯ (Web Speech API)
-  const speechSupported = ('speechSynthesis' in window); let frenchVoices = []; let activeUtterances = [];
+  // 5. ОЗВУЧЕННЯ БЕЗ ДУБЛЮВАННЯ ГОЛОСІВ (Пункт 1)
+  const speechSupported = ('speechSynthesis' in window);
+  let frenchVoices = [];
+  let activeUtterances = [];
+
   function refreshVoices() {
     if (!speechSupported) return;
-    const voices = window.speechSynthesis.getVoices();
-    frenchVoices = voices.filter(v => /^fr(-|_|$)/i.test(v.lang));
+    const allVoices = window.speechSynthesis.getVoices();
+    const rawFr = allVoices.filter(v => /^fr(-|_|$)/i.test(v.lang));
+    
+    // Строга дедуплікація за парою ім'я + мова, щоб голоси "Томас (fr-FR)" та "Амели (fr-CA)" ніколи не дублювалися
+    const uniqueMap = new Map();
+    rawFr.forEach(v => {
+      const cleanName = String(v.name || '').trim().toLowerCase();
+      const cleanLang = String(v.lang || '').trim().toLowerCase();
+      const key = `${cleanName}__${cleanLang}`;
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, v);
+      }
+    });
+    frenchVoices = Array.from(uniqueMap.values());
+
     const sel = document.getElementById('selVoice');
     if (sel) {
       const currentVal = state.settings.voiceURI || '';
-      sel.innerHTML = '<option value="">Автоматичний вибір (найкращий доступний fr)</option>' +
-        frenchVoices.map(v => `<option value="${escapeHtml(v.voiceURI)}" ${currentVal === v.voiceURI ? 'selected' : ''}>${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`).join('');
+      sel.innerHTML = '';
+      const defOpt = document.createElement('option');
+      defOpt.value = '';
+      defOpt.textContent = 'Автоматичний вибір (найкращий доступний fr)';
+      sel.appendChild(defOpt);
+
+      frenchVoices.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.voiceURI;
+        opt.textContent = `${v.name} (${v.lang})`;
+        if (currentVal === v.voiceURI) opt.selected = true;
+        sel.appendChild(opt);
+      });
     }
   }
   if (speechSupported) {
     refreshVoices();
     window.speechSynthesis.onvoiceschanged = refreshVoices;
   }
+
   function speakFrench(text, rate = 1.0) {
     if (!speechSupported) return;
     let cleanText = String(text || '').replace(/\[|\]/g, '').trim();
-    // Замінюємо скорочення qqn / qqch для природного звучання при озвученні карток
+    // Прибираємо службові дужки типу "(vivre dans qqch)" при читанні вголос
+    cleanText = cleanText.replace(/\s*\([^)]*\)/g, '').trim();
     cleanText = cleanText
       .replace(/\bqqch\b/gi, 'quelque chose')
       .replace(/\bqch\b/gi, 'quelque chose')
@@ -517,42 +849,82 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       window.speechSynthesis.speak(u);
     }, 85);
   }
-  function speakerBtnHtml(text) { if (!speechSupported) return ''; return `<button type="button" class="btn-icon js-speak-btn" data-speak="${encodeURIComponent(String(text||'').replace(/\[|\]/g, ''))}"><svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg></button>`; }
-  function escapeHtml(str) { return String(str??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-  function highlightBracketExample(ex, wordFr) { if(!ex)return''; const safe=escapeHtml(ex); return /\[.+?\]/.test(safe) ? safe.replace(/\[(.+?)\]/g,'<span class="hl-word">$1</span>') : safe; }
-
-  window.toggleConjugation = function(btn) { 
-      const box = btn.nextElementSibling;
-      if(box && box.classList.contains('conj-box')) box.classList.toggle('open'); 
+  function speakerBtnHtml(text, label = 'Озвучити') {
+    if (!speechSupported) return '';
+    return `<button type="button" class="btn-icon js-speak-btn" data-speak="${encodeURIComponent(String(text || '').replace(/\[|\]/g, ''))}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}"><svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg></button>`;
   }
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function highlightBracketExample(ex) {
+    if (!ex) return '';
+    const safe = escapeHtml(ex);
+    return /\[.+?\]/.test(safe) ? safe.replace(/\[(.+?)\]/g, '<span class="hl-word">$1</span>') : safe;
+  }
+
+  // Підтримка відображення відмінювання як для масивів рядків ("je vis"), так і для об'єктів ({p, v})
+  function formatConjugationRow(item) {
+    if (typeof item === 'string') {
+      const str = item.trim();
+      const match = str.match(/^((?:que\s+|qu')?(?:je|j'|tu|il\/elle\/on|il\/elle|il|elle|on|nous|vous|ils\/elles|ils|elles))\s*(.*)$/i);
+      if (match) {
+        return `<div class="form-row-c"><span class="pronoun">${escapeHtml(match[1])}</span><span><b>${escapeHtml(match[2])}</b></span></div>`;
+      }
+      return `<div class="form-row-c"><span><b>${escapeHtml(str)}</b></span></div>`;
+    } else if (item && typeof item === 'object') {
+      return `<div class="form-row-c"><span class="pronoun">${escapeHtml(item.p || '')}</span><span><b>${escapeHtml(item.v || '')}</b></span></div>`;
+    }
+    return '';
+  }
+
+  window.toggleConjugation = function(btn) {
+    const box = btn.nextElementSibling;
+    if (box && box.classList.contains('conj-box')) box.classList.toggle('open');
+  };
+
   window.switchTense = function(tenseKey, event, containerId = 'tense-content') {
-      let container, box;
-      if (event) {
-          box = event.target.closest('.conj-box');
-          if (box) {
-              box.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-              event.target.classList.add('active');
-              container = box.querySelector('.tense-content') || box.querySelector('#tense-content');
-              if (container && container.dataset.vid) {
-                  const w = state.words.find(x => x.id === container.dataset.vid);
-                  if (w && w.conj) currentVerbData = w.conj;
-              }
-          }
+    let container, box;
+    if (event) {
+      box = event.target.closest('.conj-box');
+      if (box) {
+        box.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        container = box.querySelector('.tense-content') || box.querySelector('#tense-content');
+        if (container && container.dataset.vid) {
+          const w = state.words.find(x => x.id === container.dataset.vid);
+          if (w && w.conj) currentVerbData = w.conj;
+        }
       }
-      if (!container) container = document.getElementById(containerId);
-      if (!container || !currentVerbData) return;
+    }
+    if (!container) container = document.getElementById(containerId);
+    if (!container) return;
+    if (container.dataset.vid) {
+      const w = state.words.find(x => x.id === container.dataset.vid);
+      if (w && w.conj) currentVerbData = w.conj;
+    }
+    if (!currentVerbData || !currentVerbData.tenses) return;
 
-      if (tenseKey === 'pc') { 
-          container.innerHTML = `<div class="passe-compose-banner"><div><b>Допоміжне дієслово:</b> ${currentVerbData.auxiliary||'avoir'}</div><div><b>Participe passé:</b> <span style="font-family:'JetBrains Mono'; font-weight:600;">${currentVerbData.participe_passe||''}</span></div></div>`; 
-          return; 
+    const tenses = currentVerbData.tenses;
+    let forms = null;
+    if (tenseKey === 'pc' || tenseKey === 'passe_compose') {
+      forms = tenses.passe_compose || tenses.pc || null;
+      if (!forms) {
+        container.innerHTML = `<div class="passe-compose-banner"><div><b>Допоміжне дієслово:</b> ${escapeHtml(currentVerbData.auxiliary || 'avoir')}</div><div><b>Participe passé:</b> <span style="font-family:var(--font-mono); font-weight:600;">${escapeHtml(currentVerbData.participe_passe || '')}</span></div></div>`;
+        return;
       }
-      const forms = currentVerbData.tenses[tenseKey]; 
-      if (!forms) return;
-      container.innerHTML = `<div class="forms-grid">${forms.map(item => `<div class="form-row-c"><span class="pronoun">${item.p}</span><span><b>${item.v}</b></span></div>`).join('')}</div>`;
-  }
+    } else if (tenseKey === 'futur' || tenseKey === 'futur_simple') {
+      forms = tenses.futur_simple || tenses.futur || null;
+    } else {
+      forms = tenses[tenseKey] || null;
+    }
 
+    if (!forms || !Array.isArray(forms)) return;
+    container.innerHTML = `<div class="forms-grid">${forms.map(item => formatConjugationRow(item)).join('')}</div>`;
+  };
+
+  // Опис карток без технічного "SM-2" (Пункт 2)
   const MODES_META = [
-    { id: 'cards', name: 'Картки', svg: '<rect x="4" y="4" width="16" height="16" rx="2"/><line x1="4" y1="9" x2="20" y2="9"/>', desc: 'Класичні картки з оцінкою SM-2 та прикладами' },
+    { id: 'cards', name: 'Картки', svg: '<rect x="4" y="4" width="16" height="16" rx="2"/><line x1="4" y1="9" x2="20" y2="9"/>', desc: 'Класичні картки з прикладами та інтервальним повторенням' },
     { id: 'choice', name: 'Вибір', svg: '<circle cx="6" cy="7" r="1.5"/><line x1="10" y1="7" x2="20" y2="7"/><circle cx="6" cy="12" r="1.5"/><line x1="10" y1="12" x2="20" y2="12"/>', desc: '10 запитань із 4 варіантами (прямий і зворотний)' },
     { id: 'write', name: 'Напиши', svg: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>', desc: 'Введення французького слова за значенням і шаблоном' },
     { id: 'dictation', name: 'Диктант', svg: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>', desc: 'Сприйняття на слух та написання французьких слів' },
@@ -564,22 +936,77 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     { id: 'anagram', name: 'Анаграма', svg: '<rect x="3" y="8" width="5" height="8" rx="1"/><rect x="9.5" y="8" width="5" height="8" rx="1"/><rect x="16" y="8" width="5" height="8" rx="1"/>', desc: 'Складання слова з перемішаних літер' }
   ];
 
-  let currentTab = 'study'; let activeSessionCleanup = null;
-  function cleanupSession() { if (typeof activeSessionCleanup === 'function') { activeSessionCleanup(); activeSessionCleanup = null; } }
-  function updateNavBadge() { const el = document.getElementById('navWordCount'); if(el)el.textContent=state.words.length; const btnUk=document.getElementById('btnModeUkFr'); const btnFr=document.getElementById('btnModeFrFr'); if(btnUk&&btnFr){btnUk.classList.toggle('active',state.settings.langMode==='UK_FR');btnFr.classList.toggle('active',state.settings.langMode==='FR_FR');} }
-  function switchTab(tab) { cleanupSession(); currentTab = tab; document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab)); renderCurrentTab(); }
-  function renderCurrentTab() { cleanupSession(); updateNavBadge(); const main = document.getElementById('mainView'); if (!main) return; if (currentTab === 'study') renderStudyDashboard(main); else if (currentTab === 'words') renderWordsTab(main); else if (currentTab === 'settings') renderSettingsTab(main); }
+  let currentTab = 'study';
+  let activeSessionCleanup = null;
+  function cleanupSession() {
+    if (typeof activeSessionCleanup === 'function') {
+      activeSessionCleanup();
+      activeSessionCleanup = null;
+    }
+  }
+  function exitToDashboard() {
+    clearActiveSessionProgress();
+    renderCurrentTab();
+  }
+  function updateNavBadge() {
+    const el = document.getElementById('navWordCount');
+    if (el) el.textContent = state.words.length;
+    const btnUk = document.getElementById('btnModeUkFr');
+    const btnFr = document.getElementById('btnModeFrFr');
+    if (btnUk && btnFr) {
+      btnUk.classList.toggle('active', state.settings.langMode === 'UK_FR');
+      btnFr.classList.toggle('active', state.settings.langMode === 'FR_FR');
+    }
+  }
+  function switchTab(tab) {
+    cleanupSession();
+    clearActiveSessionProgress();
+    currentTab = tab;
+    document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+    renderCurrentTab();
+  }
+  function renderCurrentTab() {
+    cleanupSession();
+    updateNavBadge();
+    const main = document.getElementById('mainView');
+    if (!main) return;
+    if (currentTab === 'study') renderStudyDashboard(main);
+    else if (currentTab === 'words') renderWordsTab(main);
+    else if (currentTab === 'settings') renderSettingsTab(main);
+  }
 
-  // 5. ДАШБОРД
+  // 6. ДАШБОРД
   function renderStudyDashboard(container) {
-    if (state.words.length === 0) { container.innerHTML = `<section class="index-card empty-state"><h2 class="empty-title">Ваша скринька слів порожня</h2><p class="empty-desc">Викладач ще не додав вам слів для вивчення.</p></section>`; return; }
+    clearActiveSessionProgress();
+    if (state.words.length === 0) {
+      container.innerHTML = `
+        <section class="index-card empty-state">
+          <h2 class="empty-title">Ваша скринька слів порожня</h2>
+          <p class="empty-desc">Додайте слова з коду викладача або створіть першу картку власноруч.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+            <button type="button" class="btn btn-primary" id="btnEmptyAddCode">Додати з коду</button>
+            <button type="button" class="btn" id="btnEmptyAddWord">+ Слово</button>
+          </div>
+        </section>`;
+      container.querySelector('#btnEmptyAddCode').addEventListener('click', openAddCodeModal);
+      container.querySelector('#btnEmptyAddWord').addEventListener('click', () => openWordFormModal());
+      return;
+    }
     const availableTopics = Array.from(new Set(state.words.map(w => w.src).filter(Boolean))).sort();
+    if (state.settings.focusTopic !== 'all' && !availableTopics.includes(state.settings.focusTopic)) {
+      state.settings.focusTopic = 'all';
+    }
     const currentFocus = state.settings.focusTopic || 'all';
-    const pool = getActiveWordsPool(); const queues = getDueAndNewQueues(); const counts = { new:0, learn:0, know:0, master:0 }; pool.forEach(w => counts[getWordStatus(w)]++); const total = pool.length||1;
+    const pool = getActiveWordsPool();
+    const queues = getDueAndNewQueues();
+    const counts = { new:0, learn:0, know:0, master:0 };
+    pool.forEach(w => counts[getWordStatus(w)]++);
+    const total = pool.length || 1;
     
-    // Прогноз на 7 днів
-    const daysForecast = []; const dayNames = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
-    const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0); const baseMs = startOfToday.getTime();
+    const daysForecast = [];
+    const dayNames = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+    const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+    const baseMs = startOfToday.getTime();
     for (let d = 0; d < 7; d++) {
       const start = baseMs + d * DAY_MS; const end = start + DAY_MS; let cnt = 0;
       pool.forEach(w => { if (w.r > 0) { if (d === 0 && w.due <= end) cnt++; else if (d > 0 && w.due > start && w.due <= end) cnt++; } });
@@ -611,7 +1038,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
       </section>
 
-      <section class="panel-card">
+      <section class="panel-card" style="margin-bottom:16px;">
         <div class="section-label">Словниковий запас (${pool.length})</div>
         <div class="segment-bar">
           <div class="seg-part" style="width:${(counts.new/total)*100}%; background:var(--st-new);"></div>
@@ -627,7 +1054,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
       </section>
       
-      <section class="panel-card">
+      <section class="panel-card" style="margin-bottom:16px;">
         <div class="section-label">Прогноз повторень на 7 днів</div>
         <div class="forecast-chart">
           ${daysForecast.map(f => `<div class="forecast-col"><span class="forecast-val">${f.count}</span><div class="forecast-bar-wrap"><div class="forecast-bar" style="height:${f.count>0?Math.max(8,Math.round((f.count/maxForecast)*100)):0}%;"></div></div><span class="forecast-day">${f.label}</span></div>`).join('')}
@@ -641,38 +1068,85 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
       </section>
     `;
-    container.querySelector('#selDashboardTopic').addEventListener('change', e => { state.settings.focusTopic = e.target.value; saveLocalStats(); renderStudyDashboard(container); });
+    container.querySelector('#selDashboardTopic').addEventListener('change', e => {
+      state.settings.focusTopic = e.target.value;
+      saveLocalStats();
+      renderStudyDashboard(container);
+    });
     container.querySelector('#btnMainReview').addEventListener('click', () => startMode('cards'));
     container.querySelectorAll('.mode-tile').forEach(btn => btn.addEventListener('click', () => startMode(btn.dataset.mode)));
   }
 
-  function startMode(modeId) {
-    cleanupSession(); const main = document.getElementById('mainView'); if (!main) return;
-    if (modeId==='cards') runCardsMode(main); else if (modeId==='blitz') runBlitzMode(main); else if (modeId==='choice') runChoiceMode(main); else if (modeId==='write') runWriteMode(main); else if (modeId==='dictation') runDictationMode(main); else if (modeId==='context') runContextMode(main); else if (modeId==='synonyms') runSynonymsMode(main); else if (modeId==='pairs') runPairsMode(main); else if (modeId==='crossword') runCrosswordMode(main); else if (modeId==='anagram') runAnagramMode(main);
+  function startMode(modeId, restoredState = null) {
+    cleanupSession();
+    const main = document.getElementById('mainView');
+    if (!main) return;
+    if (modeId === 'cards') runCardsMode(main, restoredState);
+    else if (modeId === 'blitz') runBlitzMode(main, restoredState);
+    else if (modeId === 'choice') runChoiceMode(main, restoredState);
+    else if (modeId === 'write') runWriteMode(main, restoredState);
+    else if (modeId === 'dictation') runDictationMode(main, restoredState);
+    else if (modeId === 'context') runContextMode(main, restoredState);
+    else if (modeId === 'synonyms') runSynonymsMode(main, restoredState);
+    else if (modeId === 'pairs') runPairsMode(main, restoredState);
+    else if (modeId === 'crossword') runCrosswordMode(main, restoredState);
+    else if (modeId === 'anagram') runAnagramMode(main, restoredState);
   }
 
   function renderRoundSummary(container, modeId, results) {
     cleanupSession();
+    clearActiveSessionProgress();
     container.innerHTML = `<section class="index-card"><div class="session-header"><h2 style="font-family:var(--font-fr); font-size:1.35rem;">Підсумок раунду</h2><span class="session-progress">${results.filter(r=>r.ok).length} / ${results.length}</span></div>
       <div class="summary-list">${results.map(r => `<div class="summary-row"><div><strong style="font-family:var(--font-fr);">${escapeHtml(r.word.fr)}</strong><span style="color:var(--text-muted); margin-left:8px;">— ${escapeHtml(getPromptText(r.word))}</span></div><div style="display:flex; align-items:center; gap:8px;">${speakerBtnHtml(r.word.fr)}<span class="${r.ok?'mark-ok':'mark-err'}">${r.ok?'✓':'✗'}</span></div></div>`).join('')}</div>
       <div style="display:flex; gap:10px; margin-top:16px;"><button type="button" class="btn btn-primary" id="btnSummaryAgain">Ще раунд</button><button type="button" class="btn" id="btnSummaryBack">До режимів</button></div></section>`;
-    container.querySelector('#btnSummaryAgain').addEventListener('click', () => startMode(modeId)); container.querySelector('#btnSummaryBack').addEventListener('click', renderCurrentTab);
+    container.querySelector('#btnSummaryAgain').addEventListener('click', () => startMode(modeId));
+    container.querySelector('#btnSummaryBack').addEventListener('click', exitToDashboard);
   }
 
   /* =========================================================
    * 1. РЕЖИМ КАРТКИ
    * ========================================================= */
-  function runCardsMode(container) {
+  function runCardsMode(container, restored = null) {
     const q = getDueAndNewQueues();
-    let deck = q.combined.length > 0 ? q.combined.slice() : shuffle(getActiveWordsPool()).slice(0, 10);
-    if (deck.length === 0) { renderCurrentTab(); return; }
-    const totalInitial = deck.length;
+    let deck = [];
     let completed = 0;
+    let totalInitial = 0;
     let revealed = false;
     const sum = new Map();
 
+    if (restored && Array.isArray(restored.wordIds)) {
+      deck = restored.wordIds.map(id => state.words.find(w => w.id === id)).filter(Boolean);
+      completed = restored.completed || 0;
+      totalInitial = restored.totalInitial || (deck.length + completed);
+      revealed = Boolean(restored.revealed);
+      if (Array.isArray(restored.results)) {
+        restored.results.forEach(r => {
+          const w = state.words.find(x => x.id === r.id);
+          if (w) sum.set(w.id, { word: w, ok: r.ok });
+        });
+      }
+    } else {
+      deck = q.combined.length > 0 ? q.combined.slice() : shuffle(getActiveWordsPool()).slice(0, 10);
+      totalInitial = deck.length;
+    }
+
+    if (deck.length === 0) { exitToDashboard(); return; }
+
+    function syncSession() {
+      activeRoundState = {
+        mode: 'cards',
+        wordIds: deck.map(w => w.id),
+        completed,
+        totalInitial,
+        revealed,
+        results: Array.from(sum.values()).map(r => ({ id: r.word.id, ok: r.ok }))
+      };
+      saveActiveSessionProgress();
+    }
+
     function renderCard() {
       if (deck.length === 0) { renderRoundSummary(container, 'cards', Array.from(sum.values())); return; }
+      syncSession();
       const w = deck[0];
       const hasC = w.conj && w.conj.tenses;
       if (hasC) currentVerbData = w.conj;
@@ -696,9 +1170,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             <div class="conj-box" id="conj-box">
               <div class="tabs-nav">
                 <button type="button" class="tab-btn active" onclick="switchTense('present',event)">Présent</button>
-                <button type="button" class="tab-btn" onclick="switchTense('pc',event)">Passé composé</button>
+                <button type="button" class="tab-btn" onclick="switchTense('passe_compose',event)">Passé composé</button>
                 <button type="button" class="tab-btn" onclick="switchTense('imparfait',event)">Imparfait</button>
-                <button type="button" class="tab-btn" onclick="switchTense('futur',event)">Futur simple</button>
+                <button type="button" class="tab-btn" onclick="switchTense('futur_simple',event)">Futur simple</button>
                 <button type="button" class="tab-btn" onclick="switchTense('conditionnel',event)">Conditionnel</button>
                 <button type="button" class="tab-btn" onclick="switchTense('subjonctif',event)">Subjonctif</button>
               </div>
@@ -711,7 +1185,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             <hr class="study-divider">
             <div class="study-meaning">${escapeHtml(getPromptText(w))}</div>
             ${showBothUkAndDef ? `<div class="study-def">${escapeHtml(w.def)}</div>` : ''}
-            ${w.ex ? `<div class="study-example"><span>${highlightBracketExample(w.ex, w.fr)}</span>${speakerBtnHtml(w.ex)}</div>` : ''}
+            ${w.ex ? `<div class="study-example"><div><div>${highlightBracketExample(w.ex)}</div>${w.context_translation ? `<div style="font-family:var(--font-ui); font-size:0.85rem; color:var(--text-muted); margin-top:4px;">${escapeHtml(w.context_translation)}</div>` : ''}</div>${speakerBtnHtml(w.ex)}</div>` : ''}
             ${w.syn && w.syn.length ? `<div class="study-synonyms">Синоніми: <strong>${escapeHtml(w.syn.join(', '))}</strong></div>` : ''}
             <div class="grade-grid">
               <button type="button" class="grade-btn grade-again" data-g="again"><span class="g-name">1 · Знову</span><span class="g-time">${previewNextInterval(w, 'again').label}</span></button>
@@ -725,7 +1199,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         currentVerbData = w.conj; 
         switchTense('present');
       }
-      container.querySelector('#btnExit').addEventListener('click', renderCurrentTab);
+      container.querySelector('#btnExit').addEventListener('click', exitToDashboard);
       if (!revealed) {
         container.querySelector('#btnRev').addEventListener('click', () => { revealed = true; renderCard(); });
       } else {
@@ -759,16 +1233,53 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 2. РЕЖИМ ВИБІР
+   * 2. РЕЖИМ ВИБІР (Вимкнено автоозвучення при кліку - Пункт 6)
    * ========================================================= */
-  function runChoiceMode(container){
-    const qs=pickStudyWords(10); let idx=0; let ansd=false; const res=[]; let opts=[];
-    function setup(){ const w=qs[idx]; const dis=shuffle(getActiveWordsPool().filter(x=>x.id!==w.id)).slice(0,3); opts=shuffle([w,...dis]); ansd=false; render(w); }
-    function render(w,chId=null){
-      const rev=(idx%2===1);
+  function runChoiceMode(container, restored = null) {
+    let qs = [];
+    let idx = 0;
+    let ansd = false;
+    const res = [];
+    let opts = [];
+
+    if (restored && Array.isArray(restored.wordIds)) {
+      qs = restored.wordIds.map(id => state.words.find(w => w.id === id)).filter(Boolean);
+      idx = restored.idx || 0;
+      if (Array.isArray(restored.results)) {
+        restored.results.forEach(r => {
+          const w = state.words.find(x => x.id === r.id);
+          if (w) res.push({ word: w, ok: r.ok });
+        });
+      }
+    } else {
+      qs = pickStudyWords(10);
+    }
+    if (qs.length === 0 || idx >= qs.length) { exitToDashboard(); return; }
+
+    function syncSession() {
+      activeRoundState = {
+        mode: 'choice',
+        wordIds: qs.map(w => w.id),
+        idx,
+        results: res.map(r => ({ id: r.word.id, ok: r.ok }))
+      };
+      saveActiveSessionProgress();
+    }
+
+    function setup() {
+      syncSession();
+      const w = qs[idx];
+      const dis = shuffle(getActiveWordsPool().filter(x => x.id !== w.id)).slice(0, 3);
+      opts = shuffle([w, ...dis]);
+      ansd = false;
+      render(w);
+    }
+
+    function render(w, chId = null) {
+      const rev = (idx % 2 === 1);
       const isPromptFrench = !rev || state.settings.langMode === 'FR_FR';
       const areOptionsFrench = rev || state.settings.langMode === 'FR_FR';
-      container.innerHTML=`
+      container.innerHTML = `
       <div class="session-header">
         <button class="btn btn-sm" id="btnEx">← До режимів</button>
         <span class="session-progress">Вибір · ${idx+1} / ${qs.length}</span>
@@ -776,28 +1287,53 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       <section class="index-card">
         <div class="instruction-text">${rev ? 'Оберіть французьке слово за значенням:' : 'Оберіть правильне значення слова:'}</div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-          <div class="${isPromptFrench ? 'study-word-title' : 'study-meaning'}">${escapeHtml(rev?getPromptText(w):w.fr)}</div>
-          ${!rev?speakerBtnHtml(w.fr):''}
+          <div class="${isPromptFrench ? 'study-word-title' : 'study-meaning'}">${escapeHtml(rev ? getPromptText(w) : w.fr)}</div>
+          ${!rev ? speakerBtnHtml(w.fr) : ''}
         </div>
         <div class="options-grid">
-          ${opts.map((o,i)=>{
-            let cls='';
-            if(ansd){if(o.id===w.id)cls='correct';else if(o.id===chId)cls='wrong';}
-            return `<button class="option-btn ${cls}" data-opt="${o.id}" ${ansd?'disabled':''}><span class="option-key">${i+1}</span><span class="${areOptionsFrench ? 'opt-fr' : 'opt-uk'}">${escapeHtml(rev?o.fr:getPromptText(o))}</span></button>`;
+          ${opts.map((o,i) => {
+            let cls = '';
+            if (ansd) { if (o.id === w.id) cls = 'correct'; else if (o.id === chId) cls = 'wrong'; }
+            return `<button class="option-btn ${cls}" data-opt="${o.id}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="${areOptionsFrench ? 'opt-fr' : 'opt-uk'}">${escapeHtml(rev ? o.fr : getPromptText(o))}</span></button>`;
           }).join('')}
         </div>
-        ${ansd?`<div style="margin-top:14px;display:flex;justify-content:space-between;">${speakerBtnHtml(w.fr)}<button class="btn btn-primary" id="bNx">Далі (Enter)</button></div>`:''}
+        ${ansd ? `<div style="margin-top:14px;display:flex;justify-content:space-between;">${speakerBtnHtml(w.fr)}<button class="btn btn-primary" id="bNx">Далі (Enter)</button></div>` : ''}
       </section>`;
-      container.querySelector('#btnEx').addEventListener('click',renderCurrentTab); container.querySelectorAll('[data-opt]').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.opt))); if(ansd)container.querySelector('#bNx').addEventListener('click',next);
+      container.querySelector('#btnEx').addEventListener('click', exitToDashboard);
+      container.querySelectorAll('[data-opt]').forEach(b => b.addEventListener('click', () => choose(b.dataset.opt)));
+      if (ansd) container.querySelector('#bNx').addEventListener('click', next);
     }
-    function choose(id){if(ansd)return; ansd=true; const w=qs[idx]; const ok=(id===w.id); handleMiniGameResult(w,ok); res.push({word:w,ok}); render(w,id);}
-    function next(){idx++; if(idx>=qs.length)renderRoundSummary(container,'choice',res); else setup();}
-    function onK(e){if(!ansd&&['1','2','3','4'].includes(e.key)){const o=opts[Number(e.key)-1]; if(o)choose(o.id);} else if(ansd&&e.key==='Enter')next();}
-    window.addEventListener('keydown',onK); activeSessionCleanup=()=>window.removeEventListener('keydown',onK); setup();
+
+    function choose(id) {
+      if (ansd) return;
+      ansd = true;
+      const w = qs[idx];
+      const ok = (id === w.id);
+      handleMiniGameResult(w, ok);
+      res.push({ word: w, ok });
+      render(w, id);
+    }
+    function next() {
+      idx++;
+      if (idx >= qs.length) renderRoundSummary(container, 'choice', res);
+      else setup();
+    }
+    function onK(e) {
+      if (!ansd && ['1','2','3','4'].includes(e.key)) {
+        const o = opts[Number(e.key) - 1];
+        if (o) choose(o.id);
+      } else if (ansd && e.key === 'Enter') {
+        e.preventDefault();
+        next();
+      }
+    }
+    window.addEventListener('keydown', onK);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onK);
+    setup();
   }
 
   /* =========================================================
-   * 3. РЕЖИМ НАПИШИ
+   * 3. РЕЖИМ НАПИШИ (Виправлено Enter та автоозвучення - Пункти 3 і 6)
    * ========================================================= */
   function levenshtein(a, b) {
     const m = a.length, n = b.length;
@@ -829,28 +1365,28 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       }
       const parts = cleanTarget.split('/');
       if (parts.length === 2) {
-          validTargets.push(stripDiacritics(`${parts[1].trim()} / ${parts[0].trim()}`.toLowerCase()));
+        validTargets.push(stripDiacritics(`${parts[1].trim()} / ${parts[0].trim()}`.toLowerCase()));
       }
     }
 
-    if (!inp) return 'wrong';
+    if (!inp) return 'err';
 
     if (validTargets.includes(inp)) {
-        const rawLower = String(inputRaw || '').trim().toLowerCase().replace(/[’‘]/g, "'");
-        const exactTargets = [
-            cleanTarget.toLowerCase().replace(/[’‘]/g, "'"),
-            String(targetRaw || '').trim().toLowerCase().replace(/[’‘]/g, "'")
-        ];
-        if (cleanTarget.includes('/')) {
-           const m = cleanTarget.match(/^(.*?)\b(\S+)\s*\/\s*(\S+)$/);
-           if(m) exactTargets.push(`${m[1]}${m[3]} / ${m[2]}`.trim().toLowerCase());
-        }
-        if (exactTargets.includes(rawLower)) return 'ok';
-        return 'almost';
+      const rawLower = String(inputRaw || '').trim().toLowerCase().replace(/[’‘]/g, "'");
+      const exactTargets = [
+        cleanTarget.toLowerCase().replace(/[’‘]/g, "'"),
+        String(targetRaw || '').trim().toLowerCase().replace(/[’‘]/g, "'")
+      ];
+      if (cleanTarget.includes('/')) {
+        const m = cleanTarget.match(/^(.*?)\b(\S+)\s*\/\s*(\S+)$/);
+        if (m) exactTargets.push(`${m[1]}${m[3]} / ${m[2]}`.trim().toLowerCase());
+      }
+      if (exactTargets.includes(rawLower)) return 'ok';
+      return 'almost';
     }
 
     for (const t of validTargets) {
-        if (t.length >= 4 && levenshtein(inp, t) <= 1) return 'almost';
+      if (t.length >= 4 && levenshtein(inp, t) <= 1) return 'almost';
     }
     return 'err';
   }
@@ -873,15 +1409,50 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     }).join('');
   }
 
-  function runWriteMode(container){
-    const qs=pickStudyWords(10); let idx=0; let chk=null; let last=''; let hintCount=0; const res=[];
-    function render(){
-      const w=qs[idx];
+  function runWriteMode(container, restored = null) {
+    let qs = [];
+    let idx = 0;
+    let chk = null;
+    let last = '';
+    let hintCount = 0;
+    const res = [];
+
+    if (restored && Array.isArray(restored.wordIds)) {
+      qs = restored.wordIds.map(id => state.words.find(w => w.id === id)).filter(Boolean);
+      idx = restored.idx || 0;
+      hintCount = restored.hintCount || 0;
+      last = restored.last || '';
+      if (Array.isArray(restored.results)) {
+        restored.results.forEach(r => {
+          const w = state.words.find(x => x.id === r.id);
+          if (w) res.push({ word: w, ok: r.ok });
+        });
+      }
+    } else {
+      qs = pickStudyWords(10);
+    }
+    if (qs.length === 0 || idx >= qs.length) { exitToDashboard(); return; }
+
+    function syncSession() {
+      activeRoundState = {
+        mode: 'write',
+        wordIds: qs.map(w => w.id),
+        idx,
+        hintCount,
+        last,
+        results: res.map(r => ({ id: r.word.id, ok: r.ok }))
+      };
+      saveActiveSessionProgress();
+    }
+
+    function render() {
+      syncSession();
+      const w = qs[idx];
       const targetFr = getTestableFr(w.fr);
       const wCount = targetFr.split(/\s+/).filter(Boolean).length;
       const cleanPos = getCleanPosForWrite(w.pos);
       const isPromptFr = state.settings.langMode === 'FR_FR';
-      container.innerHTML=`
+      container.innerHTML = `
       <div class="session-header">
         <button class="btn btn-sm" id="bEx">← До режимів</button>
         <span class="session-progress">Напиши · ${idx+1} / ${qs.length}</span>
@@ -890,106 +1461,365 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <div class="${isPromptFr ? 'study-def' : 'study-meaning'}">${escapeHtml(getPromptText(w))}</div>
         <div class="study-pos">${escapeHtml(cleanPos)} <span class="badge" style="font-style:normal; font-family:var(--font-mono);">Слів у виразі: ${wCount}</span></div>
         <div class="template-mask">${buildMaskTemplate(targetFr, hintCount)}</div>
-        <input type="text" id="inpW" class="input" placeholder="Введіть слово або вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk?'disabled':''}>
-        ${!chk?`<div style="display:flex;gap:10px;flex-wrap:wrap;"><button class="btn btn-primary" id="bCh">Перевірити (Enter)</button><button class="btn" id="bHint">Підказка (+1 літера)</button></div>`:`<div class="feedback-box ${chk}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div>${chk==='ok'?'Бездоганно!':(chk==='almost'?'Майже правильно (зверніть увагу на діакритику):':'Правильна відповідь:')}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.25rem;margin-top:2px;">${escapeHtml(targetFr)} ${targetFr !== w.fr ? `<span style="font-weight:400;font-size:0.95rem;color:var(--text-muted);">(${escapeHtml(w.fr)})</span>` : ''}</div></div>${speakerBtnHtml(w.fr)}</div></div><button class="btn btn-primary" id="bNx" style="margin-top:12px;float:right;">Далі (Enter)</button>`}
+        <input type="text" id="inpW" class="input" placeholder="Введіть слово або вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk ? 'disabled' : ''}>
+        ${!chk ? `<div style="display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button><button type="button" class="btn" id="bHint">Підказка (+1 літера)</button></div>` : `<div class="feedback-box ${chk}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div>${chk==='ok'?'Бездоганно!':(chk==='almost'?'Майже правильно (зверніть увагу на діакритику):':'Правильна відповідь:')}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.25rem;margin-top:2px;">${escapeHtml(targetFr)} ${targetFr !== w.fr ? `<span style="font-weight:400;font-size:0.95rem;color:var(--text-muted);">(${escapeHtml(w.fr)})</span>` : ''}</div></div>${speakerBtnHtml(w.fr)}</div></div><button type="button" class="btn btn-primary" id="bNx" style="margin-top:12px;float:right;">Далі (Enter)</button>`}
       </section>`;
-      container.querySelector('#bEx').addEventListener('click',renderCurrentTab);
-      const inp=container.querySelector('#inpW');
-      if(inp&&!chk){
+      container.querySelector('#bEx').addEventListener('click', exitToDashboard);
+      const inp = container.querySelector('#inpW');
+      if (inp && !chk) {
         inp.focus();
         inp.setSelectionRange(inp.value.length, inp.value.length);
-        inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e.stopPropagation();check(inp.value);}});
+        inp.addEventListener('input', () => { last = inp.value; saveActiveSessionProgress(); });
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            check(inp.value);
+          }
+        });
       }
-      if(!chk){
-        container.querySelector('#bCh').addEventListener('click',()=>check(inp.value));
-        container.querySelector('#bHint').addEventListener('click',()=>{
-          last=inp.value;
+      if (!chk) {
+        container.querySelector('#bCh').addEventListener('click', () => check(inp ? inp.value : ''));
+        container.querySelector('#bHint').addEventListener('click', () => {
+          if (inp) last = inp.value;
           hintCount++;
           render();
         });
       } else {
-        container.querySelector('#bNx').addEventListener('click',next);
+        const nxBtn = container.querySelector('#bNx');
+        if (nxBtn) {
+          nxBtn.focus();
+          nxBtn.addEventListener('click', next);
+        }
       }
     }
-    function check(v){if(chk)return; last=v; const w=qs[idx]; chk=evalWrite(v,w.fr); const ok=(chk==='ok'||chk==='almost'); handleMiniGameResult(w,ok); res.push({word:w,ok}); if(speechSupported)speakFrench(w.fr); render();}
-    function next(){idx++; chk=null; last=''; hintCount=0; if(idx>=qs.length)renderRoundSummary(container,'write',res); else render();}
-    function onK(e){if(chk&&e.key==='Enter'){e.preventDefault();next();}} window.addEventListener('keydown',onK); activeSessionCleanup=()=>window.removeEventListener('keydown',onK); render();
+
+    function check(v) {
+      if (chk) return;
+      last = v;
+      const w = qs[idx];
+      chk = evaluateWrittenAnswer(v, w.fr);
+      const ok = (chk === 'ok' || chk === 'almost');
+      handleMiniGameResult(w, ok);
+      res.push({ word: w, ok });
+      render();
+    }
+    function next() {
+      idx++;
+      chk = null;
+      last = '';
+      hintCount = 0;
+      if (idx >= qs.length) renderRoundSummary(container, 'write', res);
+      else render();
+    }
+    function onK(e) {
+      if (chk && e.key === 'Enter') {
+        e.preventDefault();
+        next();
+      }
+    }
+    window.addEventListener('keydown', onK);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onK);
+    render();
   }
 
   /* =========================================================
-   * 4. РЕЖИМ ДИКТАНТ
+   * 4. РЕЖИМ ДИКТАНТ (Виправлено evaluateWrittenAnswer та Enter - Пункт 3)
    * ========================================================= */
-  function runDictationMode(container){
-    const qs=pickStudyWords(10); let idx=0; let chk=null; let last=''; let showHint=false; const res=[];
-    function render(play=false){
-      const w=qs[idx];
+  function runDictationMode(container, restored = null) {
+    let qs = [];
+    let idx = 0;
+    let chk = null;
+    let last = '';
+    let showHint = false;
+    const res = [];
+
+    if (restored && Array.isArray(restored.wordIds)) {
+      qs = restored.wordIds.map(id => state.words.find(w => w.id === id)).filter(Boolean);
+      idx = restored.idx || 0;
+      last = restored.last || '';
+      showHint = Boolean(restored.showHint);
+      if (Array.isArray(restored.results)) {
+        restored.results.forEach(r => {
+          const w = state.words.find(x => x.id === r.id);
+          if (w) res.push({ word: w, ok: r.ok });
+        });
+      }
+    } else {
+      qs = pickStudyWords(10);
+    }
+    if (qs.length === 0 || idx >= qs.length) { exitToDashboard(); return; }
+
+    function syncSession() {
+      activeRoundState = {
+        mode: 'dictation',
+        wordIds: qs.map(w => w.id),
+        idx,
+        last,
+        showHint,
+        results: res.map(r => ({ id: r.word.id, ok: r.ok }))
+      };
+      saveActiveSessionProgress();
+    }
+
+    function render(play = false) {
+      syncSession();
+      const w = qs[idx];
       const targetFr = getTestableFr(w.fr);
-      if(play)speakFrench(targetFr);
-      container.innerHTML=`
+      if (play) speakFrench(targetFr);
+      container.innerHTML = `
       <div class="session-header">
         <button class="btn btn-sm" id="bEx">← До режимів</button>
         <span class="session-progress">Диктант · ${idx+1} / ${qs.length}</span>
       </div>
       <section class="index-card">
         <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
-          <button class="btn btn-primary" id="bL">Слухати</button>
-          <button class="btn" id="bS">Повільно</button>
-          ${!showHint?`<button class="btn" id="bH">Підказка (значення)</button>`:''}
+          <button type="button" class="btn btn-primary" id="bL">Слухати</button>
+          <button type="button" class="btn" id="bS">Повільно</button>
+          ${!showHint ? `<button type="button" class="btn" id="bH">Підказка (значення)</button>` : ''}
         </div>
-        ${showHint?`<div style="margin-bottom:12px;padding:8px 12px;background:var(--bg-elevated);border-radius:4px;">Значення: <strong>${escapeHtml(getPromptText(w))}</strong></div>`:''}
-        <input type="text" id="inpD" class="input" placeholder="Напишіть почутий вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk?'disabled':''}>
-        ${!chk?`<button class="btn btn-primary" id="bCh">Перевірити (Enter)</button>`:`<div class="feedback-box ${chk}"><div style="font-family:var(--font-fr);font-weight:700;font-size:1.2rem;">${escapeHtml(targetFr)} — <span style="font-weight:400;font-size:1rem;font-family:var(--font-ui);">${escapeHtml(getPromptText(w))}</span></div></div><button class="btn btn-primary" id="bNx" style="margin-top:12px;float:right;">Далі (Enter)</button>`}
+        ${showHint ? `<div style="margin-bottom:12px;padding:8px 12px;background:var(--bg-elevated);border-radius:4px;">Значення: <strong>${escapeHtml(getPromptText(w))}</strong></div>` : ''}
+        <input type="text" id="inpD" class="input" placeholder="Напишіть почутий вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk ? 'disabled' : ''}>
+        ${!chk ? `<button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button>` : `<div class="feedback-box ${chk}"><div style="font-family:var(--font-fr);font-weight:700;font-size:1.2rem;">${escapeHtml(targetFr)} — <span style="font-weight:400;font-size:1rem;font-family:var(--font-ui);">${escapeHtml(getPromptText(w))}</span></div></div><button type="button" class="btn btn-primary" id="bNx" style="margin-top:12px;float:right;">Далі (Enter)</button>`}
       </section>`;
-      container.querySelector('#bEx').addEventListener('click',renderCurrentTab); container.querySelector('#bL').addEventListener('click',()=>speakFrench(targetFr)); container.querySelector('#bS').addEventListener('click',()=>speakFrench(targetFr,0.6));
-      if(!showHint)container.querySelector('#bH').addEventListener('click',()=>{last=container.querySelector('#inpD').value;showHint=true;render(false);});
-      const inp=container.querySelector('#inpD'); if(inp&&!chk){inp.focus(); inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();e.stopPropagation();check(inp.value);}});}
-      if(!chk)container.querySelector('#bCh').addEventListener('click',()=>check(inp.value)); else container.querySelector('#bNx').addEventListener('click',next);
+      container.querySelector('#bEx').addEventListener('click', exitToDashboard);
+      container.querySelector('#bL').addEventListener('click', () => speakFrench(targetFr));
+      container.querySelector('#bS').addEventListener('click', () => speakFrench(targetFr, 0.6));
+      if (!showHint) {
+        container.querySelector('#bH').addEventListener('click', () => {
+          const inpEl = container.querySelector('#inpD');
+          if (inpEl) last = inpEl.value;
+          showHint = true;
+          render(false);
+        });
+      }
+      const inp = container.querySelector('#inpD');
+      if (inp && !chk) {
+        inp.focus();
+        inp.addEventListener('input', () => { last = inp.value; saveActiveSessionProgress(); });
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            check(inp.value);
+          }
+        });
+      }
+      if (!chk) {
+        container.querySelector('#bCh').addEventListener('click', () => check(inp ? inp.value : ''));
+      } else {
+        const nxBtn = container.querySelector('#bNx');
+        if (nxBtn) {
+          nxBtn.focus();
+          nxBtn.addEventListener('click', next);
+        }
+      }
     }
-    function check(v){if(chk)return; last=v; const w=qs[idx]; chk=evalWrite(v,w.fr); const ok=(chk==='ok'||chk==='almost'); handleMiniGameResult(w,ok); res.push({word:w,ok}); render(false);}
-    function next(){idx++; chk=null; last=''; showHint=false; if(idx>=qs.length)renderRoundSummary(container,'dictation',res); else render(true);}
-    function onK(e){if(chk&&e.key==='Enter'){e.preventDefault();next();}} window.addEventListener('keydown',onK); activeSessionCleanup=()=>window.removeEventListener('keydown',onK); render(true);
+
+    function check(v) {
+      if (chk) return;
+      last = v;
+      const w = qs[idx];
+      chk = evaluateWrittenAnswer(v, w.fr);
+      const ok = (chk === 'ok' || chk === 'almost');
+      handleMiniGameResult(w, ok);
+      res.push({ word: w, ok });
+      render(false);
+    }
+    function next() {
+      idx++;
+      chk = null;
+      last = '';
+      showHint = false;
+      if (idx >= qs.length) renderRoundSummary(container, 'dictation', res);
+      else render(true);
+    }
+    function onK(e) {
+      if (chk && e.key === 'Enter') {
+        e.preventDefault();
+        next();
+      }
+    }
+    window.addEventListener('keydown', onK);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onK);
+    render(!restored);
   }
 
   /* =========================================================
-   * 5. РЕЖИМ У КОНТЕКСТІ
+   * 5. РЕЖИМ У КОНТЕКСТІ (Підтримка context_quiz + Вимкнено автоозвучення - Пункт 6)
    * ========================================================= */
-  function runContextMode(container){
-    const qs=pickStudyWords(10, w=>Boolean(w.ex)); if(qs.length<4){alert('Мало слів із прикладами (ex)'); renderCurrentTab(); return;}
-    let idx=0; let ansd=false; let opts=[]; const res=[];
-    function setup(){ const w=qs[idx]; opts=shuffle([w, ...shuffle(getActiveWordsPool().filter(x=>x.id!==w.id)).slice(0,3)]); ansd=false; render(w); }
-    function render(w,chId=null){
-      container.innerHTML=`
+  function runContextMode(container, restored = null) {
+    let qs = [];
+    let idx = 0;
+    let ansd = false;
+    let opts = []; // [{ text, isCorrect }]
+    const res = [];
+
+    if (restored && Array.isArray(restored.wordIds)) {
+      qs = restored.wordIds.map(id => state.words.find(w => w.id === id)).filter(Boolean);
+      idx = restored.idx || 0;
+      if (Array.isArray(restored.results)) {
+        restored.results.forEach(r => {
+          const w = state.words.find(x => x.id === r.id);
+          if (w) res.push({ word: w, ok: r.ok });
+        });
+      }
+    } else {
+      qs = pickStudyWords(10, w => Boolean(w.ex));
+    }
+    if (qs.length < 1) {
+      showToast('Мало слів із прикладами (ex)');
+      exitToDashboard();
+      return;
+    }
+
+    function syncSession() {
+      activeRoundState = {
+        mode: 'context',
+        wordIds: qs.map(w => w.id),
+        idx,
+        results: res.map(r => ({ id: r.word.id, ok: r.ok }))
+      };
+      saveActiveSessionProgress();
+    }
+
+    function setup() {
+      syncSession();
+      const w = qs[idx];
+      // Якщо картка має згенерований за новим промптом блок context_quiz — беремо однорідні форми звідти
+      if (w.context_quiz && w.context_quiz.correct && Array.isArray(w.context_quiz.distractors) && w.context_quiz.distractors.length > 0) {
+        const cText = String(w.context_quiz.correct).trim();
+        const dList = w.context_quiz.distractors.slice(0, 3).map(d => ({ text: String(d).trim(), isCorrect: false }));
+        opts = shuffle([{ text: cText, isCorrect: true }, ...dList]);
+      } else {
+        // Fallback для старіших карток: беремо точну форму з квадратних дужок [...] або очищену від артиклів форму
+        const bracketMatch = String(w.ex || '').match(/\[(.+?)\]/);
+        const correctForm = bracketMatch ? bracketMatch[1].trim() : getContextOptionText(w.fr);
+        const otherWords = shuffle(getActiveWordsPool().filter(x => x.id !== w.id)).slice(0, 3);
+        const dList = otherWords.map(o => {
+          const m = String(o.ex || '').match(/\[(.+?)\]/);
+          return { text: m ? m[1].trim() : getContextOptionText(o.fr), isCorrect: false };
+        });
+        opts = shuffle([{ text: correctForm, isCorrect: true }, ...dList]);
+      }
+      ansd = false;
+      render(w);
+    }
+
+    function render(w, chosenIndex = null) {
+      container.innerHTML = `
       <div class="session-header">
         <button class="btn btn-sm" id="bEx">← До режимів</button>
-        <span class="session-progress">У контексті · ${idx+1}/${qs.length}</span>
+        <span class="session-progress">У контексті · ${idx+1} / ${qs.length}</span>
       </div>
       <section class="index-card">
         <div class="instruction-text">Доповніть речення відповідним словом (${escapeHtml(getPromptText(w))}):</div>
-        <div class="study-example"><span>${ansd?highlightBracketExample(w.ex,w.fr):escapeHtml(w.ex).replace(/\[.+?\]/g,'<span class="hl-word">[ … ]</span>')}</span>${ansd?speakerBtnHtml(w.ex):''}</div>
-        <div class="options-grid">
-          ${opts.map((o,i)=>{ let cls=''; if(ansd){if(o.id===w.id)cls='correct';else if(o.id===chId)cls='wrong';} return `<button class="option-btn ${cls}" data-opt="${o.id}" ${ansd?'disabled':''}><span class="option-key">${i+1}</span><span style="font-family:var(--font-fr);font-weight:700;">${escapeHtml(getContextOptionText(o.fr))}</span></button>`;}).join('')}
+        <div class="study-example">
+          <div>
+            <div>${ansd ? highlightBracketExample(w.ex) : escapeHtml(w.ex).replace(/\[.+?\]/g, '<span class="hl-word">[ … ]</span>')}</div>
+            ${ansd && w.context_translation ? `<div style="font-family:var(--font-ui); font-size:0.85rem; color:var(--text-muted); margin-top:4px;">${escapeHtml(w.context_translation)}</div>` : ''}
+          </div>
+          ${speakerBtnHtml(w.ex, 'Озвучити речення')}
         </div>
-        ${ansd?`<button class="btn btn-primary" id="bNx" style="margin-top:14px;float:right;">Далі</button>`:''}
+        <div class="options-grid">
+          ${opts.map((o, i) => {
+            let cls = '';
+            if (ansd) {
+              if (o.isCorrect) cls = 'correct';
+              else if (i === chosenIndex) cls = 'wrong';
+            }
+            return `<button type="button" class="option-btn ${cls}" data-idx="${i}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span style="font-family:var(--font-fr);font-weight:700;">${escapeHtml(o.text)}</span></button>`;
+          }).join('')}
+        </div>
+        ${ansd ? `<button type="button" class="btn btn-primary" id="bNx" style="margin-top:14px;float:right;">Далі (Enter)</button>` : ''}
       </section>`;
-      container.querySelector('#bEx').addEventListener('click',renderCurrentTab); container.querySelectorAll('[data-opt]').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.opt))); if(ansd)container.querySelector('#bNx').addEventListener('click',next);
+      container.querySelector('#bEx').addEventListener('click', exitToDashboard);
+      container.querySelectorAll('[data-idx]').forEach(b => b.addEventListener('click', () => choose(Number(b.dataset.idx))));
+      if (ansd) container.querySelector('#bNx').addEventListener('click', next);
     }
-    function choose(id){if(ansd)return; ansd=true; const w=qs[idx]; const ok=(id===w.id); handleMiniGameResult(w,ok); res.push({word:w,ok}); render(w,id); if(speechSupported)speakFrench(w.ex);}
-    function next(){idx++; if(idx>=qs.length)renderRoundSummary(container,'context',res); else setup();}
-    function onK(e){if(!ansd&&['1','2','3','4'].includes(e.key)){const o=opts[Number(e.key)-1]; if(o)choose(o.id);} else if(ansd&&e.key==='Enter')next();} window.addEventListener('keydown',onK); activeSessionCleanup=()=>window.removeEventListener('keydown',onK); setup();
+
+    function choose(i) {
+      if (ansd) return;
+      ansd = true;
+      const w = qs[idx];
+      const ok = Boolean(opts[i] && opts[i].isCorrect);
+      handleMiniGameResult(w, ok);
+      res.push({ word: w, ok });
+      render(w, i);
+      // Автоозвучення при кліку на варіант вимкнено (Пункт 6) — звук лише за кнопкою динаміка
+    }
+    function next() {
+      idx++;
+      if (idx >= qs.length) renderRoundSummary(container, 'context', res);
+      else setup();
+    }
+    function onK(e) {
+      if (!ansd && ['1','2','3','4'].includes(e.key)) {
+        const i = Number(e.key) - 1;
+        if (opts[i]) choose(i);
+      } else if (ansd && e.key === 'Enter') {
+        e.preventDefault();
+        next();
+      }
+    }
+    window.addEventListener('keydown', onK);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onK);
+    setup();
   }
 
   /* =========================================================
    * 6. РЕЖИМ СИНОНІМИ
    * ========================================================= */
-  function runSynonymsMode(container){
-    const qs=pickStudyWords(10, w=>w.syn&&w.syn.length>0); if(qs.length<1){alert('Немає слів із синонімами'); renderCurrentTab(); return;}
-    let idx=0; let ansd=false; let opts=[]; let tSyn=''; const res=[];
-    function setup(){ const w=qs[idx]; tSyn=w.syn[0]; const dp=getActiveWordsPool().filter(x=>x.id!==w.id).map(x=>(x.syn&&x.syn[0])?x.syn[0]:x.fr).filter(s=>s.toLowerCase()!==tSyn.toLowerCase()); opts=shuffle([tSyn, ...shuffle(Array.from(new Set(dp))).slice(0,3)]); ansd=false; render(w); }
-    function render(w,ch=null){
-      container.innerHTML=`
+  function runSynonymsMode(container, restored = null) {
+    let qs = [];
+    let idx = 0;
+    let ansd = false;
+    let opts = [];
+    let tSyn = '';
+    const res = [];
+
+    if (restored && Array.isArray(restored.wordIds)) {
+      qs = restored.wordIds.map(id => state.words.find(w => w.id === id)).filter(Boolean);
+      idx = restored.idx || 0;
+      if (Array.isArray(restored.results)) {
+        restored.results.forEach(r => {
+          const w = state.words.find(x => x.id === r.id);
+          if (w) res.push({ word: w, ok: r.ok });
+        });
+      }
+    } else {
+      qs = pickStudyWords(10, w => w.syn && w.syn.length > 0);
+    }
+    if (qs.length < 1) {
+      showToast('Немає слів із синонімами');
+      exitToDashboard();
+      return;
+    }
+
+    function syncSession() {
+      activeRoundState = {
+        mode: 'synonyms',
+        wordIds: qs.map(w => w.id),
+        idx,
+        results: res.map(r => ({ id: r.word.id, ok: r.ok }))
+      };
+      saveActiveSessionProgress();
+    }
+
+    function setup() {
+      syncSession();
+      const w = qs[idx];
+      tSyn = w.syn[0];
+      const dp = getActiveWordsPool().filter(x => x.id !== w.id).map(x => (x.syn && x.syn[0]) ? x.syn[0] : getTestableFr(x.fr)).filter(s => s.toLowerCase() !== tSyn.toLowerCase());
+      opts = shuffle([tSyn, ...shuffle(Array.from(new Set(dp))).slice(0, 3)]);
+      ansd = false;
+      render(w);
+    }
+    function render(w, ch = null) {
+      container.innerHTML = `
       <div class="session-header">
         <button class="btn btn-sm" id="bEx">← До режимів</button>
-        <span class="session-progress">Синоніми · ${idx+1}/${qs.length}</span>
+        <span class="session-progress">Синоніми · ${idx+1} / ${qs.length}</span>
       </div>
       <section class="index-card">
         <div class="instruction-text">Оберіть синонім до виразу:</div>
@@ -998,28 +1828,69 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           ${speakerBtnHtml(w.fr)}
         </div>
         <div class="options-grid">
-          ${opts.map((o,i)=>{ let cls=''; if(ansd){if(o===tSyn)cls='correct';else if(o===ch)cls='wrong';} return `<button class="option-btn ${cls}" data-s="${escapeHtml(o)}" ${ansd?'disabled':''}><span class="option-key">${i+1}</span><span class="opt-fr">${escapeHtml(o)}</span></button>`;}).join('')}
+          ${opts.map((o,i) => {
+            let cls = '';
+            if (ansd) { if (o === tSyn) cls = 'correct'; else if (o === ch) cls = 'wrong'; }
+            return `<button type="button" class="option-btn ${cls}" data-s="${escapeHtml(o)}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="opt-fr">${escapeHtml(o)}</span></button>`;
+          }).join('')}
         </div>
-        ${ansd?`<button class="btn btn-primary" id="bNx" style="margin-top:14px;float:right;">Далі</button>`:''}
+        ${ansd ? `<button type="button" class="btn btn-primary" id="bNx" style="margin-top:14px;float:right;">Далі (Enter)</button>` : ''}
       </section>`;
-      container.querySelector('#bEx').addEventListener('click',renderCurrentTab); container.querySelectorAll('[data-s]').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.s))); if(ansd)container.querySelector('#bNx').addEventListener('click',next);
+      container.querySelector('#bEx').addEventListener('click', exitToDashboard);
+      container.querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => choose(b.dataset.s)));
+      if (ansd) container.querySelector('#bNx').addEventListener('click', next);
     }
-    function choose(v){if(ansd)return; ansd=true; const w=qs[idx]; const ok=(v===tSyn); handleMiniGameResult(w,ok); res.push({word:w,ok}); render(w,v);}
-    function next(){idx++; if(idx>=qs.length)renderRoundSummary(container,'synonyms',res); else setup();}
-    function onK(e){if(!ansd&&['1','2','3','4'].includes(e.key)){const o=opts[Number(e.key)-1]; if(o)choose(o);} else if(ansd&&e.key==='Enter')next();} window.addEventListener('keydown',onK); activeSessionCleanup=()=>window.removeEventListener('keydown',onK); setup();
+    function choose(v) {
+      if (ansd) return;
+      ansd = true;
+      const w = qs[idx];
+      const ok = (v === tSyn);
+      handleMiniGameResult(w, ok);
+      res.push({ word: w, ok });
+      render(w, v);
+    }
+    function next() {
+      idx++;
+      if (idx >= qs.length) renderRoundSummary(container, 'synonyms', res);
+      else setup();
+    }
+    function onK(e) {
+      if (!ansd && ['1','2','3','4'].includes(e.key)) {
+        const o = opts[Number(e.key) - 1];
+        if (o) choose(o);
+      } else if (ansd && e.key === 'Enter') {
+        e.preventDefault();
+        next();
+      }
+    }
+    window.addEventListener('keydown', onK);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onK);
+    setup();
   }
 
   /* =========================================================
-   * 7. РЕЖИМ ПАРИ
+   * 7. РЕЖИМ ПАРИ (Вимкнено автоозвучення - Пункт 6)
    * ========================================================= */
-  function runPairsMode(container){
-    const pool=pickStudyWords(10); if(pool.length<5){alert('Потрібно мінімум 5 слів'); renderCurrentTab(); return;}
-    const rounds=[pool.slice(0,5)]; if(pool.length>=10)rounds.push(pool.slice(5,10));
-    let rIdx=0; let t=0; const res=[]; let L=[], R=[], mat=new Set(), sL=null, sR=null;
-    const iv=setInterval(()=>{t++; const el=document.getElementById('pT'); if(el)el.innerText=t;},1000); activeSessionCleanup=()=>clearInterval(iv);
-    function setup(){ const b=rounds[rIdx]; L=shuffle(b.slice()); R=shuffle(b.slice()); mat=new Set(); sL=null; sR=null; render(); }
-    function render(){
-      container.innerHTML=`
+  function runPairsMode(container) {
+    const pool = pickStudyWords(10);
+    if (pool.length < 5) {
+      showToast('Потрібно мінімум 5 слів');
+      exitToDashboard();
+      return;
+    }
+    const rounds = [pool.slice(0, 5)];
+    if (pool.length >= 10) rounds.push(pool.slice(5, 10));
+    let rIdx = 0; let t = 0; const res = []; let L = [], R = [], mat = new Set(), sL = null, sR = null;
+    const iv = setInterval(() => { t++; const el = document.getElementById('pT'); if (el) el.innerText = t; }, 1000);
+    activeSessionCleanup = () => clearInterval(iv);
+
+    function setup() {
+      const b = rounds[rIdx];
+      L = shuffle(b.slice()); R = shuffle(b.slice()); mat = new Set(); sL = null; sR = null;
+      render();
+    }
+    function render() {
+      container.innerHTML = `
       <div class="session-header">
         <button class="btn btn-sm" id="bEx">← До режимів</button>
         <span class="session-progress">Пари · Раунд ${rIdx+1} / ${rounds.length} · <span id="pT">${t}</span> с</span>
@@ -1027,16 +1898,31 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       <section class="index-card">
         <div class="instruction-text">З'єднайте французький вираз та його значення:</div>
         <div class="pairs-columns">
-          <div style="display:flex;flex-direction:column;gap:8px;">${L.map(w=>`<button class="pair-btn pair-left ${mat.has(w.id)?'matched':''} ${sL===w.id?'selected':''}" data-l="${w.id}">${escapeHtml(w.fr)}</button>`).join('')}</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">${R.map(w=>`<button class="pair-btn pair-right ${mat.has(w.id)?'matched':''} ${sR===w.id?'selected':''}" data-r="${w.id}">${escapeHtml(getPromptText(w))}</button>`).join('')}</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">${L.map(w=>`<button type="button" class="pair-btn pair-left ${mat.has(w.id)?'matched':''} ${sL===w.id?'selected':''}" data-l="${w.id}">${escapeHtml(w.fr)}</button>`).join('')}</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">${R.map(w=>`<button type="button" class="pair-btn pair-right ${mat.has(w.id)?'matched':''} ${sR===w.id?'selected':''}" data-r="${w.id}">${escapeHtml(getPromptText(w))}</button>`).join('')}</div>
         </div>
       </section>`;
-      container.querySelector('#bEx').addEventListener('click',renderCurrentTab); container.querySelectorAll('[data-l]').forEach(b=>b.addEventListener('click',()=>{sL=b.dataset.l;chk();})); container.querySelectorAll('[data-r]').forEach(b=>b.addEventListener('click',()=>{sR=b.dataset.r;chk();}));
+      container.querySelector('#bEx').addEventListener('click', exitToDashboard);
+      container.querySelectorAll('[data-l]').forEach(b => b.addEventListener('click', () => { sL = b.dataset.l; chk(); }));
+      container.querySelectorAll('[data-r]').forEach(b => b.addEventListener('click', () => { sR = b.dataset.r; chk(); }));
     }
-    function chk(){
-      if(!sL||!sR){render();return;}
-      if(sL===sR){mat.add(sL); const w=rounds[rIdx].find(x=>x.id===sL); if(w){handleMiniGameResult(w,true); res.push({word:w,ok:true}); if(speechSupported)speakFrench(w.fr);} sL=null; sR=null; if(mat.size===rounds[rIdx].length){rIdx++; if(rIdx>=rounds.length){clearInterval(iv); renderRoundSummary(container,'pairs',res);} else setup();} else render(); }
-      else {sL=null; sR=null; showToast('Не збігається'); render();}
+    function chk() {
+      if (!sL || !sR) { render(); return; }
+      if (sL === sR) {
+        mat.add(sL);
+        const w = rounds[rIdx].find(x => x.id === sL);
+        if (w) { handleMiniGameResult(w, true); res.push({ word: w, ok: true }); }
+        sL = null; sR = null;
+        if (mat.size === rounds[rIdx].length) {
+          rIdx++;
+          if (rIdx >= rounds.length) { clearInterval(iv); renderRoundSummary(container, 'pairs', res); }
+          else setup();
+        } else render();
+      } else {
+        sL = null; sR = null;
+        showToast('Не збігається');
+        render();
+      }
     }
     setup();
   }
@@ -1045,11 +1931,23 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    * 8. РЕЖИМ БЛІЦ
    * ========================================================= */
   function runBlitzMode(container) {
-    const pool = getActiveWordsPool(); let time = 60; let score = 0; const results = []; let cur = null;
-    function next(){ const w=pool[Math.floor(Math.random()*pool.length)]; const isT=Math.random()<0.5; let showW=w; if(!isT){const ot=pool.filter(x=>x.id!==w.id); showW=ot[Math.floor(Math.random()*ot.length)]||w;} cur={word:w, mean:getPromptText(showW), isM:showW.id===w.id}; render(); }
-    function render(){
-      const w=cur.word;
-      container.innerHTML=`
+    const pool = getActiveWordsPool();
+    if (pool.length < 2) { showToast('Недостатньо слів для Бліцу'); exitToDashboard(); return; }
+    let time = 60; let score = 0; const results = []; let cur = null;
+    function next() {
+      const w = pool[Math.floor(Math.random() * pool.length)];
+      const isT = Math.random() < 0.5;
+      let showW = w;
+      if (!isT) {
+        const ot = pool.filter(x => x.id !== w.id);
+        showW = ot[Math.floor(Math.random() * ot.length)] || w;
+      }
+      cur = { word: w, mean: getPromptText(showW), isM: showW.id === w.id };
+      render();
+    }
+    function render() {
+      const w = cur.word;
+      container.innerHTML = `
       <div class="session-header">
         <button class="btn btn-sm" id="btnExit">← До режимів</button>
         <span class="session-progress">Бліц · ${time} с · Рахунок: ${score}</span>
@@ -1060,21 +1958,42 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <hr class="study-divider">
         <div class="study-meaning" style="margin-bottom:24px;">${escapeHtml(cur.mean)}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <button class="btn btn-danger" id="bNo" style="min-height:54px;">← Ні (Неправильно)</button>
-          <button class="btn btn-primary" id="bYes" style="min-height:54px;">Так (Правильно) →</button>
+          <button type="button" class="btn btn-danger" id="bNo" style="min-height:54px;">← Ні (Неправильно)</button>
+          <button type="button" class="btn btn-primary" id="bYes" style="min-height:54px;">Так (Правильно) →</button>
         </div>
       </section>`;
-      container.querySelector('#btnExit').addEventListener('click',renderCurrentTab); container.querySelector('#bNo').addEventListener('click',()=>ans(false)); container.querySelector('#bYes').addEventListener('click',()=>ans(true));
+      container.querySelector('#btnExit').addEventListener('click', exitToDashboard);
+      container.querySelector('#bNo').addEventListener('click', () => ans(false));
+      container.querySelector('#bYes').addEventListener('click', () => ans(true));
     }
-    function ans(yes){ const ok=(yes===cur.isM); if(ok)score++; handleMiniGameResult(cur.word,ok); results.push({word:cur.word,ok}); const fb=document.getElementById('fb'); if(fb){fb.innerText=ok?'✓ Правильно':'✗ Помилка'; fb.className=ok?'feedback-toast bg-green show':'feedback-toast bg-red show'; setTimeout(next,500);} else next(); }
-    const iv=setInterval(()=>{time--; const t=document.querySelector('.session-progress'); if(t)t.innerHTML=`Бліц · ${time} с · Рахунок: ${score}`; if(time<=0){clearInterval(iv); renderRoundSummary(container,'blitz',results);} },1000);
-    function onKey(e){if(e.key==='ArrowLeft')ans(false);else if(e.key==='ArrowRight')ans(true);} window.addEventListener('keydown',onKey); activeSessionCleanup=()=>{clearInterval(iv); window.removeEventListener('keydown',onKey);}; next();
+    function ans(yes) {
+      const ok = (yes === cur.isM);
+      if (ok) score++;
+      handleMiniGameResult(cur.word, ok);
+      results.push({ word: cur.word, ok });
+      const fb = document.getElementById('fb');
+      if (fb) {
+        fb.innerText = ok ? '✓ Правильно' : '✗ Помилка';
+        fb.className = ok ? 'feedback-toast bg-green show' : 'feedback-toast bg-red show';
+        setTimeout(next, 450);
+      } else next();
+    }
+    const iv = setInterval(() => {
+      time--;
+      const t = document.querySelector('.session-progress');
+      if (t) t.innerHTML = `Бліц · ${time} с · Рахунок: ${score}`;
+      if (time <= 0) { clearInterval(iv); renderRoundSummary(container, 'blitz', results); }
+    }, 1000);
+    function onKey(e) { if (e.key === 'ArrowLeft') ans(false); else if (e.key === 'ArrowRight') ans(true); }
+    window.addEventListener('keydown', onKey);
+    activeSessionCleanup = () => { clearInterval(iv); window.removeEventListener('keydown', onKey); };
+    next();
   }
 
   /* =========================================================
    * 9. РЕЖИМ КРОСВОРД
    * ========================================================= */
-  const CW_STOPWORDS = new Set(['qqn', 'qqch', 'qch', 'qn', 'taille', 'pointure', 'adjectif', 'nom', 'un', 'une', 'le', 'la', 'les', 'des']);
+  const CW_STOPWORDS = new Set(['qqn', 'qqch', 'qch', 'qn', 'taille', 'pointure', 'adjectif', 'nom', 'un', 'une', 'le', 'la', 'les', 'des', 'dans', 'pour', 'avec']);
   function extractCrosswordEntry(w) {
     const rawFr = getTestableFr(w.fr);
     const fullClean = rawFr.replace(/^(le |la |les |un |une |l'|se |s')/i, '').replace(/[-'’]/g, '').replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]/gi, '').toLowerCase();
@@ -1156,9 +2075,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     placed.forEach((p, idx) => { p.num = idx + 1; });
     return { grid, placed, size: GRID_SIZE };
   }
+
   function runCrosswordMode(container) {
     const puzzle = generateCrosswordPuzzle();
-    if(puzzle.placed.length===0){alert('Мало слів для генерації кросворду');renderCurrentTab();return;}
+    if (puzzle.placed.length === 0) { showToast('Мало слів для генерації кросворду'); exitToDashboard(); return; }
     let activeDir = 'H'; let lastFocused = null; const numMap = {};
     puzzle.placed.forEach(p => { const key = `${p.r},${p.c}`; numMap[key] = numMap[key] ? `${numMap[key]}/${p.num}` : String(p.num); });
     const across = puzzle.placed.filter(p => p.dir === 'H'); const down = puzzle.placed.filter(p => p.dir === 'V');
@@ -1194,13 +2114,21 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
       </section>
     `;
-    container.querySelector('#btnExitMode').addEventListener('click', renderCurrentTab);
+    container.querySelector('#btnExitMode').addEventListener('click', exitToDashboard);
     const getInput = (r, c) => container.querySelector(`input[data-r="${r}"][data-c="${c}"]`);
     container.querySelectorAll('.cw-clue-item').forEach(el => { el.addEventListener('click', () => { const [r, c, dir] = el.dataset.focus.split(','); activeDir = dir; const inp = getInput(Number(r), Number(c)); if (inp) inp.focus(); }); });
     container.querySelectorAll('.cw-cell input').forEach(inp => {
       inp.addEventListener('focus', () => { lastFocused = inp; });
       inp.addEventListener('input', () => { inp.classList.remove('cw-ok', 'cw-err'); if (inp.value) { const r = Number(inp.dataset.r); const c = Number(inp.dataset.c); const next = activeDir === 'H' ? getInput(r, c + 1) : getInput(r + 1, c); if (next) next.focus(); } });
-      inp.addEventListener('keydown', e => { const r = Number(inp.dataset.r); const c = Number(inp.dataset.c); if (e.key === 'Backspace' && !inp.value) { const prev = activeDir === 'H' ? getInput(r, c - 1) : getInput(r - 1, c); if (prev) prev.focus(); } else if (e.key === 'ArrowRight') { activeDir = 'H'; const n = getInput(r, c + 1); if (n) n.focus(); } else if (e.key === 'ArrowLeft') { activeDir = 'H'; const n = getInput(r, c - 1); if (n) n.focus(); } else if (e.key === 'ArrowDown') { activeDir = 'V'; const n = getInput(r + 1, c); if (n) n.focus(); } else if (e.key === 'ArrowUp') { activeDir = 'V'; const n = getInput(r - 1, c); if (n) n.focus(); } });
+      inp.addEventListener('keydown', e => {
+        const r = Number(inp.dataset.r); const c = Number(inp.dataset.c);
+        if (e.key === 'Backspace' && !inp.value) { const prev = activeDir === 'H' ? getInput(r, c - 1) : getInput(r - 1, c); if (prev) prev.focus(); }
+        else if (e.key === 'ArrowRight') { activeDir = 'H'; const n = getInput(r, c + 1); if (n) n.focus(); }
+        else if (e.key === 'ArrowLeft') { activeDir = 'H'; const n = getInput(r, c - 1); if (n) n.focus(); }
+        else if (e.key === 'ArrowDown') { activeDir = 'V'; const n = getInput(r + 1, c); if (n) n.focus(); }
+        else if (e.key === 'ArrowUp') { activeDir = 'V'; const n = getInput(r - 1, c); if (n) n.focus(); }
+        else if (e.key === 'Enter') { e.preventDefault(); container.querySelector('#btnCwCheck').click(); }
+      });
     });
     container.querySelector('#btnCwCheck').addEventListener('click', () => { container.querySelectorAll('.cw-cell input').forEach(inp => { const val = stripDiacritics(inp.value.trim().toLowerCase()); const ans = stripDiacritics(inp.dataset.ans.toLowerCase()); if (!val) return; if (val === ans) { inp.classList.add('cw-ok'); inp.classList.remove('cw-err'); } else { inp.classList.add('cw-err'); inp.classList.remove('cw-ok'); } }); });
     container.querySelector('#btnCwHint').addEventListener('click', () => { const target = (lastFocused && !lastFocused.value) ? lastFocused : Array.from(container.querySelectorAll('.cw-cell input')).find(i => i.value.toLowerCase() !== i.dataset.ans); if (target) { target.value = target.dataset.ans; target.classList.add('cw-ok'); target.focus(); } });
@@ -1209,15 +2137,48 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 10. РЕЖИМ АНАГРАМА
+   * 10. РЕЖИМ АНАГРАМА (Вимкнено автоозвучення - Пункт 6)
    * ========================================================= */
-  function runAnagramMode(container) {
-    const questions = pickStudyWords(10); let idx = 0; let pool = []; let pickedIndices = []; let finishedWord = false; const results = [];
+  function runAnagramMode(container, restored = null) {
+    let questions = [];
+    let idx = 0;
+    let pool = [];
+    let pickedIndices = [];
+    let finishedWord = false;
+    const results = [];
+
+    if (restored && Array.isArray(restored.wordIds)) {
+      questions = restored.wordIds.map(id => state.words.find(w => w.id === id)).filter(Boolean);
+      idx = restored.idx || 0;
+      if (Array.isArray(restored.results)) {
+        restored.results.forEach(r => {
+          const w = state.words.find(x => x.id === r.id);
+          if (w) results.push({ word: w, ok: r.ok });
+        });
+      }
+    } else {
+      questions = pickStudyWords(10);
+    }
+    if (questions.length === 0 || idx >= questions.length) { exitToDashboard(); return; }
+
+    function syncSession() {
+      activeRoundState = {
+        mode: 'anagram',
+        wordIds: questions.map(w => w.id),
+        idx,
+        results: results.map(r => ({ id: r.word.id, ok: r.ok }))
+      };
+      saveActiveSessionProgress();
+    }
+
     function setupAnagram() {
+      syncSession();
       const w = questions[idx];
       const targetStr = getTestableFr(w.fr);
       pool = shuffle(Array.from(targetStr).map((c, i) => ({ c, i })).filter(item => item.c !== ' '));
-      pickedIndices = []; finishedWord = false; renderAnagram();
+      pickedIndices = [];
+      finishedWord = false;
+      renderAnagram();
     }
     function renderAnagram() {
       const w = questions[idx];
@@ -1260,11 +2221,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           `}
         </section>
       `;
-      container.querySelector('#btnExitMode').addEventListener('click', renderCurrentTab);
+      container.querySelector('#btnExitMode').addEventListener('click', exitToDashboard);
       container.querySelectorAll('[data-pick]').forEach(btn => btn.addEventListener('click', () => pickTile(Number(btn.dataset.pick))));
       container.querySelectorAll('[data-unpick]').forEach(btn => btn.addEventListener('click', () => { if (!finishedWord) { pickedIndices.splice(Number(btn.dataset.unpick), 1); renderAnagram(); } }));
-      if(container.querySelector('#btnAnaReset')) container.querySelector('#btnAnaReset').addEventListener('click', () => { pickedIndices = []; renderAnagram(); });
-      if(container.querySelector('#btnNextAna')) container.querySelector('#btnNextAna').addEventListener('click', nextWord);
+      if (container.querySelector('#btnAnaReset')) container.querySelector('#btnAnaReset').addEventListener('click', () => { pickedIndices = []; renderAnagram(); });
+      if (container.querySelector('#btnNextAna')) container.querySelector('#btnNextAna').addEventListener('click', nextWord);
     }
     function pickTile(pi) {
       if (finishedWord || pickedIndices.includes(pi)) return;
@@ -1274,58 +2235,238 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       if (pickedIndices.length === pool.length) {
         let attempt = ''; let pIdx = 0;
         for (let char of Array.from(targetStr)) { if (char === ' ') attempt += ' '; else { attempt += pool[pickedIndices[pIdx]].c; pIdx++; } }
-        if (attempt.toLowerCase() === targetStr.toLowerCase()) { finishedWord = true; handleMiniGameResult(w, true); results.push({ word: w, ok: true }); if (speechSupported) speakFrench(w.fr, 1.0); }
-        else { showToast('Неправильно, спробуйте ще раз.'); pickedIndices = []; }
+        if (attempt.toLowerCase() === targetStr.toLowerCase()) {
+          finishedWord = true;
+          handleMiniGameResult(w, true);
+          results.push({ word: w, ok: true });
+        } else {
+          showToast('Неправильно, спробуйте ще раз.');
+          pickedIndices = [];
+        }
       }
       renderAnagram();
     }
     function nextWord() { if (!finishedWord) return; idx++; if (idx >= questions.length) renderRoundSummary(container, 'anagram', results); else setupAnagram(); }
-    function onKey(e) { if (finishedWord && e.key === 'Enter') { e.preventDefault(); nextWord(); return; } if (!finishedWord) { if (e.key === 'Backspace') { pickedIndices.pop(); renderAnagram(); } } }
-    window.addEventListener('keydown', onKey); activeSessionCleanup = () => window.removeEventListener('keydown', onKey);
+    function onKey(e) {
+      if (finishedWord && e.key === 'Enter') { e.preventDefault(); nextWord(); return; }
+      if (!finishedWord) {
+        if (e.key === 'Backspace') { pickedIndices.pop(); renderAnagram(); }
+        else if (e.key.length === 1) {
+          const ch = stripDiacritics(e.key.toLowerCase());
+          const found = pool.findIndex((item, pi) => !pickedIndices.includes(pi) && stripDiacritics(item.c.toLowerCase()) === ch);
+          if (found !== -1) pickTile(found);
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    activeSessionCleanup = () => window.removeEventListener('keydown', onKey);
     setupAnagram();
   }
 
-  // === СЛОВА ТА МОДАЛЬНІ ВІКНА ===
+  /* =========================================================
+   * СЛОВА, ВИДАЛЕННЯ СЛОВА ТА ВИДАЛЕННЯ ТЕМИ (Пункт 4)
+   * ========================================================= */
+  let wordSearchQuery = '';
+  let wordFilterStatus = 'all';
+  let wordFilterSrc = 'all';
+  let confirmingDeleteWordId = null;
+  let confirmingTopicDelete = false;
+
   function renderWordsTab(container) {
     const sources = Array.from(new Set(state.words.map(w => w.src).filter(Boolean))).sort();
+    if (wordFilterSrc !== 'all' && !sources.includes(wordFilterSrc)) {
+      wordFilterSrc = 'all';
+      confirmingTopicDelete = false;
+    }
+    const canBulkDeleteTopic = (wordFilterSrc !== 'all');
+    const topicWordCount = canBulkDeleteTopic ? state.words.filter(w => w.src === wordFilterSrc).length : 0;
+
     container.innerHTML = `
-      <section class="panel-card"><h3 style="font-family:var(--font-fr); margin-bottom:12px;">Мої слова (${state.words.length})</h3>
-        <div class="words-toolbar"><button type="button" class="btn btn-primary" onclick="alert('Додавати слова з коду можна лише через панель викладача або кнопку на головному екрані')">Додати з коду</button><button type="button" class="btn" id="btnAddSingle">+ Слово</button><button type="button" class="btn" onclick="alert('Додавання списком тимчасово вимкнено')">Списком</button></div>
-        <div class="filters-bar"><input type="search" id="inpWordSearch" class="input" placeholder="Пошук виразу або перекладу…"><select id="selFilterStatus" class="select"><option value="all">Усі статуси</option><option value="new">Нове</option><option value="learn">Вчу</option><option value="know">Знаю</option><option value="master">Засвоєно</option></select><select id="selFilterSrc" class="select"><option value="all">Усі теми</option>${sources.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select></div>
+      <section class="panel-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+          <h3 style="font-family:var(--font-fr);">Мої слова (${state.words.length})</h3>
+        </div>
+        <div class="words-toolbar">
+          <button type="button" class="btn btn-primary" id="btnAddCode">Додати з коду</button>
+          <button type="button" class="btn" id="btnAddSingle">+ Слово</button>
+          ${canBulkDeleteTopic ? `
+            ${!confirmingTopicDelete ? `
+              <button type="button" class="btn btn-danger btn-sm" id="btnAskDeleteTopic" style="margin-left:auto;">
+                🗑 Видалити тему «${escapeHtml(wordFilterSrc)}» (${topicWordCount})
+              </button>
+            ` : `
+              <span class="inline-confirm" style="margin-left:auto;">
+                <button type="button" class="btn btn-sm btn-danger" id="btnConfirmDeleteTopic">Точно видалити всі ${topicWordCount} сл.?</button>
+                <button type="button" class="btn btn-sm" id="btnCancelDeleteTopic">Скасувати</button>
+              </span>
+            `}
+          ` : ''}
+        </div>
+        <div class="filters-bar">
+          <input type="search" id="inpWordSearch" class="input" style="margin-bottom:0;" placeholder="Пошук виразу або перекладу…" value="${escapeHtml(wordSearchQuery)}">
+          <select id="selFilterStatus" class="select">
+            <option value="all" ${wordFilterStatus === 'all' ? 'selected' : ''}>Усі статуси (${state.words.length})</option>
+            <option value="new" ${wordFilterStatus === 'new' ? 'selected' : ''}>Нове</option>
+            <option value="learn" ${wordFilterStatus === 'learn' ? 'selected' : ''}>Вчу</option>
+            <option value="know" ${wordFilterStatus === 'know' ? 'selected' : ''}>Знаю</option>
+            <option value="master" ${wordFilterStatus === 'master' ? 'selected' : ''}>Засвоєно</option>
+          </select>
+          <select id="selFilterSrc" class="select">
+            <option value="all" ${wordFilterSrc === 'all' ? 'selected' : ''}>Усі теми (${sources.length})</option>
+            ${sources.map(s => `<option value="${escapeHtml(s)}" ${wordFilterSrc === s ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+          </select>
+        </div>
         <div id="wordsListContainer" class="word-list"></div>
       </section>`;
       
-      container.querySelector('#btnAddSingle').addEventListener('click', () => openWordFormModal());
-      const listEl = container.querySelector('#wordsListContainer');
-      function renderList() {
-        const query = (container.querySelector('#inpWordSearch').value || '').trim().toLowerCase();
-        const stat = container.querySelector('#selFilterStatus').value;
-        const src = container.querySelector('#selFilterSrc').value;
-        const filtered = state.words.filter(w => {
-          if (stat !== 'all' && getWordStatus(w) !== stat) return false;
-          if (src !== 'all' && w.src !== src) return false;
-          if (query && !(w.fr.toLowerCase().includes(query) || (w.uk||'').toLowerCase().includes(query) || (w.def||'').toLowerCase().includes(query))) return false;
-          return true;
-        });
-        if(filtered.length === 0){ listEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Слів не знайдено.</div>`; return; }
-        listEl.innerHTML = filtered.map(w => {
-          const st = getWordStatus(w); const d = formatDueDate(w);
-          const hasC = w.conj && w.conj.tenses;
-          return `<article class="word-item" data-status="${st}">
-            <div class="word-item-header"><div class="word-fr-line"><span class="word-fr">${escapeHtml(w.fr)}</span> ${w.pos ? `<span class="word-pos">(${escapeHtml(w.pos)})</span>` : ''}</div><div class="word-badges-row"><span class="badge">${getStatusLabel(st)}</span> ${w.src ? `<span class="badge">${escapeHtml(w.src)}</span>` : ''} ${d ? `<span class="badge">${d}</span>` : ''}</div></div>
-            <div class="word-meaning">${escapeHtml(getPromptText(w))}</div>
-            ${w.ex ? `<div style="font-family:var(--font-fr); font-size:0.95rem; background:var(--bg-elevated); padding:8px; border-radius:4px;">${highlightBracketExample(w.ex, w.fr)}</div>` : ''}
-            ${hasC ? `<button type="button" class="btn-toggle-conj" style="width:fit-content; margin-top:10px; margin-bottom:0;" onclick="toggleConjugation(this); switchTense('present', null, 'tense-${w.id}');">📖 Відмінювання</button><div class="conj-box" style="margin-top:10px;"><div class="tabs-nav"><button class="tab-btn active" onclick="switchTense('present',event)">Présent</button><button class="tab-btn" onclick="switchTense('pc',event)">Passé composé</button><button class="tab-btn" onclick="switchTense('imparfait',event)">Imparfait</button><button class="tab-btn" onclick="switchTense('futur',event)">Futur simple</button><button class="tab-btn" onclick="switchTense('conditionnel',event)">Conditionnel</button><button class="tab-btn" onclick="switchTense('subjonctif',event)">Subjonctif</button></div><div id="tense-${w.id}" class="tense-content" data-vid="${w.id}"></div></div>` : ''}
-            <div class="word-item-actions"><span>Повторень: ${w.r || 0} ${w.added ? `· Додано: ${w.added.split('-').slice(1).reverse().join('.')}` : ''}</span><div style="display:flex;gap:6px;">${speakerBtnHtml(w.fr)}<button type="button" class="btn btn-sm" data-edit="${w.id}">Редагувати</button><button type="button" class="btn btn-sm" data-askdel="${w.id}">Видалити</button></div></div>
-          </article>`;
-        }).join('');
-        listEl.querySelectorAll('[data-edit]').forEach(btn => { btn.addEventListener('click', () => { const w = state.words.find(item => item.id === btn.dataset.edit); if (w) openWordFormModal(w); }); });
-        listEl.querySelectorAll('[data-askdel]').forEach(btn => { btn.addEventListener('click', () => { if(confirm('Видалити слово?')) { state.words = state.words.filter(item => item.id !== btn.dataset.askdel); saveLocalStats(); sbClient.from('cards').delete().eq('id', btn.dataset.askdel).then(); showToast('Слово видалено'); renderList(); } }); });
+    container.querySelector('#btnAddCode').addEventListener('click', openAddCodeModal);
+    container.querySelector('#btnAddSingle').addEventListener('click', () => openWordFormModal());
+
+    const askTopicBtn = container.querySelector('#btnAskDeleteTopic');
+    if (askTopicBtn) {
+      askTopicBtn.addEventListener('click', () => {
+        confirmingTopicDelete = true;
+        renderWordsTab(container);
+      });
+    }
+    const cancelTopicBtn = container.querySelector('#btnCancelDeleteTopic');
+    if (cancelTopicBtn) {
+      cancelTopicBtn.addEventListener('click', () => {
+        confirmingTopicDelete = false;
+        renderWordsTab(container);
+      });
+    }
+    const confirmTopicBtn = container.querySelector('#btnConfirmDeleteTopic');
+    if (confirmTopicBtn) {
+      confirmTopicBtn.addEventListener('click', async () => {
+        const deletedTopic = wordFilterSrc;
+        const toDelete = state.words.filter(w => w.src === deletedTopic);
+        const dbIds = toDelete.map(w => w.dbId).filter(Boolean);
+        state.words = state.words.filter(w => w.src !== deletedTopic);
+        if (state.settings.focusTopic === deletedTopic) {
+          state.settings.focusTopic = 'all';
+        }
+        wordFilterSrc = 'all';
+        confirmingTopicDelete = false;
+        saveLocalStats();
+        updateNavBadge();
+        if (dbIds.length > 0) {
+          await sbClient.from('cards').delete().in('id', dbIds);
+        } else if (currentUser) {
+          await sbClient.from('cards').delete().eq('user_email', currentUser.email).eq('src', deletedTopic);
+        }
+        showToast(`Усі слова з теми «${deletedTopic}» видалено`);
+        renderWordsTab(container);
+      });
+    }
+
+    const listEl = container.querySelector('#wordsListContainer');
+    function renderList() {
+      const query = wordSearchQuery.trim().toLowerCase();
+      const filtered = state.words.filter(w => {
+        if (wordFilterStatus !== 'all' && getWordStatus(w) !== wordFilterStatus) return false;
+        if (wordFilterSrc !== 'all' && w.src !== wordFilterSrc) return false;
+        if (query && !(w.fr.toLowerCase().includes(query) || (w.uk||'').toLowerCase().includes(query) || (w.def||'').toLowerCase().includes(query))) return false;
+        return true;
+      });
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Слів не знайдено.</div>`;
+        return;
       }
-      container.querySelector('#inpWordSearch').addEventListener('input', renderList);
-      container.querySelector('#selFilterStatus').addEventListener('change', renderList);
-      container.querySelector('#selFilterSrc').addEventListener('change', renderList);
+      listEl.innerHTML = filtered.map(w => {
+        const st = getWordStatus(w);
+        const d = formatDueDate(w);
+        const hasC = w.conj && w.conj.tenses;
+        const isConfirming = (confirmingDeleteWordId === w.id);
+        return `<article class="word-item" data-status="${st}">
+          <div class="word-item-header">
+            <div class="word-fr-line"><span class="word-fr">${escapeHtml(w.fr)}</span> ${w.pos ? `<span class="word-pos">(${escapeHtml(w.pos)})</span>` : ''}</div>
+            <div class="word-badges-row"><span class="badge">${getStatusLabel(st)}</span> ${w.src ? `<span class="badge">${escapeHtml(w.src)}</span>` : ''} ${d ? `<span class="badge">${d}</span>` : ''}</div>
+          </div>
+          <div class="word-meaning">${escapeHtml(getPromptText(w))}</div>
+          ${w.ex ? `<div style="font-family:var(--font-fr); font-size:0.95rem; background:var(--bg-elevated); padding:8px; border-radius:4px;">${highlightBracketExample(w.ex)}</div>` : ''}
+          ${hasC ? `
+            <button type="button" class="btn-toggle-conj" style="width:fit-content; margin-top:6px; margin-bottom:0;" onclick="toggleConjugation(this); switchTense('present', null, 'tense-${w.id}');">📖 Відмінювання</button>
+            <div class="conj-box" style="margin-top:8px;">
+              <div class="tabs-nav">
+                <button type="button" class="tab-btn active" onclick="switchTense('present',event)">Présent</button>
+                <button type="button" class="tab-btn" onclick="switchTense('passe_compose',event)">Passé composé</button>
+                <button type="button" class="tab-btn" onclick="switchTense('imparfait',event)">Imparfait</button>
+                <button type="button" class="tab-btn" onclick="switchTense('futur_simple',event)">Futur simple</button>
+                <button type="button" class="tab-btn" onclick="switchTense('conditionnel',event)">Conditionnel</button>
+                <button type="button" class="tab-btn" onclick="switchTense('subjonctif',event)">Subjonctif</button>
+              </div>
+              <div id="tense-${w.id}" class="tense-content" data-vid="${w.id}"></div>
+            </div>
+          ` : ''}
+          <div class="word-item-actions">
+            <span>Повторень: ${w.r || 0} ${w.added ? `· Додано: ${w.added.split('-').slice(1).reverse().join('.')}` : ''}</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+              ${speakerBtnHtml(w.fr)}
+              <button type="button" class="btn btn-sm" data-edit="${w.id}">Редагувати</button>
+              ${!isConfirming ? `
+                <button type="button" class="btn btn-sm" data-askdel="${w.id}">Видалити</button>
+              ` : `
+                <span class="inline-confirm">
+                  <button type="button" class="btn btn-sm btn-danger" data-confirmdel="${w.id}">Так, видалити</button>
+                  <button type="button" class="btn btn-sm" data-canceldel="${w.id}">Скасувати</button>
+                </span>
+              `}
+            </div>
+          </div>
+        </article>`;
+      }).join('');
+
+      listEl.querySelectorAll('[data-edit]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const w = state.words.find(item => item.id === btn.dataset.edit);
+          if (w) openWordFormModal(w);
+        });
+      });
+      listEl.querySelectorAll('[data-askdel]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          confirmingDeleteWordId = btn.dataset.askdel;
+          renderList();
+        });
+      });
+      listEl.querySelectorAll('[data-canceldel]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          confirmingDeleteWordId = null;
+          renderList();
+        });
+      });
+      listEl.querySelectorAll('[data-confirmdel]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const targetWord = state.words.find(item => item.id === btn.dataset.confirmdel);
+          state.words = state.words.filter(item => item.id !== btn.dataset.confirmdel);
+          confirmingDeleteWordId = null;
+          saveLocalStats();
+          updateNavBadge();
+          if (targetWord && targetWord.dbId) {
+            await sbClient.from('cards').delete().eq('id', targetWord.dbId);
+          } else if (targetWord && currentUser) {
+            await sbClient.from('cards').delete().eq('user_email', currentUser.email).eq('fr', targetWord.fr);
+          }
+          showToast('Слово видалено');
+          renderWordsTab(container);
+        });
+      });
+    }
+
+    container.querySelector('#inpWordSearch').addEventListener('input', e => {
+      wordSearchQuery = e.target.value;
       renderList();
+    });
+    container.querySelector('#selFilterStatus').addEventListener('change', e => {
+      wordFilterStatus = e.target.value;
+      renderList();
+    });
+    container.querySelector('#selFilterSrc').addEventListener('change', e => {
+      wordFilterSrc = e.target.value;
+      confirmingTopicDelete = false;
+      renderWordsTab(container);
+    });
+    renderList();
   }
 
   function openModal(html) {
@@ -1338,6 +2479,54 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   function closeModal() {
     const backdrop = document.getElementById('modalBackdrop');
     backdrop.classList.remove('open');
+  }
+
+  function openAddCodeModal() {
+    openModal(`
+      <h2 id="modalTitle" style="font-family:var(--font-fr); font-size:1.25rem;">Додати слова з коду</h2>
+      <p style="font-size:0.85rem; color:var(--text-muted);">
+        Вставте надісланий JSON-масив виразів. Підтримується розширений формат із відмінюванням (conj) та тестами контексту (context_quiz).
+      </p>
+      <textarea id="inpCodeJson" class="textarea" rows="7" placeholder='[{"fr":"vivre dans la précarité","uk":"жити в скрутних умовах",...}]'></textarea>
+      <div id="codeErrorMsg" style="color:var(--danger); font-size:0.85rem; display:none;"></div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:6px;">
+        <button type="button" class="btn" id="btnModalCancel">Скасувати</button>
+        <button type="button" class="btn btn-primary" id="btnModalSubmit">Імпортувати</button>
+      </div>
+    `);
+    const ta = document.getElementById('inpCodeJson');
+    const errEl = document.getElementById('codeErrorMsg');
+    document.getElementById('btnModalCancel').addEventListener('click', closeModal);
+    document.getElementById('btnModalSubmit').addEventListener('click', async () => {
+      try {
+        const arr = parseTolerantWordsJson(ta.value);
+        if (currentUser && currentUser.email) {
+          const inserted = await insertWordsBatchForEmail(currentUser.email, arr);
+          inserted.forEach(row => {
+            const norm = normalizeWordRow(row);
+            const existingIdx = state.words.findIndex(w => w.id === norm.id);
+            if (existingIdx > -1) state.words[existingIdx] = norm;
+            else state.words.push(norm);
+          });
+        } else {
+          arr.forEach(raw => {
+            const norm = normalizeWordRow(raw);
+            if (!norm.fr) return;
+            const existingIdx = state.words.findIndex(w => w.id === norm.id);
+            if (existingIdx > -1) state.words[existingIdx] = norm;
+            else state.words.push(norm);
+          });
+        }
+        saveLocalStats();
+        updateNavBadge();
+        closeModal();
+        showToast(`Успішно імпортовано слів: ${arr.length}`);
+        renderCurrentTab();
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.style.display = 'block';
+      }
+    });
   }
   
   function openWordFormModal(editWord = null) {
@@ -1354,30 +2543,82 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;"><button type="button" class="btn" id="btnModalCancel">Скасувати</button><button type="button" class="btn btn-primary" id="btnModalSave">Зберегти</button></div>
     `);
     document.getElementById('btnModalCancel').addEventListener('click', closeModal);
-    document.getElementById('btnModalSave').addEventListener('click', () => {
-      const fr = document.getElementById('fFr').value.trim(); const uk = document.getElementById('fUk').value.trim(); const def = document.getElementById('fDef').value.trim(); const ex = document.getElementById('fEx').value.trim(); const syn = document.getElementById('fSyn').value.split(',').map(s => s.trim()).filter(Boolean); const pos = document.getElementById('fPos').value.trim(); const src = document.getElementById('fSrc').value.trim() || 'Загальні';
-      if (!fr || (!uk && !def)) { document.getElementById('wordFormErr').textContent = 'Заповніть французький вираз та переклад'; document.getElementById('wordFormErr').style.display = 'block'; return; }
+    document.getElementById('btnModalSave').addEventListener('click', async () => {
+      const fr = document.getElementById('fFr').value.trim();
+      const uk = document.getElementById('fUk').value.trim();
+      const def = document.getElementById('fDef').value.trim();
+      const ex = document.getElementById('fEx').value.trim();
+      const syn = document.getElementById('fSyn').value.split(',').map(s => s.trim()).filter(Boolean);
+      const pos = document.getElementById('fPos').value.trim();
+      const src = document.getElementById('fSrc').value.trim() || 'Загальний';
+      if (!fr || (!uk && !def)) {
+        document.getElementById('wordFormErr').textContent = 'Заповніть французький вираз та переклад';
+        document.getElementById('wordFormErr').style.display = 'block';
+        return;
+      }
       if (isEdit) {
-        editWord.fr = fr; editWord.uk = uk; editWord.def = def; editWord.ex = ex; editWord.syn = syn; editWord.pos = pos; editWord.src = src;
-        saveLocalStats(); updateWordInCloud(editWord);
-        closeModal(); showToast('Вираз оновлено'); renderCurrentTab();
+        editWord.fr = fr; editWord.id = makeWordId(fr); editWord.uk = uk; editWord.def = def; editWord.ex = ex; editWord.syn = syn; editWord.pos = pos; editWord.src = src;
+        await updateWordInCloud(editWord);
+        closeModal();
+        showToast('Вираз оновлено');
+        renderCurrentTab();
       } else {
-        // Додавання нових слів для користувача зараз йде через Supabase Insert, але тут спрощена логіка
-        closeModal(); alert("Додавання нових слів працює через Панель викладача");
+        try {
+          if (currentUser && currentUser.email) {
+            const inserted = await insertWordsBatchForEmail(currentUser.email, [{ fr, uk, def, ex, syn, pos, src }]);
+            inserted.forEach(r => state.words.push(normalizeWordRow(r)));
+          } else {
+            state.words.push(normalizeWordRow({ fr, uk, def, ex, syn, pos, src }));
+          }
+          saveLocalStats();
+          updateNavBadge();
+          closeModal();
+          showToast('Вираз додано');
+          renderCurrentTab();
+        } catch (err) {
+          document.getElementById('wordFormErr').textContent = err.message;
+          document.getElementById('wordFormErr').style.display = 'block';
+        }
       }
     });
   }
 
   // === НАЛАШТУВАННЯ ===
   function renderSettingsTab(container) {
-    refreshVoices();
     container.innerHTML = `
       <div style="display:flex; flex-direction:column; gap:16px;">
-        <section class="panel-card setting-group"><div class="section-label">Навчання та інтерфейс</div><div class="setting-row"><div><div style="font-weight:600;">Ліміт нових слів на день</div></div><select id="selNewLimit" class="select" style="width:auto; min-width:120px;">${[5, 10, 15, 20].map(n => `<option value="${n}" ${state.settings.newLimit === n ? 'selected' : ''}>${n} слів</option>`).join('')}</select></div><div class="setting-row"><div><div style="font-weight:600;">Тема оформлення</div></div><select id="selTheme" class="select" style="width:auto; min-width:140px;"><option value="auto" ${state.settings.theme==='auto'?'selected':''}>Системна</option><option value="light" ${state.settings.theme==='light'?'selected':''}>Світла</option><option value="dark" ${state.settings.theme==='dark'?'selected':''}>Темна</option></select></div></section>
-        <section class="panel-card setting-group"><div class="section-label">Озвучення (Web Speech API)</div>
-          ${speechSupported ? `<div class="setting-row"><div><div style="font-weight:600;">Французький голос</div><div style="font-size:0.8125rem; color:var(--text-muted);">Оберіть голос системи (Audrey, Amélie, Thomas тощо)</div></div><select id="selVoice" class="select" style="max-width:280px;"><option value="">Автоматичний вибір (найкращий доступний fr)</option>${frenchVoices.map(v => `<option value="${escapeHtml(v.voiceURI)}" ${state.settings.voiceURI === v.voiceURI ? 'selected' : ''}>${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`).join('')}</select></div><div><button type="button" class="btn" id="btnTestSound">🔊 Перевірити обраний голос</button></div>` : `<div style="color:var(--warning); font-size:0.9rem;">Ваш браузер не підтримує синтез мовлення.</div>`}
+        <section class="panel-card setting-group">
+          <div class="section-label">Навчання та інтерфейс</div>
+          <div class="setting-row">
+            <div><div style="font-weight:600;">Ліміт нових слів на день</div></div>
+            <select id="selNewLimit" class="select" style="width:auto; min-width:120px;">
+              ${[5, 10, 15, 20].map(n => `<option value="${n}" ${state.settings.newLimit === n ? 'selected' : ''}>${n} слів</option>`).join('')}
+            </select>
+          </div>
+          <div class="setting-row">
+            <div><div style="font-weight:600;">Тема оформлення</div></div>
+            <select id="selTheme" class="select" style="width:auto; min-width:140px;">
+              <option value="auto" ${state.settings.theme==='auto'?'selected':''}>Системна</option>
+              <option value="light" ${state.settings.theme==='light'?'selected':''}>Світла</option>
+              <option value="dark" ${state.settings.theme==='dark'?'selected':''}>Темна</option>
+            </select>
+          </div>
+        </section>
+        <section class="panel-card setting-group">
+          <div class="section-label">Озвучення (Web Speech API)</div>
+          ${speechSupported ? `
+            <div class="setting-row">
+              <div>
+                <div style="font-weight:600;">Французький голос</div>
+                <div style="font-size:0.8125rem; color:var(--text-muted);">Оберіть голос системи (Audrey, Amélie, Thomas тощо)</div>
+              </div>
+              <select id="selVoice" class="select" style="max-width:280px;"></select>
+            </div>
+            <div><button type="button" class="btn" id="btnTestSound">🔊 Перевірити обраний голос</button></div>
+          ` : `<div style="color:var(--warning); font-size:0.9rem;">Ваш браузер не підтримує синтез мовлення.</div>`}
         </section>
       </div>`;
+    refreshVoices();
     container.querySelector('#selTheme').addEventListener('change', e => { state.settings.theme = e.target.value; applyTheme(); saveLocalStats(); });
     container.querySelector('#selNewLimit').addEventListener('change', e => { state.settings.newLimit = Number(e.target.value); saveLocalStats(); });
     if (speechSupported) {
@@ -1385,6 +2626,16 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       container.querySelector('#btnTestSound').addEventListener('click', () => { speakFrench('Bonjour ! Bienvenue dans votre boîte à mots.', 1.0); });
     }
   }
+
+  document.addEventListener('click', e => {
+    const speakBtn = e.target.closest('.js-speak-btn');
+    if (speakBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      speakFrench(decodeURIComponent(speakBtn.dataset.speak || ''), 1.0);
+    }
+    if (e.target.id === 'modalBackdrop') closeModal();
+  });
 
   document.querySelectorAll('.nav-tab').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
   document.getElementById('btnModeUkFr').addEventListener('click', () => { state.settings.langMode = 'UK_FR'; saveLocalStats(); renderCurrentTab(); });
