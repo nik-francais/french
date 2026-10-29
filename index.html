@@ -80,7 +80,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* AUTH & TEACHER SCREENS */
 .auth-wrapper { display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 20px; }
-.auth-container { width: 100%; max-width: 480px; background: var(--bg-card); padding: 32px 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); border-top: 4px solid var(--accent); }
+.auth-container { width: 100%; max-width: 440px; background: var(--bg-card); padding: 32px 28px; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); border-top: 4px solid var(--accent); }
 .auth-logo { font-family: var(--font-fr); font-size: 30px; font-weight: 700; text-align: center; margin-bottom: 8px; color: var(--text-main); }
 .teacher-textarea { width: 100%; min-height: 200px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); font-family: var(--font-mono); font-size: 13px; resize: vertical; margin-bottom: 16px; }
 
@@ -193,43 +193,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .bg-green { background: var(--success-soft); color: var(--success); border: 1px solid var(--success);}
 .bg-red { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger);}
 
-/* OTHER UI */
-.options-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-.option-btn { min-height: 48px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; width:100%;}
-.option-btn:hover:not(:disabled) { border-color: var(--accent); }
-.option-key { font-family: var(--font-mono); font-size: 0.75rem; width: 24px; height: 24px; border-radius: 4px; background: var(--bg-elevated); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.option-btn.correct { border-color: var(--success); background: var(--success-soft); }
-.option-btn.wrong { border-color: var(--danger); background: var(--danger-soft); }
-
-.template-mask { font-family: var(--font-mono); font-size: 1.35rem; letter-spacing: 0.08em; color: var(--accent); margin: 14px 0; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
-.template-word { display: inline-flex; gap: 5px; white-space: nowrap; }
-.feedback-box { margin-top: 12px; padding: 12px; border-radius: var(--radius); font-size: 0.9375rem; }
-.feedback-box.ok { background: var(--success-soft); color: var(--success); border: 1px solid var(--success); }
-.feedback-box.almost { background: var(--warning-soft); color: var(--warning); border: 1px solid var(--warning); }
-.feedback-box.err { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger); }
-
-.pairs-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-.pair-card { min-height: 52px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; text-align: center; word-break: break-word; }
-.pair-card.selected { border-color: var(--accent); background: var(--accent-soft); }
-.pair-card.matched { opacity: 0.35; pointer-events: none; border-color: var(--success); }
-
-.anagram-slots, .anagram-pool { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; min-height: 48px; }
-.letter-tile { min-width: 44px; min-height: 44px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); font-family: var(--font-mono); font-size: 1.1rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
-.letter-tile.used { opacity: 0.3; pointer-events: none; }
-
-.cw-wrapper { display: flex; flex-direction: column; gap: 16px; align-items: center; }
-.cw-grid { display: grid; gap: 2px; background: var(--border); padding: 3px; border-radius: 6px; max-width: 100%; overflow-x: auto; }
-.cw-cell { width: clamp(26px, 7.2vw, 38px); height: clamp(26px, 7.2vw, 38px); position: relative; background: var(--bg-elevated); }
-.cw-cell.empty { background: transparent; }
-.cw-cell input { width: 100%; height: 100%; border: 1px solid var(--border); background: var(--bg-card); text-align: center; font-family: var(--font-mono); font-size: 0.95rem; font-weight: 600; text-transform: lowercase; padding: 0; border-radius: 2px; }
-.cw-cell input.cw-ok { background: var(--success-soft); color: var(--success); }
-.cw-cell input.cw-err { background: var(--danger-soft); color: var(--danger); }
-.cw-num { position: absolute; top: 1px; left: 2px; font-size: 9px; font-family: var(--font-mono); color: var(--text-muted); pointer-events: none; line-height: 1; }
-.cw-clues { width: 100%; display: grid; grid-template-columns: 1fr; gap: 12px; font-size: 0.875rem; }
-@media (min-width: 540px) { .cw-clues { grid-template-columns: 1fr 1fr; } }
-.cw-clue-item { padding: 6px 8px; border-radius: 4px; cursor: pointer; }
-.cw-clue-item:hover { background: var(--bg-elevated); }
-
 .word-list { display: flex; flex-direction: column; gap: 10px; }
 .word-item { background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--st-new); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
 .word-item[data-status="learn"] { border-left-color: var(--st-learn); }
@@ -261,14 +224,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 </head>
 <body>
 
-<!-- ЕКРАН АВТОРИЗАЦІЇ -->
+<!-- ЕКРАН АВТОРИЗАЦІЇ (EMAIL + ПАРОЛЬ) -->
 <div id="auth-screen" class="auth-wrapper">
   <div class="auth-container">
     <div class="auth-logo">Boîte à Mots</div>
-    <p style="text-align: center; color: var(--text-muted); margin-bottom: 24px; font-size: 0.95rem;">Вхід до персональної картотеки</p>
-    <input type="email" id="email-input" class="input" placeholder="Введіть ваш email (напр. vlad@gmail.com)">
-    <button type="button" onclick="sendMagicLink()" id="login-btn" class="btn btn-primary" style="width:100%;">Отримати посилання для входу</button>
-    <p id="auth-msg" style="text-align: center; color: var(--success); font-size: 14px; display: none; margin-top:16px; line-height: 1.4;"></p>
+    <p style="text-align: center; color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem;">Вхід до персональної картотеки</p>
+    <input type="email" id="email-input" class="input" placeholder="Ваш Email (наприклад, student@gmail.com)">
+    <input type="password" id="password-input" class="input" placeholder="Пароль">
+    <button type="button" onclick="signInWithPassword()" id="login-btn" class="btn btn-primary" style="width:100%;">Увійти</button>
+    <p id="auth-err" style="text-align: center; color: var(--danger); font-size: 14px; display: none; margin-top:14px; line-height: 1.4;"></p>
   </div>
 </div>
 
@@ -317,7 +281,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
 <script>
-  // === ІНІЦІАЛІЗАЦІЯ SUPABASE ===
   const SUPABASE_URL = 'https://oxcpvcbvxmiszseckdcd.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_DAiE12czwiINHefrIYMyrg_brCfYWs-';
   const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -336,7 +299,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   });
   let state = defaultState();
 
-  // === АВТОРИЗАЦІЯ ===
+  // === АВТОРИЗАЦІЯ ЗА ПАРОЛЕМ ===
   async function checkSession() {
       try {
           const { data: { session }, error } = await sbClient.auth.getSession();
@@ -361,19 +324,32 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       } catch (err) { console.error(err); }
   }
 
-  async function sendMagicLink() {
+  async function signInWithPassword() {
       const email = document.getElementById('email-input').value.trim();
-      if (!email) return alert('Введіть email');
+      const password = document.getElementById('password-input').value;
+      const errEl = document.getElementById('auth-err');
+      
+      if (!email || !password) {
+          errEl.innerText = 'Введіть email та пароль';
+          errEl.style.display = 'block';
+          return;
+      }
+      
       const btn = document.getElementById('login-btn');
-      btn.innerText = 'Відправка...'; btn.disabled = true;
-      const { error } = await sbClient.auth.signInWithOtp({ email: email, options: { emailRedirectTo: window.location.href } });
+      btn.innerText = 'Вхід...'; btn.disabled = true;
+      errEl.style.display = 'none';
+
+      const { data, error } = await sbClient.auth.signInWithPassword({
+          email: email,
+          password: password
+      });
+
       if (error) {
-          alert('Помилка: ' + error.message);
-          btn.innerText = 'Отримати посилання для входу'; btn.disabled = false;
+          errEl.innerText = 'Помилка входу: перевірте пошту або пароль';
+          errEl.style.display = 'block';
+          btn.innerText = 'Увійти'; btn.disabled = false;
       } else {
-          document.getElementById('auth-msg').innerText = '✅ Посилання надіслано! Перевірте пошту (і папку Спам).';
-          document.getElementById('auth-msg').style.display = 'block';
-          btn.style.display = 'none';
+          checkSession();
       }
   }
 
@@ -381,9 +357,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       await sbClient.auth.signOut();
       window.location.reload();
   }
-
-  sbClient.auth.onAuthStateChange((event, session) => { if (event === 'SIGNED_IN') checkSession(); });
-  checkSession();
 
   // === ПАНЕЛЬ ВИКЛАДАЧА ===
   async function addWordsToStudent() {
@@ -431,7 +404,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       }).eq('id', word.dbId);
   }
 
-  // === ЛОГІКА ДОДАТКУ ТА SM-2 ===
+  // === SM-2 ТА ЛОГІКА ДОДАТКУ ===
   function todayStr(ts = Date.now()) {
     const d = new Date(ts);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -485,20 +458,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     else root.removeAttribute('data-theme');
   }
 
-  function showToast(msg, duration = 3800) {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-    const el = document.createElement('div');
-    el.className = 'toast'; el.textContent = msg;
-    container.appendChild(el);
-    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, duration);
-  }
-
   function makeWordId(frText) {
     return String(frText || '').trim().toLowerCase().replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]+/g, '-').replace(/^-+|-+$/g, '') || 'mot';
   }
 
-  function stripDiacritics(str) { return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/œ/g, 'oe').replace(/æ/g, 'ae'); }
   function getPromptText(word) { return state.settings.langMode === 'FR_FR' ? (word.def || word.uk || '—') : (word.uk || word.def || '—'); }
 
   const DAY_MS = 86400000;
@@ -641,10 +604,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 
   const MODES_META = [
     { id: 'cards', name: 'Картки', min: 1, desc: 'Класичні картки з оцінкою SM-2 та прикладами', svg: '<rect x="4" y="4" width="16" height="16" rx="2"/><line x1="4" y1="9" x2="20" y2="9"/>' },
-    { id: 'blitz', name: 'Бліц', min: 4, desc: '60 секунд швидкої перевірки «Так / Ні»', svg: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>' },
-    { id: 'choice', name: 'Вибір', min: 4, desc: '10 запитань із 4 варіантами', svg: '<circle cx="6" cy="7" r="1.5"/><line x1="10" y1="7" x2="20" y2="7"/><circle cx="6" cy="12" r="1.5"/><line x1="10" y1="12" x2="20" y2="12"/>' },
-    { id: 'write', name: 'Напиши', min: 1, desc: 'Введення французького слова за значенням', svg: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>' },
-    { id: 'pairs', name: 'Пари', min: 5, desc: '2 раунди по 5 пар на час', svg: '<rect x="3" y="4" width="7" height="6" rx="1"/><rect x="14" y="4" width="7" height="6" rx="1"/><rect x="3" y="14" width="7" height="6" rx="1"/><rect x="14" y="14" width="7" height="6" rx="1"/>' }
+    { id: 'blitz', name: 'Бліц', min: 4, desc: '60 секунд швидкої перевірки «Так / Ні»', svg: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>' }
   ];
 
   let currentTab = 'study';
@@ -726,7 +686,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     cleanupSession(); const main = document.getElementById('mainView'); if (!main) return;
     if (modeId === 'cards') runCardsMode(main);
     else if (modeId === 'blitz') runBlitzMode(main);
-    else { alert('Режим ' + modeId + ' доступний у повній версії.'); renderCurrentTab(); }
   }
 
   function renderRoundSummary(container, modeId, results, extraHeaderHtml = '') {
@@ -741,7 +700,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     container.querySelector('#btnSummaryBack').addEventListener('click', () => renderCurrentTab());
   }
 
-  // === РЕЖИМ: КАРТКИ ===
+  // === РЕЖИМ КАРТКИ ===
   function runCardsMode(container) {
     const queues = getDueAndNewQueues();
     let deck = queues.combined.length > 0 ? queues.combined.slice() : shuffle(getActiveWordsPool()).slice(0, 10);
@@ -798,7 +757,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     renderCard();
   }
 
-  // === РЕЖИМ: БЛІЦ ===
+  // === РЕЖИМ БЛІЦ ===
   function runBlitzMode(container) {
     const pool = getActiveWordsPool(); let timeLeft = 60; let score = 0; const results = []; let currentPair = null;
 
