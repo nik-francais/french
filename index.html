@@ -507,6 +507,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (!currentUser) return;
     const { data, error } = await sbClient.from('cards').select('*').eq('user_email', currentUser.email);
     if (!error && data) {
+      // Завжди беремо актуальний стан із хмари як єдине джерело правди
       state.words = data.map(row => normalizeWordRow(row));
       saveLocalStats();
       updateNavBadge();
@@ -2342,6 +2343,20 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         const deletedTopic = wordFilterSrc;
         const toDelete = state.words.filter(w => w.src === deletedTopic);
         const dbIds = toDelete.map(w => w.dbId).filter(Boolean);
+        
+        // 1. Спочатку гарантовано видаляємо з бази Supabase
+        try {
+          if (dbIds.length > 0) {
+            await sbClient.from('cards').delete().in('id', dbIds);
+          }
+          if (currentUser && currentUser.email) {
+            await sbClient.from('cards').delete().eq('user_email', currentUser.email).eq('src', deletedTopic);
+          }
+        } catch (err) {
+          console.error("Помилка видалення теми з Supabase:", err);
+        }
+
+        // 2. Видаляємо з локального стану та синхронізуємо локальне сховище
         state.words = state.words.filter(w => w.src !== deletedTopic);
         if (state.settings.focusTopic === deletedTopic) {
           state.settings.focusTopic = 'all';
@@ -2350,12 +2365,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         confirmingTopicDelete = false;
         saveLocalStats();
         updateNavBadge();
-        if (dbIds.length > 0) {
-          await sbClient.from('cards').delete().in('id', dbIds);
-        } else if (currentUser) {
-          await sbClient.from('cards').delete().eq('user_email', currentUser.email).eq('src', deletedTopic);
-        }
-        showToast(`Усі слова з теми «${deletedTopic}» видалено`);
+        showToast(`Усі слова з теми «${deletedTopic}» успішно видалено`);
         renderWordsTab(container);
       });
     }
@@ -2438,15 +2448,24 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       listEl.querySelectorAll('[data-confirmdel]').forEach(btn => {
         btn.addEventListener('click', async () => {
           const targetWord = state.words.find(item => item.id === btn.dataset.confirmdel);
-          state.words = state.words.filter(item => item.id !== btn.dataset.confirmdel);
+          if (!targetWord) return;
+
+          // 1. Спочатку видаляємо з Supabase, щоб при перезавантаженні сторінки запис не відновився
+          try {
+            if (targetWord.dbId) {
+              await sbClient.from('cards').delete().eq('id', targetWord.dbId);
+            } else if (currentUser && currentUser.email) {
+              await sbClient.from('cards').delete().eq('user_email', currentUser.email).eq('fr', targetWord.fr);
+            }
+          } catch (err) {
+            console.error("Помилка видалення слова з Supabase:", err);
+          }
+
+          // 2. Видаляємо з пам'яті й оновлюємо кеш localStorage
+          state.words = state.words.filter(item => item.id !== targetWord.id);
           confirmingDeleteWordId = null;
           saveLocalStats();
           updateNavBadge();
-          if (targetWord && targetWord.dbId) {
-            await sbClient.from('cards').delete().eq('id', targetWord.dbId);
-          } else if (targetWord && currentUser) {
-            await sbClient.from('cards').delete().eq('user_email', currentUser.email).eq('fr', targetWord.fr);
-          }
           showToast('Слово видалено');
           renderWordsTab(container);
         });
