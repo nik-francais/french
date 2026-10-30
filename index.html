@@ -155,7 +155,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .forecast-val { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
 .forecast-bar-wrap { width: 100%; max-width: 32px; flex: 1; display: flex; align-items: flex-end; background: var(--bg-elevated); border-radius: var(--radius-pill); overflow: hidden; }
 .forecast-bar { width: 100%; background: var(--accent); border-radius: var(--radius-pill); min-height: 3px; }
-.forecast-day { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); }
+.forecast-day { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); padding: 2px 7px; border-radius: var(--radius-pill); }
+/* Сьогодні позначаємо кольором, а не скороченням «Сьог»: день тижня лишається на місці */
+.forecast-col.is-today .forecast-day { background: var(--accent); color: var(--accent-contrast); font-weight: 700; }
+.forecast-col.is-today .forecast-val { color: var(--accent); font-weight: 700; }
 .modes-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
 @media (min-width: 520px) { .modes-grid { grid-template-columns: repeat(2, 1fr); } }
 .mode-tile { text-align: left; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 12px; transition: border-color 0.15s; min-height: 76px; }
@@ -1268,7 +1271,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     for (let d = 0; d < 7; d++) {
       const start = baseMs + d * DAY_MS; const end = start + DAY_MS; let cnt = 0;
       pool.forEach(w => { if (w.r > 0) { if (d === 0 && w.due <= end) cnt++; else if (d > 0 && w.due > start && w.due <= end) cnt++; } });
-      daysForecast.push({ label: d === 0 ? 'Сьог' : dayNames[new Date(start).getDay()], count: cnt });
+      daysForecast.push({ label: dayNames[new Date(start).getDay()], count: cnt, isToday: d === 0 });
     }
     const maxForecast = Math.max(1, ...daysForecast.map(f => f.count));
 
@@ -1315,7 +1318,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       <section class="panel-card" style="margin-bottom:16px;">
         <div class="section-label">Прогноз повторень на 7 днів</div>
         <div class="forecast-chart">
-          ${daysForecast.map(f => `<div class="forecast-col"><span class="forecast-val">${f.count}</span><div class="forecast-bar-wrap"><div class="forecast-bar" style="height:${f.count>0?Math.max(8,Math.round((f.count/maxForecast)*100)):0}%;"></div></div><span class="forecast-day">${f.label}</span></div>`).join('')}
+          ${daysForecast.map(f => `<div class="forecast-col${f.isToday ? ' is-today' : ''}"><span class="forecast-val">${f.count}</span><div class="forecast-bar-wrap">${f.count > 0 ? `<div class="forecast-bar" style="height:${Math.max(8, Math.round((f.count / maxForecast) * 100))}%;"></div>` : ''}</div><span class="forecast-day"${f.isToday ? ' aria-label="сьогодні"' : ''}>${f.label}</span></div>`).join('')}
         </div>
       </section>
 
