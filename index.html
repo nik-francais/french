@@ -213,8 +213,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .options-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .option-btn { min-height: 48px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px; font-family: var(--font-ui); font-size: 1rem; color: var(--text-main); }
 .option-btn:hover:not(:disabled) { border-color: var(--accent); background: var(--bg-elevated); }
-.option-btn .opt-fr { font-family: var(--font-fr); font-weight: 700; font-size: 1.05rem; }
-.option-btn .opt-uk { font-family: var(--font-ui); font-weight: 500; font-size: 0.98rem; }
+/* Варіант відповіді має однаковий вигляд, якою б мовою він не був:
+   різний шрифт для латиниці й кирилиці читався як різна важливість. */
+.option-btn .opt-word { font-family: var(--font-fr); font-weight: 700; font-size: 1.05rem; }
+/* Питання у вікторині: один розмір і колір незалежно від напрямку */
+.study-sub { font-family: var(--font-fr); color: var(--text-muted); }
+.study-prompt { font-family: var(--font-fr); font-size: 1.6rem; font-weight: 700; line-height: 1.25; color: var(--text-main); margin-bottom: 4px; }
 .option-key { font-family: var(--font-mono); font-size: 0.75rem; width: 26px; height: 26px; border-radius: 50%; background: var(--bg-elevated); color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;}
 .option-btn.correct { border-color: var(--success); background: var(--success-soft); }
 .option-btn.wrong { border-color: var(--danger); background: var(--danger-soft); }
@@ -279,7 +283,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .word-pos { font-family: var(--font-fr); font-size: 0.82rem; font-style: italic; color: var(--text-muted); }
 .word-badges-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
 .badge { font-size: 0.72rem; font-family: var(--font-mono); padding: 3px 10px; border-radius: var(--radius-pill); background: var(--bg-elevated); color: var(--text-muted); }
-.word-meaning { font-size: 0.98rem; color: var(--accent); font-weight: 600; }
+.word-meaning { font-family: var(--font-fr); font-size: 0.98rem; color: var(--accent); font-weight: 600; }
 .word-item-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 8px; border-top: 1px dashed var(--border-subtle); font-size: 0.78rem; color: var(--text-muted); flex-wrap: wrap; }
 .inline-confirm { display: inline-flex; align-items: center; gap: 6px; }
 
@@ -375,6 +379,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    *     і не перевертаються при перемальовуванні.
    * 16. «Повільно» в диктанті: SLOW_RATE і звичайний (не Siri/enhanced) голос,
    *     бо iOS ігнорує rate на покращених голосах.
+   * 19. Мова НЕ змінює оформлення: питання у «Виборі» — завжди .study-prompt,
+   *     варіант відповіді — завжди .opt-word. Контент (слова, значення, переклади)
+   *     набирається --font-fr; --font-ui лишається для інтерфейсу.
+   * 20. Список слів і лічильники у фільтрах рахуються ОДНИМ предикатом
+   *     wordPassesFilters. Інакше вони розходяться: лічильник частин мови
+   *     показував весь словник, ігноруючи обрану тему.
    * 18. Палітра і форма: теплий матовий папір, глибокий лісовий зелений як акцент,
    *     заокруглення лише зі шкали (--radius / --radius-card / --radius-pill).
    *     Текст на акцентній поверхні — var(--accent-contrast), НЕ жорсткий #fff:
@@ -1433,7 +1443,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             <hr class="study-divider">
             <div class="study-meaning">${escapeHtml(getPromptText(w))}</div>
             ${showBothUkAndDef ? `<div class="study-def">${escapeHtml(w.def)}</div>` : ''}
-            ${w.ex ? `<div class="study-example"><div><div>${highlightBracketExample(w.ex)}</div>${w.context_translation ? `<div style="font-family:var(--font-ui); font-size:0.85rem; color:var(--text-muted); margin-top:4px;">${escapeHtml(w.context_translation)}</div>` : ''}</div>${speakerBtnHtml(w.ex)}</div>` : ''}
+            ${w.ex ? `<div class="study-example"><div><div>${highlightBracketExample(w.ex)}</div>${w.context_translation ? `<div style="font-family:var(--font-fr); font-size:0.85rem; color:var(--text-muted); margin-top:4px;">${escapeHtml(w.context_translation)}</div>` : ''}</div>${speakerBtnHtml(w.ex)}</div>` : ''}
             ${w.syn && w.syn.length ? `<div class="study-synonyms">Синоніми: <strong>${escapeHtml(w.syn.join(', '))}</strong></div>` : ''}
             <div class="grade-grid">
               <button type="button" class="grade-btn grade-again" data-g="again"><span class="g-name">1 · Знову</span><span class="g-time">${previewNextInterval(w, 'again').label}</span></button>
@@ -1563,14 +1573,14 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       <section class="index-card">
         <div class="instruction-text">${rev ? 'Оберіть французьке слово за значенням:' : 'Оберіть правильне значення слова:'}</div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-          <div class="${isPromptFrench ? 'study-word-title' : 'study-meaning'}">${escapeHtml(rev ? getPromptText(w) : w.fr)}</div>
+          <div class="study-prompt">${escapeHtml(rev ? getPromptText(w) : w.fr)}</div>
           ${!rev ? speakerBtnHtml(w.fr) : ''}
         </div>
         <div class="options-grid">
           ${opts.map((o,i) => {
             let cls = '';
             if (ansd) { if (o.id === w.id) cls = 'correct'; else if (o.id === chId) cls = 'wrong'; }
-            return `<button type="button" class="option-btn ${cls}" data-opt="${o.id}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="${areOptionsFrench ? 'opt-fr' : 'opt-uk'}">${escapeHtml(rev ? o.fr : getPromptText(o))}</span></button>`;
+            return `<button type="button" class="option-btn ${cls}" data-opt="${o.id}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="opt-word">${escapeHtml(rev ? o.fr : getPromptText(o))}</span></button>`;
           }).join('')}
         </div>
         ${ansd ? `<div style="margin-top:14px;display:flex;justify-content:space-between;">${speakerBtnHtml(w.fr)}<button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>` : ''}
@@ -1898,7 +1908,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
         ${showHint ? `<div style="margin-bottom:12px;padding:8px 12px;background:var(--bg-elevated);border-radius:4px;">Значення: <strong>${escapeHtml(getPromptText(w))}</strong></div>` : ''}
         <input type="text" id="inpD" class="input" placeholder="Напишіть почутий вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk ? 'disabled' : ''}>
-        ${!chk ? `<button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="margin-bottom:2px;">${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.2rem;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} — <span style="font-weight:400;font-size:1rem;font-family:var(--font-ui);">${escapeHtml(getPromptText(w))}</span></div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>`}
+        ${!chk ? `<button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="margin-bottom:2px;">${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.2rem;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} — <span style="font-weight:400;font-size:1rem;font-family:var(--font-fr);">${escapeHtml(getPromptText(w))}</span></div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>`}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       container.querySelector('#bL').addEventListener('click', () => speakFrench(targetFr));
@@ -2033,7 +2043,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <div class="study-example">
           <div>
             <div>${ansd ? highlightBracketExample(w.ex) : escapeHtml(w.ex).replace(/\[.+?\]/g, '<span class="hl-word">[ … ]</span>')}</div>
-            ${ansd && w.context_translation ? `<div style="font-family:var(--font-ui); font-size:0.85rem; color:var(--text-muted); margin-top:4px;">${escapeHtml(w.context_translation)}</div>` : ''}
+            ${ansd && w.context_translation ? `<div style="font-family:var(--font-fr); font-size:0.85rem; color:var(--text-muted); margin-top:4px;">${escapeHtml(w.context_translation)}</div>` : ''}
           </div>
           ${speakerBtnHtml(w.ex, 'Озвучити речення')}
         </div>
@@ -2139,14 +2149,14 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       <section class="index-card">
         <div class="instruction-text">Оберіть синонім до виразу:</div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div><div class="study-word-title">${escapeHtml(w.fr)}</div><div style="color:var(--text-muted);">${escapeHtml(getPromptText(w))}</div></div>
+          <div><div class="study-word-title">${escapeHtml(w.fr)}</div><div class="study-sub">${escapeHtml(getPromptText(w))}</div></div>
           ${speakerBtnHtml(w.fr)}
         </div>
         <div class="options-grid">
           ${opts.map((o,i) => {
             let cls = '';
             if (ansd) { if (o === tSyn) cls = 'correct'; else if (o === ch) cls = 'wrong'; }
-            return `<button type="button" class="option-btn ${cls}" data-s="${escapeHtml(o)}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="opt-fr">${escapeHtml(o)}</span></button>`;
+            return `<button type="button" class="option-btn ${cls}" data-s="${escapeHtml(o)}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="opt-word">${escapeHtml(o)}</span></button>`;
           }).join('')}
         </div>
         ${ansd ? `<div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>` : ''}
@@ -2601,6 +2611,30 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     return hit ? hit.label : 'Інше';
   }
 
+  // ОДИН предикат і для списку, і для лічильників у випадайках.
+  // Доки вони були різні, лічильники частин мови показували весь словник,
+  // ігноруючи обрану тему. `except` дозволяє порахувати варіанти самого фільтра
+  // (скільки буде дієслів, якщо зараз вибрано «Іменники»).
+  function wordPassesFilters(w, f, except) {
+    if (except !== 'status' && f.status && f.status !== 'all' && getWordStatus(w) !== f.status) return false;
+    if (except !== 'pos' && f.pos && f.pos !== 'all' && posGroupId(w.pos) !== f.pos) return false;
+    if (except !== 'src' && f.src && f.src !== 'all' && w.src !== f.src) return false;
+    const q = String(f.query || '').trim().toLowerCase();
+    if (q) {
+      const hay = [w.fr, w.uk, w.def].map(x => String(x || '').toLowerCase());
+      if (!hay.some(x => x.includes(q))) return false;
+    }
+    return true;
+  }
+  function tallyWords(words, f, except, keyFn) {
+    const m = new Map();
+    for (const w of words) if (wordPassesFilters(w, f, except)) {
+      const k = keyFn(w);
+      m.set(k, (m.get(k) || 0) + 1);
+    }
+    return m;
+  }
+
   let wordSearchQuery = '';
   let wordFilterStatus = 'all';
   let wordFilterPos = 'all';
@@ -2614,15 +2648,38 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       wordFilterSrc = 'all';
       confirmingTopicDelete = false;
     }
-    // Показуємо лише ті частини мови, які реально є у словнику (щоб не було порожніх фільтрів)
-    const posTally = new Map();
-    state.words.forEach(w => {
-      const id = posGroupId(w.pos);
-      posTally.set(id, (posTally.get(id) || 0) + 1);
-    });
     const posOrder = POS_GROUPS.map(g => g.id).concat('autre');
-    const posCounts = posOrder.filter(id => posTally.has(id)).map(id => [id, posTally.get(id)]);
-    if (wordFilterPos !== 'all' && !posTally.has(wordFilterPos)) wordFilterPos = 'all';
+    // Скидаємо вибір лише тоді, коли такої частини мови не лишилось у СЛОВНИКУ взагалі
+    // (наприклад, слова видалили). Через зміну теми вибір не губимо: буде видно «(0)».
+    const posEverywhere = new Set(state.words.map(w => posGroupId(w.pos)));
+    if (wordFilterPos !== 'all' && !posEverywhere.has(wordFilterPos)) wordFilterPos = 'all';
+    const currentFilters = () => ({ status: wordFilterStatus, pos: wordFilterPos, src: wordFilterSrc, query: wordSearchQuery });
+
+    function srcOptionsHtml() {
+      const f = currentFilters();
+      const tally = tallyWords(state.words, f, 'src', w => w.src || '');
+      const total = [...tally.values()].reduce((a, b) => a + b, 0);
+      return `<option value="all" ${wordFilterSrc === 'all' ? 'selected' : ''}>🌟 Усі теми (${total})</option>`
+        + sources.map(src => `<option value="${escapeHtml(src)}" ${wordFilterSrc === src ? 'selected' : ''}>${escapeHtml(src)} (${tally.get(src) || 0})</option>`).join('');
+    }
+    function posOptionsHtml() {
+      const f = currentFilters();
+      const tally = tallyWords(state.words, f, 'pos', w => posGroupId(w.pos));
+      // Показуємо наявні в цій вибірці + обрану (хай навіть «0»), щоб вибір не зникав з-під пальця
+      const ids = posOrder.filter(id => tally.has(id) || id === wordFilterPos);
+      const total = [...tally.values()].reduce((a, b) => a + b, 0);
+      return `<option value="all" ${wordFilterPos === 'all' ? 'selected' : ''}>Усі частини мови (${total})</option>`
+        + ids.map(id => `<option value="${escapeHtml(id)}" ${wordFilterPos === id ? 'selected' : ''}>${escapeHtml(posGroupLabel(id))} (${tally.get(id) || 0})</option>`).join('');
+    }
+    function statusOptionsHtml() {
+      const f = currentFilters();
+      const tally = tallyWords(state.words, f, 'status', w => getWordStatus(w));
+      const total = [...tally.values()].reduce((a, b) => a + b, 0);
+      const labels = [['new', 'Нове'], ['learn', 'Вчу'], ['know', 'Знаю'], ['master', 'Засвоєно']];
+      return `<option value="all" ${wordFilterStatus === 'all' ? 'selected' : ''}>Усі статуси (${total})</option>`
+        + labels.map(([id, label]) => `<option value="${id}" ${wordFilterStatus === id ? 'selected' : ''}>${label} (${tally.get(id) || 0})</option>`).join('');
+    }
+
     const canBulkDeleteTopic = (wordFilterSrc !== 'all');
     const topicWordCount = canBulkDeleteTopic ? state.words.filter(w => w.src === wordFilterSrc).length : 0;
 
@@ -2649,21 +2706,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
         <div class="filters-bar">
           <input type="search" id="inpWordSearch" class="input f-search" style="margin-bottom:0;" placeholder="Пошук виразу або перекладу…" value="${escapeHtml(wordSearchQuery)}">
-          <select id="selFilterPos" class="select">
-            <option value="all" ${wordFilterPos === 'all' ? 'selected' : ''}>Усі частини мови</option>
-            ${posCounts.map(([id, n]) => `<option value="${escapeHtml(id)}" ${wordFilterPos === id ? 'selected' : ''}>${escapeHtml(posGroupLabel(id))} (${n})</option>`).join('')}
-          </select>
-          <select id="selFilterStatus" class="select">
-            <option value="all" ${wordFilterStatus === 'all' ? 'selected' : ''}>Усі статуси (${state.words.length})</option>
-            <option value="new" ${wordFilterStatus === 'new' ? 'selected' : ''}>Нове</option>
-            <option value="learn" ${wordFilterStatus === 'learn' ? 'selected' : ''}>Вчу</option>
-            <option value="know" ${wordFilterStatus === 'know' ? 'selected' : ''}>Знаю</option>
-            <option value="master" ${wordFilterStatus === 'master' ? 'selected' : ''}>Засвоєно</option>
-          </select>
-          <select id="selFilterSrc" class="select">
-            <option value="all" ${wordFilterSrc === 'all' ? 'selected' : ''}>Усі теми (${sources.length})</option>
-            ${sources.map(s => `<option value="${escapeHtml(s)}" ${wordFilterSrc === s ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
-          </select>
+          <select id="selFilterSrc" class="select">${srcOptionsHtml()}</select>
+          <select id="selFilterPos" class="select">${posOptionsHtml()}</select>
+          <select id="selFilterStatus" class="select">${statusOptionsHtml()}</select>
         </div>
         <div id="wordsListContainer" class="word-list"></div>
       </section>`;
@@ -2729,15 +2774,18 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     }
 
     const listEl = container.querySelector('#wordsListContainer');
+    function refreshFilterCounts() {
+      const srcSel = container.querySelector('#selFilterSrc');
+      const posSel = container.querySelector('#selFilterPos');
+      const stSel = container.querySelector('#selFilterStatus');
+      if (srcSel) srcSel.innerHTML = srcOptionsHtml();
+      if (posSel) posSel.innerHTML = posOptionsHtml();
+      if (stSel) stSel.innerHTML = statusOptionsHtml();
+    }
     function renderList() {
-      const query = wordSearchQuery.trim().toLowerCase();
-      const filtered = state.words.filter(w => {
-        if (wordFilterStatus !== 'all' && getWordStatus(w) !== wordFilterStatus) return false;
-        if (wordFilterPos !== 'all' && posGroupId(w.pos) !== wordFilterPos) return false;
-        if (wordFilterSrc !== 'all' && w.src !== wordFilterSrc) return false;
-        if (query && !(w.fr.toLowerCase().includes(query) || (w.uk||'').toLowerCase().includes(query) || (w.def||'').toLowerCase().includes(query))) return false;
-        return true;
-      });
+      refreshFilterCounts();
+      const f = currentFilters();
+      const filtered = state.words.filter(w => wordPassesFilters(w, f));
       if (filtered.length === 0) {
         listEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Слів не знайдено.</div>`;
         return;

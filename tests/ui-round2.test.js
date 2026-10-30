@@ -68,7 +68,7 @@ test('Відмінювання: сітка заповнюється по кол�
 // ───────────── Шрифт: питання і варіанти однією гарнітурою ─────────────
 test('Шрифт: слово-значення використовує ту саму гарнітуру, що й французькі варіанти', () => {
   const meaning = HTML.match(/\.study-meaning \{[^}]*\}/);
-  const optFr = HTML.match(/\.option-btn \.opt-fr \{[^}]*\}/);
+  const optFr = HTML.match(/\.option-btn \.opt-word \{[^}]*\}/);
   assert.ok(meaning && optFr);
   assert.match(meaning[0], /font-family:\s*var\(--font-fr\)/, 'кирилиця знову випадає в інший шрифт');
   assert.match(optFr[0], /font-family:\s*var\(--font-fr\)/);
