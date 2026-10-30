@@ -219,7 +219,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .feedback-box { margin-top: 12px; padding: 12px; border-radius: var(--radius); font-size: 0.9375rem; }
 .feedback-box.ok { background: var(--success-soft); color: var(--success); border: 1px solid var(--success); }
 .feedback-box.err { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger); }
-.feedback-box.almost { background: var(--warning-soft); color: var(--warning); border: 1px solid var(--warning); }
+.accent-miss { background: var(--bg-card); color: var(--warning); border-bottom: 2px solid var(--warning); border-radius: 3px; padding: 0 2px; }
 
 /* РЕЖИМ НАПИШИ ТА АНАГРАМА */
 .template-mask { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 16px 0; align-items: center; }
@@ -368,6 +368,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    *     і не перевертаються при перемальовуванні.
    * 16. «Повільно» в диктанті: SLOW_RATE і звичайний (не Siri/enhanced) голос,
    *     бо iOS ігнорує rate на покращених голосах.
+   * 17. Письмова відповідь зараховується ЛИШЕ при точному написанні
+   *     (isWrittenAnswerCorrect). Пропущений акцент — помилка, як на DELF.
+   *     Регістр лишається пробачним: телефони автоматично ставлять велику літеру.
    * Перед змінами: npm test
    * ===================================================================== */
   // 1. ІНІЦІАЛІЗАЦІЯ SUPABASE ТА ЗМІННИХ СТАНУ
@@ -1655,13 +1658,43 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         if (m) exactTargets.push(`${m[1]}${m[3]} / ${m[2]}`.trim().toLowerCase());
       }
       if (exactTargets.includes(rawLower)) return 'ok';
-      return 'almost';
+      return 'accent';
     }
 
     for (const t of validTargets) {
-      if (t.length >= 4 && levenshtein(inp, t) <= 1) return 'almost';
+      if (t.length >= 4 && levenshtein(inp, t) <= 1) return 'typo';
     }
     return 'err';
+  }
+
+  // Зараховується ЛИШЕ точне написання: пропущений акцент — орфографічна помилка
+  // і на DELF, і в будь-якому диктанті. Вердикт розрізняє причину, щоб учень бачив,
+  // що саме не так, але на інтервальне повторення і 'accent', і 'typo' впливають як помилка.
+  function isWrittenAnswerCorrect(verdict) {
+    return verdict === 'ok';
+  }
+
+  function writtenVerdictMeta(verdict) {
+    if (verdict === 'ok') return { cls: 'ok', title: 'Бездоганно!' };
+    if (verdict === 'accent') return { cls: 'err', title: 'Літери правильні, але діакритика — це теж орфографія:' };
+    if (verdict === 'typo') return { cls: 'err', title: 'Одруківка. Правильне написання:' };
+    return { cls: 'err', title: 'Правильна відповідь:' };
+  }
+
+  // Підсвічує саме ті літери, де загубився акцент, щоб помилка запам'яталась візуально.
+  function markAccentDiff(inputRaw, targetText) {
+    const target = String(targetText || '');
+    const input = String(inputRaw || '').trim();
+    const norm = s => stripDiacritics(s).toLowerCase().replace(/[’‘]/g, "'");
+    if (!input || norm(input) !== norm(target)) return escapeHtml(target);
+    const inChars = Array.from(input);
+    const tChars = Array.from(target);
+    if (inChars.length !== tChars.length) return escapeHtml(target);
+    return tChars.map((ch, i) => (
+      ch.toLowerCase() === inChars[i].toLowerCase()
+        ? escapeHtml(ch)
+        : `<mark class="accent-miss">${escapeHtml(ch)}</mark>`
+    )).join('');
   }
 
   function buildMaskTemplate(fr, revealedCount = 0) {
@@ -1735,7 +1768,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <div class="study-pos">${escapeHtml(cleanPos)} <span class="badge" style="font-style:normal; font-family:var(--font-mono);">Слів у виразі: ${wCount}</span></div>
         <div class="template-mask">${buildMaskTemplate(targetFr, hintCount)}</div>
         <input type="text" id="inpW" class="input" placeholder="Введіть слово або вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk ? 'disabled' : ''}>
-        ${!chk ? `<div style="display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button><button type="button" class="btn" id="bHint">Підказка (+1 літера)</button></div>` : `<div class="feedback-box ${chk}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div>${chk==='ok'?'Бездоганно!':(chk==='almost'?'Майже правильно (зверніть увагу на діакритику):':'Правильна відповідь:')}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.25rem;margin-top:2px;">${escapeHtml(targetFr)} ${targetFr !== w.fr ? `<span style="font-weight:400;font-size:0.95rem;color:var(--text-muted);">(${escapeHtml(w.fr)})</span>` : ''}</div></div>${speakerBtnHtml(w.fr)}</div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>`}
+        ${!chk ? `<div style="display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button><button type="button" class="btn" id="bHint">Підказка (+1 літера)</button></div>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div>${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.25rem;margin-top:2px;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} ${targetFr !== w.fr ? `<span style="font-weight:400;font-size:0.95rem;color:var(--text-muted);">(${escapeHtml(w.fr)})</span>` : ''}</div></div>${speakerBtnHtml(w.fr)}</div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>`}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       const inp = container.querySelector('#inpW');
@@ -1772,7 +1805,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       last = v;
       const w = qs[idx];
       chk = evaluateWrittenAnswer(v, w.fr);
-      const ok = (chk === 'ok' || chk === 'almost');
+      const ok = isWrittenAnswerCorrect(chk);
       handleMiniGameResult(w, ok);
       res.push({ word: w, ok });
       render();
@@ -1853,7 +1886,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
         ${showHint ? `<div style="margin-bottom:12px;padding:8px 12px;background:var(--bg-elevated);border-radius:4px;">Значення: <strong>${escapeHtml(getPromptText(w))}</strong></div>` : ''}
         <input type="text" id="inpD" class="input" placeholder="Напишіть почутий вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk ? 'disabled' : ''}>
-        ${!chk ? `<button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button>` : `<div class="feedback-box ${chk}"><div style="font-family:var(--font-fr);font-weight:700;font-size:1.2rem;">${escapeHtml(targetFr)} — <span style="font-weight:400;font-size:1rem;font-family:var(--font-ui);">${escapeHtml(getPromptText(w))}</span></div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>`}
+        ${!chk ? `<button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="margin-bottom:2px;">${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.2rem;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} — <span style="font-weight:400;font-size:1rem;font-family:var(--font-ui);">${escapeHtml(getPromptText(w))}</span></div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>`}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       container.querySelector('#bL').addEventListener('click', () => speakFrench(targetFr));
@@ -1894,7 +1927,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       last = v;
       const w = qs[idx];
       chk = evaluateWrittenAnswer(v, w.fr);
-      const ok = (chk === 'ok' || chk === 'almost');
+      const ok = isWrittenAnswerCorrect(chk);
       handleMiniGameResult(w, ok);
       res.push({ word: w, ok });
       render(false);
