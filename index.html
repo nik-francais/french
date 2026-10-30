@@ -333,6 +333,22 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 <div id="toastContainer" class="toast-container"></div>
 
 <script>
+  /* =====================================================================
+   * НЕ ЛАМАТИ (рішення, які вже ухвалено; кожне захищене тестом у tests/)
+   *  1. Список французьких голосів без дублів (refreshVoices).
+   *  2. Озвучення лише по кнопці з динаміком, не при виборі відповіді.
+   *  3. Enter підтверджує відповідь / веде далі в «Напиши», «Диктант», «Анаграма».
+   *  4. Без технічних термінів («SM-2») в інтерфейсі для учня.
+   *  5. Видалення: слово зникає з екрана ЛИШЕ після підтвердження бази (deleteCardsByIds).
+   *  6. Прогрес раунду зберігається при згортанні вкладки (visibilitychange).
+   *  7. «У контексті»: варіанти беруться з context_quiz, форми однорідні.
+   *  8. Відмінювання: окремі форми для кожного часу, subjonctif із «que».
+   *  9. У тренажерах немає qqn/qqch (getTestableFr), лишається основа й прийменник.
+   * 10. У кросворді немає апострофів і дефісів.
+   * 11. Помилки Supabase не кидають виняток, а повертають {error}: завжди перевіряти.
+   *     Оцінки йдуть через чергу pendingProgress, а не «стріляються й забуваються».
+   * Перед змінами: npm test
+   * ===================================================================== */
   // 1. ІНІЦІАЛІЗАЦІЯ SUPABASE ТА ЗМІННИХ СТАНУ
   const SUPABASE_URL = 'https://oxcpvcbvxmiszseckdcd.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_DAiE12czwiINHefrIYMyrg_brCfYWs-';
@@ -344,6 +360,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   let activeRoundState = null;
   const STORAGE_KEY = 'bam_app_data_cloud_v3';
   const SESSION_PROGRESS_KEY = 'bam_active_session_v3';
+  const PENDING_KEY_PREFIX = 'bam_pending_progress_v1:';
+  // Оцінки, які ще не потрапили в хмару (dbId -> дані). Зберігаються на пристрої, тож не губляться при збої мережі.
+  const pendingProgress = new Map();
+  let flushingProgress = false;
+  let lastCloudWarnAt = 0;
   
   const defaultState = () => ({ 
     words: [], 
@@ -395,11 +416,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       const { data: { session } } = await sbClient.auth.getSession();
       if (session) {
         currentUser = session.user;
-        if (currentUser.email === ADMIN_EMAIL) {
+        if (String(currentUser.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
           document.getElementById('teacher-screen').style.display = 'flex';
         } else {
           document.getElementById('app-screen').style.display = 'flex';
           loadLocalStats();
+          loadPendingProgress();
+          await flushPendingProgress(); // догнати те, що не встигло зберегтись минулого разу
           await loadStudentWords();
         }
       } else {
@@ -445,11 +468,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     window.location.reload();
   }
 
-  sbClient.auth.onAuthStateChange((event) => {
-    if (event === 'SIGNED_IN') {
-      document.getElementById('auth-screen').style.display = 'none';
-      checkSession();
-    }
+  sbClient.auth.onAuthStateChange((event, session) => {
+    if (event !== 'SIGNED_IN') return;
+    // supabase-js повторно шле SIGNED_IN, коли учень повертається на вкладку (з Telegram тощо).
+    // Для вже завантаженого користувача нічого не перезавантажуємо, інакше раунд скидається.
+    if (currentUser && session && session.user && currentUser.id === session.user.id) return;
+    document.getElementById('auth-screen').style.display = 'none';
+    checkSession();
   });
   checkSession();
 
@@ -471,7 +496,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     return parsed;
   }
 
+  function isValidEmail(s) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(s || '').trim());
+  }
+
   async function insertWordsBatchForEmail(email, wordsArray) {
+    // Supabase зберігає email малими літерами. Без нормалізації учень не побачить слова.
+    const owner = String(email || '').trim().toLowerCase();
     const recordsToInsert = wordsArray.map(w => {
       let conjPayload = w.conj || w.conjugation || null;
       if (w.context_quiz || w.context_translation) {
@@ -480,7 +511,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         if (w.context_translation) conjPayload.context_translation = w.context_translation;
       }
       return {
-        user_email: email,
+        user_email: owner,
         fr: String(w.fr || w.word || '').trim(),
         uk: String(w.uk || w.translation || '').trim(),
         def: String(w.def || '').trim(),
@@ -497,18 +528,27 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 
     if (recordsToInsert.length === 0) throw new Error('Не знайдено валідних карток для імпорту.');
     const { data, error } = await sbClient.from('cards').insert(recordsToInsert).select();
-    if (error) throw error;
-    return data || recordsToInsert;
+    if (error) {
+      if (error.code === '42501' || /row-level security/i.test(error.message || '')) {
+        throw new Error('Немає дозволу додавати слова (налаштування бази). Зверніться до викладача.');
+      }
+      throw error;
+    }
+    const inserted = data || recordsToInsert;
+    inserted.skipped = wordsArray.length - recordsToInsert.length; // картки без fr або без перекладу/тлумачення
+    return inserted;
   }
 
   async function addWordsToStudent() {
-    const email = document.getElementById('target-student-email').value.trim();
+    const email = document.getElementById('target-student-email').value.trim().toLowerCase();
     const code = document.getElementById('json-code').value.trim();
     if (!email || !code) return alert('Заповніть пошту та вставте код');
+    if (!isValidEmail(email)) return alert('Перевірте email учня: схоже, в адресі є помилка.');
     try {
       const wordsArray = parseTolerantWordsJson(code);
+      if (!confirm(`Додати ${wordsArray.length} слів учню ${email}?`)) return;
       const inserted = await insertWordsBatchForEmail(email, wordsArray);
-      alert(`✅ Успішно додано ${inserted.length} слів учню ${email}!`);
+      alert(`✅ Додано ${inserted.length} слів учню ${email}.` + (inserted.skipped ? `\n⚠️ Пропущено карток без перекладу або тлумачення: ${inserted.skipped}.` : ''));
       document.getElementById('json-code').value = '';
     } catch (err) {
       alert('Помилка: ' + err.message);
@@ -517,9 +557,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 
   async function loadStudentWords() {
     if (!currentUser) return;
-    const { data, error } = await sbClient.from('cards').select('*').eq('user_email', currentUser.email);
+    const { data, error } = await sbClient.from('cards').select('*').eq('user_email', String(currentUser.email).toLowerCase());
     if (!error && data) {
       state.words = data.map(row => normalizeWordRow(row));
+      applyPendingToWords(state.words); // неотриману хмарою оцінку не затираємо старою версією
       saveLocalStats();
       updateNavBadge();
       if (!tryRestoreActiveSession()) {
@@ -533,20 +574,117 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     }
   }
 
+  // ---- Хмарні операції: помилки Supabase не кидають виняток, а повертають {error}, тож їх треба перевіряти ----
+  function reportCloudError(where, error) {
+    console.error('[cloud] ' + where, error);
+    const now = Date.now();
+    if (now - lastCloudWarnAt < 20000) return; // не засипаємо учня повідомленнями
+    lastCloudWarnAt = now;
+    showToast('⚠️ Не вдалося синхронізувати з хмарою. Прогрес збережено на пристрої, спробуємо ще раз.');
+  }
+
+  function progressPayload(word) {
+    return { iv: word.iv, ef: word.ef, r: word.r, l: word.l, due: word.due, t: word.t, status: getWordStatus(word) };
+  }
+  function pendingStorageKey() {
+    return currentUser && currentUser.email ? PENDING_KEY_PREFIX + String(currentUser.email).toLowerCase() : null;
+  }
+  function savePendingProgress() {
+    const key = pendingStorageKey();
+    if (!key) return;
+    try {
+      if (pendingProgress.size === 0) window.localStorage.removeItem(key);
+      else window.localStorage.setItem(key, JSON.stringify(Array.from(pendingProgress.entries())));
+    } catch (e) {}
+  }
+  function loadPendingProgress() {
+    pendingProgress.clear();
+    const key = pendingStorageKey();
+    if (!key) return;
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (raw) JSON.parse(raw).forEach(([id, payload]) => pendingProgress.set(id, payload));
+    } catch (e) {}
+  }
+  function applyPendingToWords(words) {
+    words.forEach(w => {
+      const p = w.dbId && pendingProgress.get(w.dbId);
+      if (p) Object.assign(w, { iv: p.iv, ef: p.ef, r: p.r, l: p.l, due: p.due, t: p.t });
+    });
+  }
+
+  async function flushPendingProgress() {
+    if (flushingProgress || !currentUser) return;
+    flushingProgress = true;
+    try {
+      while (pendingProgress.size > 0) {
+        const [id, payload] = pendingProgress.entries().next().value;
+        const { data, error } = await sbClient.from('cards').update(payload).eq('id', id).select('id');
+        if (error) { reportCloudError('збереження прогресу', error); break; }
+        if (!data || data.length === 0) console.warn('[cloud] картки немає або доступ заборонено, пропускаємо', id);
+        // Якщо поки йшов запит з'явилась новіша оцінка, не видаляємо її: цикл надішле її наступною
+        if (pendingProgress.get(id) === payload) pendingProgress.delete(id);
+      }
+    } catch (err) {
+      reportCloudError('збереження прогресу', err);
+    } finally {
+      flushingProgress = false;
+      savePendingProgress();
+    }
+  }
+
   async function syncWordProgress(word) {
     saveLocalStats();
     if (!word.dbId) return;
-    await sbClient.from('cards').update({
-      iv: word.iv, ef: word.ef, r: word.r, l: word.l, due: word.due, t: word.t, status: getWordStatus(word)
-    }).eq('id', word.dbId);
+    pendingProgress.set(word.dbId, progressPayload(word));
+    savePendingProgress();
+    await flushPendingProgress();
   }
-  
+
+  // true: збережено в хмарі; false: збережено лише на пристрої
   async function updateWordInCloud(word) {
     saveLocalStats();
-    if (!word.dbId) return;
-    await sbClient.from('cards').update({
-      fr: word.fr, uk: word.uk, def: word.def, ex: word.ex, syn: word.syn, pos: word.pos, src: word.src
-    }).eq('id', word.dbId);
+    if (!word.dbId) return true;
+    try {
+      const { data, error } = await sbClient.from('cards').update({
+        fr: word.fr, uk: word.uk, def: word.def, ex: word.ex, syn: word.syn, pos: word.pos, src: word.src
+      }).eq('id', word.dbId).select('id');
+      if (error) { reportCloudError('редагування слова', error); return false; }
+      return Boolean(data && data.length);
+    } catch (err) {
+      reportCloudError('редагування слова', err);
+      return false;
+    }
+  }
+
+  // Видалення. Якщо RLS забороняє, Supabase НЕ видає помилки, а просто видаляє 0 рядків.
+  // Тому питаємо, що саме видалено, а «0 рядків» перевіряємо повторним запитом (заборонено чи вже зникло деінде).
+  async function deleteCardsByIds(ids) {
+    const result = { deletedIds: [], failedIds: [], error: null };
+    const wanted = Array.from(new Set((ids || []).filter(Boolean)));
+    if (wanted.length === 0) return result;
+    try {
+      const del = await sbClient.from('cards').delete().in('id', wanted).select('id');
+      if (del.error) { result.error = del.error; result.failedIds = wanted; return result; }
+      const gone = new Set((del.data || []).map(r => r.id));
+      const rest = wanted.filter(id => !gone.has(id));
+      if (rest.length > 0) {
+        const chk = await sbClient.from('cards').select('id').in('id', rest);
+        if (chk.error) {
+          result.error = chk.error;
+          result.failedIds = rest;
+        } else {
+          const still = new Set((chk.data || []).map(r => r.id));
+          rest.forEach(id => { if (still.has(id)) result.failedIds.push(id); else gone.add(id); });
+        }
+      }
+      result.deletedIds = Array.from(gone);
+    } catch (err) {
+      result.error = err;
+      result.deletedIds = [];
+      result.failedIds = wanted;
+    }
+    return result;
   }
 
   // 3. ЗБЕРЕЖЕННЯ ТА ВІДНОВЛЕННЯ ПРОГРЕСУ СЕСІЇ ПРИ ПЕРЕМИКАННІ ЗАСТОСУНКІВ
@@ -583,8 +721,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (document.visibilityState === 'hidden') {
       saveActiveSessionProgress();
       saveLocalStats();
+    } else if (document.visibilityState === 'visible') {
+      flushPendingProgress(); // учень повернувся: пробуємо догнати незбережене
     }
   });
+  window.addEventListener('online', () => flushPendingProgress());
   window.addEventListener('pagehide', () => {
     saveActiveSessionProgress();
     saveLocalStats();
@@ -595,9 +736,22 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     const d = new Date(ts);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
+  // Кеш на пристрої окремий для кожного облікового запису: слова та налаштування одного учня не бачить інший.
+  function storageKeyFor(email) {
+    return email ? STORAGE_KEY + ':' + String(email).toLowerCase() : STORAGE_KEY;
+  }
   function loadLocalStats() {
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const key = storageKeyFor(currentUser && currentUser.email);
+      let raw = window.localStorage.getItem(key);
+      if (!raw && key !== STORAGE_KEY) {
+        // Міграція зі старого спільного ключа: перший, хто увійде після оновлення, зберігає свою серію й налаштування
+        const legacy = window.localStorage.getItem(STORAGE_KEY);
+        if (legacy) {
+          raw = legacy;
+          try { window.localStorage.setItem(key, legacy); window.localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        }
+      }
       if (raw) {
         const p = JSON.parse(raw);
         state.settings = Object.assign(defaultState().settings, p.settings || {});
@@ -612,13 +766,14 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
   function saveLocalStats() {
     checkDailyRollover();
+    const key = storageKeyFor(currentUser && currentUser.email);
+    const base = { settings: state.settings, stats: state.stats };
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        settings: state.settings,
-        stats: state.stats,
-        wordsCache: state.words
-      }));
-    } catch (e) {}
+      window.localStorage.setItem(key, JSON.stringify(Object.assign({}, base, { wordsCache: state.words })));
+    } catch (e) {
+      // Не вмістилось (ліміт ~5 МБ): кеш слів можна відновити з хмари, а налаштування й серію втрачати не можна
+      try { window.localStorage.setItem(key, JSON.stringify(base)); } catch (e2) {}
+    }
   }
   function checkDailyRollover() {
     const today = todayStr();
@@ -2346,17 +2501,29 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         const deletedTopic = wordFilterSrc;
         const toDelete = state.words.filter(w => w.src === deletedTopic);
         const dbIds = toDelete.map(w => w.dbId).filter(Boolean);
-        
-        try {
-          if (dbIds.length > 0) {
-            await sbClient.from('cards').delete().in('id', dbIds);
-          }
-          if (currentUser && currentUser.email) {
-            await sbClient.from('cards').delete().eq('user_email', currentUser.email).eq('src', deletedTopic);
-          }
-        } catch (err) {
-          console.error("Помилка видалення теми з Supabase:", err);
+
+        const res = await deleteCardsByIds(dbIds);
+        if (res.failedIds.length > 0) {
+          // Не все видалилось (немає дозволу або зв'язку). Прибираємо з екрана лише те, що справді зникло з бази,
+          // інакше після перезавантаження слова «воскреснуть».
+          const gone = new Set(res.deletedIds);
+          state.words = state.words.filter(w => !(w.src === deletedTopic && (!w.dbId || gone.has(w.dbId))));
+          res.deletedIds.forEach(id => pendingProgress.delete(id));
+          savePendingProgress();
+          confirmingTopicDelete = false;
+          saveLocalStats();
+          updateNavBadge();
+          showToast(`Видалено ${res.deletedIds.length} із ${dbIds.length}. Решту видалити не вдалося, спробуйте ще раз.`);
+          renderWordsTab(container);
+          return;
         }
+        if (currentUser && currentUser.email) {
+          // Дочищаємо слова цієї теми, яких немає на цьому пристрої (наприклад, додані з іншого)
+          const extra = await sbClient.from('cards').delete().eq('user_email', String(currentUser.email).toLowerCase()).eq('src', deletedTopic);
+          if (extra.error) console.error('Помилка дочищення теми:', extra.error);
+        }
+        dbIds.forEach(id => pendingProgress.delete(id));
+        savePendingProgress();
 
         state.words = state.words.filter(w => w.src !== deletedTopic);
         if (state.settings.focusTopic === deletedTopic) {
@@ -2451,14 +2618,17 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           const targetWord = state.words.find(item => item.id === btn.dataset.confirmdel);
           if (!targetWord) return;
 
-          try {
-            if (targetWord.dbId) {
-              await sbClient.from('cards').delete().eq('id', targetWord.dbId);
-            } else if (currentUser && currentUser.email) {
-              await sbClient.from('cards').delete().eq('user_email', currentUser.email).eq('fr', targetWord.fr);
+          if (targetWord.dbId) {
+            const res = await deleteCardsByIds([targetWord.dbId]);
+            if (res.deletedIds.length === 0) {
+              // Не видалилось у базі: не прибираємо слово з екрана, щоб воно не «воскресло» після перезавантаження
+              confirmingDeleteWordId = null;
+              showToast('Не вдалося видалити слово. Перевірте зв’язок і спробуйте ще раз.');
+              renderList();
+              return;
             }
-          } catch (err) {
-            console.error("Помилка видалення слова з Supabase:", err);
+            pendingProgress.delete(targetWord.dbId);
+            savePendingProgress();
           }
 
           state.words = state.words.filter(item => item.id !== targetWord.id);
@@ -2592,9 +2762,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       }
       if (isEdit) {
         editWord.fr = fr; editWord.id = makeWordId(fr); editWord.uk = uk; editWord.def = def; editWord.ex = ex; editWord.syn = syn; editWord.pos = pos; editWord.src = src;
-        await updateWordInCloud(editWord);
+        const savedToCloud = await updateWordInCloud(editWord);
         closeModal();
-        showToast('Вираз оновлено');
+        showToast(savedToCloud ? 'Вираз оновлено' : 'Змінено лише на цьому пристрої: не вдалося зберегти в хмарі');
         renderCurrentTab();
       } else {
         try {
