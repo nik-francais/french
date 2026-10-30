@@ -21,15 +21,19 @@
   --text-main: #1d2420;
   --text-muted: #586359;
 
-  --accent: #2d4f3a;
-  --accent-hover: #24402f;
+  /* Акцент виводиться з ОДНОГО відтінку: світлота й насиченість зафіксовані,
+     тож будь-який вибір учня лишається контрастним (перевірено tests/contrast.test.js).
+     156° — це рівно #2d4f3a, решта пресетів нижче — його рідня по колу. */
+  --accent-h: 156;
+  --accent: oklch(0.395 0.054 var(--accent-h));
+  --accent-hover: oklch(0.343 0.046 var(--accent-h));
   --accent-contrast: #ffffff;   /* текст НА акцентній поверхні; у темній темі стає майже чорним */
-  --accent-soft: #e3ece4;
+  --accent-soft: oklch(0.934 0.014 var(--accent-h));
   --border: #e4e8dd;
   --border-subtle: #edf0e8;
 
   --card-top-line: #c2654f;
-  --card-seyes-main: rgba(45, 79, 58, 0.045);
+  --card-seyes-main: oklch(0.395 0.054 var(--accent-h) / 0.06);
   --card-margin-line: rgba(194, 101, 79, 0.16);
 
   --danger: #a6453c;
@@ -59,9 +63,9 @@
     /* Той самий зошит у приглушеному світлі: теплий графіт, не холодний синій. */
     --bg-page: #171613; --bg-card: #232220; --bg-elevated: #2e2c28; --bg-input: #1b1a17;
     --text-main: #eae7df; --text-muted: #a39f95;
-    --accent: #7ba891; --accent-hover: #93c0a8; --accent-contrast: #171613; --accent-soft: #23302a;
+    --accent: oklch(0.692 0.059 var(--accent-h)); --accent-hover: oklch(0.769 0.059 var(--accent-h)); --accent-contrast: #171613; --accent-soft: oklch(0.295 0.021 var(--accent-h));
     --border: #3e3c37; --border-subtle: #2d2b27;
-    --card-top-line: #c96a5e; --card-seyes-main: rgba(123, 168, 145, 0.07); --card-margin-line: rgba(201, 106, 94, 0.3);
+    --card-top-line: #c96a5e; --card-seyes-main: oklch(0.692 0.059 var(--accent-h) / 0.08); --card-margin-line: rgba(201, 106, 94, 0.3);
     --danger: #e5847c; --danger-soft: #2e1d1a; --warning: #d9a441; --warning-soft: #2e2415;
     --success: #86d9a5; --success-soft: #1c2a22;
     --st-new: #8d8373; --st-learn: #d9a441; --st-know: #7fb0c2; --st-master: #7ba891;
@@ -72,9 +76,9 @@
 :root[data-theme="dark"] {
   --bg-page: #171613; --bg-card: #232220; --bg-elevated: #2e2c28; --bg-input: #1b1a17;
   --text-main: #eae7df; --text-muted: #a39f95;
-  --accent: #7ba891; --accent-hover: #93c0a8; --accent-contrast: #171613; --accent-soft: #23302a;
+  --accent: oklch(0.692 0.059 var(--accent-h)); --accent-hover: oklch(0.769 0.059 var(--accent-h)); --accent-contrast: #171613; --accent-soft: oklch(0.295 0.021 var(--accent-h));
   --border: #3e3c37; --border-subtle: #2d2b27;
-  --card-top-line: #c96a5e; --card-seyes-main: rgba(123, 168, 145, 0.07); --card-margin-line: rgba(201, 106, 94, 0.3);
+  --card-top-line: #c96a5e; --card-seyes-main: oklch(0.692 0.059 var(--accent-h) / 0.08); --card-margin-line: rgba(201, 106, 94, 0.3);
   --danger: #e5847c; --danger-soft: #2e1d1a; --warning: #d9a441; --warning-soft: #2e2415;
   --success: #86d9a5; --success-soft: #1c2a22;
   --st-new: #8d8373; --st-learn: #d9a441; --st-know: #7fb0c2; --st-master: #7ba891;
@@ -103,6 +107,21 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .lang-switch { display: inline-flex; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 2px; }
 .lang-switch button { min-height: 38px; padding: 0 12px; border: none; background: transparent; border-radius: var(--radius-pill); font-size: 0.8125rem; font-family: var(--font-mono); font-weight: 600; cursor: pointer; color: var(--text-muted); }
 .lang-switch button.active { background: var(--bg-card); color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+/* Пресети акценту: змінюється ЛИШЕ відтінок, світлота й насиченість — ні */
+:root[data-accent="terre"]  { --accent-h: 40; }
+:root[data-accent="olive"]  { --accent-h: 110; }
+:root[data-accent="forest"] { --accent-h: 156; }
+:root[data-accent="ocean"]  { --accent-h: 205; }
+:root[data-accent="ink"]    { --accent-h: 255; }
+:root[data-accent="plum"]   { --accent-h: 330; }
+
+.accent-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.accent-swatch { width: 40px; height: 40px; min-height: 40px; padding: 0; border-radius: 50%; cursor: pointer;
+  border: 2px solid var(--border); background: oklch(0.395 0.054 var(--sw-h)); position: relative; }
+.accent-swatch[aria-pressed="true"] { border-color: var(--text-main); }
+.accent-swatch[aria-pressed="true"]::after { content: '✓'; position: absolute; inset: 0; display: flex;
+  align-items: center; justify-content: center; color: #fff; font-size: 17px; font-weight: 700; }
 
 /* Перемикач напрямку в режимі «Вибір» */
 .dir-switch-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -388,6 +407,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    * 20. Список слів і лічильники у фільтрах рахуються ОДНИМ предикатом
    *     wordPassesFilters. Інакше вони розходяться: лічильник частин мови
    *     показував весь словник, ігноруючи обрану тему.
+   * 21. Акцент виводиться з ОДНОГО відтінку (--accent-h): світлота й насиченість
+   *     зафіксовані, тож будь-який вибір учня лишається контрастним.
+   *     Пресети в CSS (:root[data-accent=...]) і в ACCENTS мають збігатися.
+   *     Поверхні НЕ йдуть за акцентом: теплий папір несе ідентичність зошита.
    * 18. Палітра і форма: теплий матовий папір, глибокий лісовий зелений як акцент,
    *     заокруглення лише зі шкали (--radius / --radius-card / --radius-pill).
    *     Текст на акцентній поверхні — var(--accent-contrast), НЕ жорсткий #fff:
@@ -417,7 +440,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   
   const defaultState = () => ({ 
     words: [], 
-    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', focusTopic: 'all', choiceDir: 'random' },
+    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random' },
     stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0 } 
   });
   let state = defaultState();
@@ -844,10 +867,24 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       state.stats.lastStudyDate = today;
     }
   }
+  // Відтінки мають збігатися з :root[data-accent="…"] у стилях
+  const ACCENTS = [
+    { id: 'forest', name: 'Ліс', h: 156 },
+    { id: 'olive',  name: 'Олива', h: 110 },
+    { id: 'ocean',  name: 'Океан', h: 205 },
+    { id: 'ink',    name: 'Чорнило', h: 255 },
+    { id: 'plum',   name: 'Слива', h: 330 },
+    { id: 'terre',  name: 'Теракота', h: 40 }
+  ];
   function applyTheme() {
     const root = document.documentElement;
     if (state.settings.theme === 'light' || state.settings.theme === 'dark') root.setAttribute('data-theme', state.settings.theme);
     else root.removeAttribute('data-theme');
+    applyAccent();
+  }
+  function applyAccent() {
+    const id = ACCENTS.some(a => a.id === state.settings.accent) ? state.settings.accent : 'forest';
+    document.documentElement.setAttribute('data-accent', id);
   }
   function makeWordId(frText) {
     return String(frText || '').trim().toLowerCase().replace(/[^a-zàâäéèêëîïôöùûüÿçœæ]+/g, '-').replace(/^-+|-+$/g, '') || 'mot';
@@ -3045,6 +3082,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
               ${[5, 10, 15, 20].map(n => `<option value="${n}" ${state.settings.newLimit === n ? 'selected' : ''}>${n} слів</option>`).join('')}
             </select>
           </div>
+          <div class="setting-row" style="align-items:flex-start;">
+            <div>
+              <div style="font-weight:600;">Колір застосунку</div>
+              <div style="font-size:0.8125rem; color:var(--text-muted);">Зберігається на цьому пристрої</div>
+            </div>
+            <div class="accent-row" role="group" aria-label="Колір застосунку">
+              ${ACCENTS.map(a => `<button type="button" class="accent-swatch" data-accent-id="${a.id}" style="--sw-h:${a.h};" title="${escapeHtml(a.name)}" aria-label="${escapeHtml(a.name)}" aria-pressed="${state.settings.accent === a.id}"></button>`).join('')}
+            </div>
+          </div>
           <div class="setting-row">
             <div><div style="font-weight:600;">Тема оформлення</div></div>
             <select id="selTheme" class="select" style="width:auto; min-width:140px;">
@@ -3070,6 +3116,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       </div>`;
     refreshVoices();
     container.querySelector('#selTheme').addEventListener('change', e => { state.settings.theme = e.target.value; applyTheme(); saveLocalStats(); });
+    container.querySelectorAll('[data-accent-id]').forEach(btn => btn.addEventListener('click', () => {
+      state.settings.accent = btn.dataset.accentId;
+      applyAccent();
+      saveLocalStats();
+      container.querySelectorAll('[data-accent-id]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.accentId === state.settings.accent)));
+    }));
     container.querySelector('#selNewLimit').addEventListener('change', e => { state.settings.newLimit = Number(e.target.value); saveLocalStats(); });
     if (speechSupported) {
       container.querySelector('#selVoice').addEventListener('change', e => { state.settings.voiceURI = e.target.value; saveLocalStats(); showToast('Голос озвучення збережено'); });

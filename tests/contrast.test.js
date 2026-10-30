@@ -19,15 +19,45 @@ function vars(selector) {
 const LIGHT = vars(':root');
 const DARK = vars(':root[data-theme="dark"]');
 
-const lum = hex => {
-  const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
-  assert.ok(m, `очікувався колір #rrggbb, а не "${hex}"`);
-  const c = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255)
-    .map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+// Пресети акценту: id → відтінок, читаємо прямо зі стилів
+const PRESET_HUES = (() => {
+  const m = {};
+  for (const x of HTML.matchAll(/:root\[data-accent="(\w+)"\]\s*\{\s*--accent-h:\s*([\d.]+);/g)) m[x[1]] = Number(x[2]);
+  return m;
+})();
+
+function oklchToRgb(L, C, H) {
+  const h = H * Math.PI / 180, a = C * Math.cos(h), b = C * Math.sin(h);
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3;
+  const lin = [
+     4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+  ];
+  const f = v => (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055);
+  return lin.map(v => Math.min(1, Math.max(0, f(v))));
+}
+
+// Приймає #rrggbb або oklch(L C H), де H може бути var(--accent-h)
+function toRgb(value, hue) {
+  const v = String(value).trim();
+  const hx = /^#([0-9a-f]{6})$/i.exec(v);
+  if (hx) return [0, 2, 4].map(i => parseInt(hx[1].slice(i, i + 2), 16) / 255);
+  const ok = /^oklch\(\s*([\d.]+)\s+([\d.]+)\s+(var\(--accent-h\)|[\d.]+)/i.exec(v);
+  assert.ok(ok, `не розпізнано колір "${v}"`);
+  const H = ok[3].startsWith('var') ? hue : Number(ok[3]);
+  assert.ok(Number.isFinite(H), `немає відтінку для "${v}"`);
+  return oklchToRgb(Number(ok[1]), Number(ok[2]), H);
+}
+const lumRgb = c => {
+  const n = c.map(v => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * n[0] + 0.7152 * n[1] + 0.0722 * n[2];
 };
-const ratio = (a, b) => {
-  const x = lum(a), y = lum(b);
+const lum = (value, hue) => lumRgb(toRgb(value, hue));
+const ratio = (a, b, hue) => {
+  const x = lum(a, hue), y = lum(b, hue);
   return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
 };
 
@@ -49,13 +79,21 @@ const PAIRS = [
   ['крапка статусу «Засвоєно»', '--st-master', '--bg-card', 3]
 ];
 
+test('Пресети акценту знайдено у стилях', () => {
+  assert.ok(Object.keys(PRESET_HUES).length >= 4, `знайдено лише: ${JSON.stringify(PRESET_HUES)}`);
+  assert.equal(PRESET_HUES.forest, 156, 'пресет «Ліс» має давати рівно схвалений #2d4f3a');
+});
+
+// Кожна пара перевіряється на КОЖНОМУ пресеті: учень не має змоги зробити текст нечитабельним
 for (const [theme, map] of [['світла', LIGHT], ['темна', DARK]]) {
   for (const [name, fg, bg, min] of PAIRS) {
-    test(`Контраст (${theme}): ${name}`, () => {
+    test(`Контраст (${theme}): ${name} — на всіх пресетах`, () => {
       assert.ok(map[fg], `немає змінної ${fg} у ${theme} темі`);
       assert.ok(map[bg], `немає змінної ${bg} у ${theme} темі`);
-      const r = ratio(map[fg], map[bg]);
-      assert.ok(r >= min, `${fg} на ${bg} = ${r.toFixed(2)}:1, треба ${min}:1`);
+      for (const [id, hue] of Object.entries(PRESET_HUES)) {
+        const r = ratio(map[fg], map[bg], hue);
+        assert.ok(r >= min, `пресет «${id}»: ${fg} на ${bg} = ${r.toFixed(2)}:1, треба ${min}:1`);
+      }
     });
   }
 }
@@ -84,8 +122,9 @@ test('Темна тема в медіазапиті збігається з яв
 
 test('Акцент і «успіх» достатньо різні, щоб кнопку не плутати з правильною відповіддю', () => {
   for (const [theme, map] of [['світла', LIGHT], ['темна', DARK]]) {
-    const d = Math.max(lum(map['--accent']), lum(map['--success'])) /
-              Math.min(lum(map['--accent']), lum(map['--success']));
+    const h = PRESET_HUES.forest;
+    const d = Math.max(lum(map['--accent'], h), lum(map['--success'], h)) /
+              Math.min(lum(map['--accent'], h), lum(map['--success'], h));
     assert.ok(d >= 1.5, `${theme}: акцент і успіх майже однакові (${d.toFixed(2)}×)`);
   }
 });
@@ -112,4 +151,39 @@ test('Кнопки, вкладки й картки беруть радіус з�
 test('Гострих дрібних радіусів не лишилось (окрім клітинок кросворда й підсвітки)', () => {
   const stray = [...HTML.matchAll(/border-radius: (\d+)px/g)].map(m => Number(m[1])).filter(n => n > 3);
   assert.deepEqual(stray, [], `лишились фіксовані радіуси: ${stray.join(', ')}`);
+});
+
+// ───────────── Вибір акценту ─────────────
+test('Акцент: пресети у стилях і в коді збігаються', () => {
+  const js = HTML.slice(HTML.indexOf('const ACCENTS = ['), HTML.indexOf('function applyTheme'));
+  const inJs = {};
+  for (const m of js.matchAll(/id: '(\w+)'[^}]*h: (\d+)/g)) inJs[m[1]] = Number(m[2]);
+  assert.deepEqual(inJs, PRESET_HUES,
+    'список кнопок у налаштуваннях розійшовся з пресетами в CSS');
+});
+
+test('Акцент: усі кольори акценту виводяться з --accent-h, жодного зашитого', () => {
+  for (const [theme, map] of [['світла', LIGHT], ['темна', DARK]]) {
+    for (const k of ['--accent', '--accent-hover', '--accent-soft']) {
+      assert.match(map[k], /var\(--accent-h\)/, `${theme}: ${k} не реагує на вибір учня`);
+    }
+  }
+});
+
+test('Акцент: світлота зафіксована — змінюється лише відтінок', () => {
+  const L = v => Number(/oklch\(\s*([\d.]+)/.exec(v)[1]);
+  // саме це і гарантує контраст при будь-якому виборі
+  assert.ok(L(LIGHT['--accent']) < 0.5, 'у світлій темі акцент має лишатись темним');
+  assert.ok(L(DARK['--accent']) > 0.6, 'у темній темі акцент має лишатись світлим');
+});
+
+test('Акцент: невідоме значення з налаштувань не ламає тему', () => {
+  const fn = HTML.slice(HTML.indexOf('function applyAccent'), HTML.indexOf('function makeWordId'));
+  assert.match(fn, /ACCENTS\.some\(a => a\.id === state\.settings\.accent\)/, 'немає перевірки на відоме значення');
+  assert.match(fn, /'forest'/, 'немає запасного пресету');
+});
+
+test('Акцент: позначка «сьогодні» у прогнозі теж іде за вибраним кольором', () => {
+  const rule = HTML.match(/\.forecast-col\.is-today \.forecast-day \{[^}]*\}/)[0];
+  assert.match(rule, /background: var\(--accent\)/);
 });
