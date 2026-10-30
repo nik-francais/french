@@ -14,12 +14,14 @@
 :root {
   /* Палітра: теплий матовий папір + глибокий лісовий зелений.
      Кожна пара «текст / тло» перевірена тестом tests/contrast.test.js — не правити наосліп. */
-  --bg-page: #edefe8;
-  --bg-card: #fbfcf9;
-  --bg-elevated: #e6eae0;
-  --bg-input: #ffffff;
-  --text-main: #1d2420;
-  --text-muted: #586359;
+  /* Поверхні теж виводяться з --accent-h: змінюється весь інтерфейс, а не лише кнопки.
+     Насиченість навмисно крихітна — папір лишається папером, а не кольоровою плашкою. */
+  --bg-page: oklch(0.949 0.014 var(--accent-h));
+  --bg-card: oklch(0.989 0.005 var(--accent-h));
+  --bg-elevated: oklch(0.931 0.018 var(--accent-h));
+  --bg-input: oklch(0.992 0.004 var(--accent-h));
+  --text-main: oklch(0.252 0.013 var(--accent-h));
+  --text-muted: oklch(0.487 0.021 var(--accent-h));
 
   /* Акцент виводиться з ОДНОГО відтінку: світлота й насиченість зафіксовані,
      тож будь-який вибір учня лишається контрастним (перевірено tests/contrast.test.js).
@@ -29,8 +31,8 @@
   --accent-hover: oklch(0.343 0.046 var(--accent-h));
   --accent-contrast: #ffffff;   /* текст НА акцентній поверхні; у темній темі стає майже чорним */
   --accent-soft: oklch(0.934 0.014 var(--accent-h));
-  --border: #e4e8dd;
-  --border-subtle: #edf0e8;
+  --border: oklch(0.925 0.016 var(--accent-h));
+  --border-subtle: oklch(0.951 0.011 var(--accent-h));
 
   --card-top-line: #c2654f;
   --card-seyes-main: oklch(0.395 0.054 var(--accent-h) / 0.06);
@@ -44,7 +46,7 @@
   --success-soft: #e8f3ec;
 
   --st-new: #8a9183;
-  --st-learn: #c0873c;
+  --st-learn: #b07c33;
   --st-know: #4d8296;
   --st-master: #296d46;
 
@@ -61,10 +63,10 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     /* Той самий зошит у приглушеному світлі: теплий графіт, не холодний синій. */
-    --bg-page: #171613; --bg-card: #232220; --bg-elevated: #2e2c28; --bg-input: #1b1a17;
-    --text-main: #eae7df; --text-muted: #a39f95;
-    --accent: oklch(0.692 0.059 var(--accent-h)); --accent-hover: oklch(0.769 0.059 var(--accent-h)); --accent-contrast: #171613; --accent-soft: oklch(0.295 0.021 var(--accent-h));
-    --border: #3e3c37; --border-subtle: #2d2b27;
+    --bg-page: oklch(0.200 0.008 var(--accent-h)); --bg-card: oklch(0.252 0.007 var(--accent-h)); --bg-elevated: oklch(0.294 0.010 var(--accent-h)); --bg-input: oklch(0.218 0.006 var(--accent-h));
+    --text-main: oklch(0.928 0.010 var(--accent-h)); --text-muted: oklch(0.703 0.014 var(--accent-h));
+    --accent: oklch(0.692 0.059 var(--accent-h)); --accent-hover: oklch(0.769 0.059 var(--accent-h)); --accent-contrast: oklch(0.200 0.008 var(--accent-h)); --accent-soft: oklch(0.295 0.021 var(--accent-h));
+    --border: oklch(0.356 0.011 var(--accent-h)); --border-subtle: oklch(0.300 0.009 var(--accent-h));
     --card-top-line: #c96a5e; --card-seyes-main: oklch(0.692 0.059 var(--accent-h) / 0.08); --card-margin-line: rgba(201, 106, 94, 0.3);
     --danger: #e5847c; --danger-soft: #2e1d1a; --warning: #d9a441; --warning-soft: #2e2415;
     --success: #86d9a5; --success-soft: #1c2a22;
@@ -74,10 +76,10 @@
 }
 
 :root[data-theme="dark"] {
-  --bg-page: #171613; --bg-card: #232220; --bg-elevated: #2e2c28; --bg-input: #1b1a17;
-  --text-main: #eae7df; --text-muted: #a39f95;
-  --accent: oklch(0.692 0.059 var(--accent-h)); --accent-hover: oklch(0.769 0.059 var(--accent-h)); --accent-contrast: #171613; --accent-soft: oklch(0.295 0.021 var(--accent-h));
-  --border: #3e3c37; --border-subtle: #2d2b27;
+  --bg-page: oklch(0.200 0.008 var(--accent-h)); --bg-card: oklch(0.252 0.007 var(--accent-h)); --bg-elevated: oklch(0.294 0.010 var(--accent-h)); --bg-input: oklch(0.218 0.006 var(--accent-h));
+  --text-main: oklch(0.928 0.010 var(--accent-h)); --text-muted: oklch(0.703 0.014 var(--accent-h));
+  --accent: oklch(0.692 0.059 var(--accent-h)); --accent-hover: oklch(0.769 0.059 var(--accent-h)); --accent-contrast: oklch(0.200 0.008 var(--accent-h)); --accent-soft: oklch(0.295 0.021 var(--accent-h));
+  --border: oklch(0.356 0.011 var(--accent-h)); --border-subtle: oklch(0.300 0.009 var(--accent-h));
   --card-top-line: #c96a5e; --card-seyes-main: oklch(0.692 0.059 var(--accent-h) / 0.08); --card-margin-line: rgba(201, 106, 94, 0.3);
   --danger: #e5847c; --danger-soft: #2e1d1a; --warning: #d9a441; --warning-soft: #2e2415;
   --success: #86d9a5; --success-soft: #1c2a22;
@@ -407,10 +409,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    * 20. Список слів і лічильники у фільтрах рахуються ОДНИМ предикатом
    *     wordPassesFilters. Інакше вони розходяться: лічильник частин мови
    *     показував весь словник, ігноруючи обрану тему.
-   * 21. Акцент виводиться з ОДНОГО відтінку (--accent-h): світлота й насиченість
-   *     зафіксовані, тож будь-який вибір учня лишається контрастним.
+   * 21. УСЯ палітра виводиться з ОДНОГО відтінку (--accent-h): і акцент, і фони,
+   *     і текст. Світлота та насиченість кожної ролі зафіксовані, змінюється лише
+   *     відтінок — саме це гарантує контраст при будь-якому виборі учня.
    *     Пресети в CSS (:root[data-accent=...]) і в ACCENTS мають збігатися.
-   *     Поверхні НЕ йдуть за акцентом: теплий папір несе ідентичність зошита.
+   *     Насиченість поверхонь навмисно крихітна: папір лишається папером.
+   *     Семантичні кольори (помилка, успіх, статуси) за акцентом НЕ йдуть.
    * 18. Палітра і форма: теплий матовий папір, глибокий лісовий зелений як акцент,
    *     заокруглення лише зі шкали (--radius / --radius-card / --radius-pill).
    *     Текст на акцентній поверхні — var(--accent-contrast), НЕ жорсткий #fff:

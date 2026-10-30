@@ -11,7 +11,8 @@ const HTML = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 function vars(selector) {
   const i = HTML.indexOf(selector + ' {');
   assert.notEqual(i, -1, `не знайдено блок ${selector}`);
-  const block = HTML.slice(i, HTML.indexOf('}', i));
+  // Коментарі прибираємо: «--accent-h:» у поясненні інакше зчитується як оголошення
+  const block = HTML.slice(i, HTML.indexOf('}', i)).replace(/\/\*[\s\S]*?\*\//g, '');
   const map = {};
   for (const m of block.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) map[m[1]] = m[2].trim();
   return map;
@@ -186,4 +187,31 @@ test('Акцент: невідоме значення з налаштувань 
 test('Акцент: позначка «сьогодні» у прогнозі теж іде за вибраним кольором', () => {
   const rule = HTML.match(/\.forecast-col\.is-today \.forecast-day \{[^}]*\}/)[0];
   assert.match(rule, /background: var\(--accent\)/);
+});
+
+test('Акцент: фони й текст теж реагують на вибір, а не лише кнопки', () => {
+  for (const [theme, map] of [['світла', LIGHT], ['темна', DARK]]) {
+    for (const k of ['--bg-page', '--bg-card', '--bg-elevated', '--text-main', '--text-muted', '--border']) {
+      assert.match(map[k], /var\(--accent-h\)/, `${theme}: ${k} не змінюється разом з акцентом`);
+    }
+  }
+});
+
+test('Акцент: поверхні лишаються папером — насиченість мінімальна', () => {
+  const C = v => Number(/oklch\(\s*[\d.]+\s+([\d.]+)/.exec(v)[1]);
+  for (const [theme, map] of [['світла', LIGHT], ['темна', DARK]]) {
+    for (const k of ['--bg-page', '--bg-card', '--bg-elevated']) {
+      assert.ok(C(map[k]) <= 0.03, `${theme}: ${k} став кольоровою плашкою замість паперу`);
+    }
+    assert.ok(C(map['--accent']) > 0.04, `${theme}: акцент має лишатись насиченим`);
+  }
+});
+
+test('Семантичні кольори за акцентом не йдуть', () => {
+  for (const [theme, map] of [['світла', LIGHT], ['темна', DARK]]) {
+    for (const k of ['--danger', '--warning', '--success', '--st-learn']) {
+      assert.equal(/var\(--accent-h\)/.test(map[k]), false,
+        `${theme}: ${k} втратить значення, якщо йтиме за акцентом`);
+    }
+  }
 });
