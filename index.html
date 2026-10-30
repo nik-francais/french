@@ -43,9 +43,9 @@
 
   --shadow: 0 3px 10px rgba(35, 30, 20, 0.05), 0 1px 3px rgba(35, 30, 20, 0.04);
   --radius: 6px;
-  --font-ui: 'Golos Text', -apple-system, sans-serif;
-  --font-fr: 'Literata', Georgia, serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-ui: 'Golos Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-fr: 'Literata', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -57,6 +57,7 @@
     --card-top-line: #c94a4a; --card-seyes-main: rgba(255, 255, 255, 0.025); --card-margin-line: rgba(230, 90, 90, 0.22);
     --danger: #f87171; --danger-soft: #381a1a; --warning: #fbbf24; --warning-soft: #3a280c;
     --success: #4ade80; --success-soft: #123320;
+    --st-new: #94a3b8; --st-learn: #fbbf24; --st-know: #7ca5d8; --st-master: #4ade80;
     --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   }
 }
@@ -69,6 +70,8 @@
   --card-top-line: #c94a4a; --card-seyes-main: rgba(255, 255, 255, 0.025); --card-margin-line: rgba(230, 90, 90, 0.22);
   --danger: #f87171; --danger-soft: #381a1a; --warning: #fbbf24; --warning-soft: #3a280c;
   --success: #4ade80; --success-soft: #123320;
+  --st-new: #94a3b8; --st-learn: #fbbf24; --st-know: #7ca5d8; --st-master: #4ade80;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -98,7 +101,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nav-tab { min-height: 44px; border: none; background: transparent; border-radius: calc(var(--radius) - 2px); font-weight: 600; font-size: 0.9375rem; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background-color 0.15s, color 0.15s; }
 .nav-tab.active { background: var(--bg-card); color: var(--text-main); box-shadow: var(--shadow); }
 
-/* КАРТКИ */
+/* КАРТКИ (ЗОШИТ SÉYÈS) */
 .index-card { background-color: var(--bg-card); background-image: linear-gradient(90deg, transparent 42px, var(--card-margin-line) 42px, var(--card-margin-line) 43px, transparent 43px), repeating-linear-gradient(to bottom, transparent 0px, transparent 31px, var(--card-seyes-main) 31px, var(--card-seyes-main) 32px); border: 1px solid var(--border); border-top: 3px solid var(--card-top-line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px 22px 22px 52px; position: relative; }
 @media (max-width: 480px) { .index-card { padding: 18px 16px 18px 20px; background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 31px, var(--card-seyes-main) 31px, var(--card-seyes-main) 32px); } }
 .panel-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
@@ -120,7 +123,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 
 /* ДАШБОРД */
 .topic-focus-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; background: var(--bg-elevated); border-radius: var(--radius); border: 1px solid var(--border); font-size: 0.875rem; margin-bottom: 16px; }
-.topic-focus-select { padding: 6px 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); font-weight: 600; color: var(--text-main); max-width: 250px; }
+.topic-focus-select { padding: 6px 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); font-weight: 600; color: var(--text-main); max-width: 260px; }
 .hero-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
 .due-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; display: block; }
 .due-number { font-family: var(--font-mono); font-size: 2.8rem; font-weight: 700; line-height: 1.1; color: var(--accent); display: block; margin-top: 4px; }
@@ -131,11 +134,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .section-label { font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 10px; }
 .segment-bar { height: 12px; width: 100%; background: var(--bg-elevated); border-radius: 6px; overflow: hidden; display: flex; margin-bottom: 10px; }
 .seg-part { height: 100%; transition: width 0.3s ease; }
-.segment-legend { display: flex; align-items: center; gap: 12px; font-size: 0.8125rem; flex-wrap: wrap; }
+.segment-legend { display: flex; align-items: center; gap: 14px; font-size: 0.8125rem; flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 6px; }
 .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .legend-count { font-family: var(--font-mono); font-weight: 600; }
-.forecast-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 110px; padding-top: 18px; margin-bottom: 16px;}
+.forecast-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 110px; padding-top: 18px; margin-bottom: 4px;}
 .forecast-col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 4px; }
 .forecast-val { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
 .forecast-bar-wrap { width: 100%; max-width: 32px; flex: 1; display: flex; align-items: flex-end; background: var(--bg-elevated); border-radius: 4px; overflow: hidden; }
@@ -150,14 +153,14 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .mode-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 2px; }
 .mode-desc { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.35; }
 
-/* СЕСІЇ ТА КАРТКИ */
+/* НАВЧАЛЬНІ ЕКРАНИ ТА ТИПОГРАФІКА */
 .session-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .session-progress { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 600; color: var(--text-muted); }
 .instruction-text { font-family: var(--font-ui); font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
 .study-word-title { font-family: var(--font-fr); font-size: 2rem; font-weight: 700; line-height: 1.25; margin-bottom: 4px; color: var(--text-main); }
 .study-pos { font-family: var(--font-fr); font-size: 0.88rem; color: var(--text-muted); font-style: italic; margin-bottom: 16px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .study-divider { border: none; border-top: 1px dashed var(--border); margin: 16px 0; }
-.study-meaning { font-family: var(--font-ui); font-size: 1.35rem; font-weight: 700; line-height: 1.3; color: var(--accent); margin-bottom: 8px; }
+.study-meaning { font-family: var(--font-ui); font-size: 1.4rem; font-weight: 700; line-height: 1.3; color: var(--accent); margin-bottom: 8px; }
 .study-def { font-family: var(--font-fr); font-size: 0.98rem; line-height: 1.5; color: var(--text-muted); margin-bottom: 12px; padding-left: 10px; border-left: 2px solid var(--border); }
 .study-synonyms { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
 .study-example { font-family: var(--font-fr); font-size: 1.05rem; line-height: 1.45; padding: 12px 14px; background: var(--bg-elevated); border-left: 3px solid var(--card-top-line); border-radius: 4px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -185,7 +188,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .forms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; background: var(--bg-card); border-radius: 8px; padding: 14px; border: 1px solid var(--border); }
 @media (max-width: 480px) { .forms-grid { grid-template-columns: 1fr; } }
 .form-row-c { font-family: var(--font-mono); font-size: 14px; display: flex; align-items: baseline; }
-.pronoun { color: var(--text-muted); margin-right: 6px; font-family: var(--font-ui); font-size: 13px; min-width: 38px; display: inline-block; }
+.pronoun { color: var(--text-muted); margin-right: 6px; font-family: var(--font-ui); font-size: 13px; min-width: 42px; display: inline-block; }
 .passe-compose-banner { background: var(--bg-card); padding: 12px; border-radius: 8px; font-size: 14px; border: 1px solid var(--border); line-height: 1.6; }
 
 /* ОПЦІЇ ТА ЗВОРОТНИЙ ЗВ'ЯЗОК */
@@ -264,6 +267,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
 .modal-backdrop.open { display: flex; }
 .modal-box { background: var(--bg-card); border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: var(--radius); max-width: 540px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+.form-row { display: flex; flex-direction: column; gap: 4px; }
+.form-row label { font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); }
 .toast-container { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 8px; max-width: 92vw; width: 420px; pointer-events: none; }
 .toast { background: var(--text-main); color: var(--bg-card); padding: 12px 16px; border-radius: var(--radius); font-size: 0.875rem; box-shadow: var(--shadow); pointer-events: auto; }
 .setting-group { display: flex; flex-direction: column; gap: 12px; }
@@ -336,25 +341,31 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   
   let currentUser = null; 
   let currentVerbData = null;
-  let activeRoundState = null; // Стан для збереження прогресу при згортанні вкладки
-  const STORAGE_KEY = 'bam_app_data_cloud_v2';
-  const SESSION_PROGRESS_KEY = 'bam_active_session_v2';
+  let activeRoundState = null;
+  const STORAGE_KEY = 'bam_app_data_cloud_v3';
+  const SESSION_PROGRESS_KEY = 'bam_active_session_v3';
   
   const defaultState = () => ({ 
     words: [], 
     settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', focusTopic: 'all' }, 
-    stats: { streak: 0, dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0 } 
+    stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0 } 
   });
   let state = defaultState();
 
-  // Нормалізація вхідного слова (підтримка старих та нових полів JSON, таких як context_quiz і conj)
+  // Нормалізація рядка (підтримка старих та нових полів JSON: context_quiz, context_translation, conj)
   function normalizeWordRow(row) {
-    let conjData = row.conj || row.conjugation || null;
+    let rawConj = row.conj || row.conjugation || null;
     let ctxQuiz = row.context_quiz || null;
-    if (!ctxQuiz && conjData && conjData.context_quiz) {
-      ctxQuiz = conjData.context_quiz;
+    let ctxTrans = String(row.context_translation || '').trim();
+
+    if (rawConj && typeof rawConj === 'object') {
+      if (!ctxQuiz && rawConj.context_quiz) ctxQuiz = rawConj.context_quiz;
+      if (!ctxTrans && rawConj.context_translation) ctxTrans = String(rawConj.context_translation).trim();
     }
+
+    const hasValidTenses = Boolean(rawConj && rawConj.tenses && typeof rawConj.tenses === 'object');
     const frText = String(row.fr || row.word || '').trim();
+
     return {
       dbId: row.id || row.dbId || null,
       id: makeWordId(frText),
@@ -362,9 +373,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       uk: String(row.uk || row.translation || '').trim(),
       def: String(row.def || '').trim(),
       ex: String(row.ex || row.context || '').trim(),
-      context_translation: String(row.context_translation || '').trim(),
+      context_translation: ctxTrans,
       syn: Array.isArray(row.syn) ? row.syn : (Array.isArray(row.synonyms) ? row.synonyms : []),
-      conj: conjData,
+      conj: hasValidTenses ? rawConj : null,
       context_quiz: ctxQuiz,
       pos: String(row.pos || '').trim(),
       src: String(row.src || 'Загальний').trim(),
@@ -378,7 +389,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     };
   }
 
-  // 2. АВТОРИЗАЦІЯ ТА СИНХРОНІЗАЦІЯ
+  // 2. АВТОРИЗАЦІЯ ТА ХМАРНА СИНХРОНІЗАЦІЯ
   async function checkSession() {
     try {
       const { data: { session } } = await sbClient.auth.getSession();
@@ -423,7 +434,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     }
   }
 
-  // Підтримка Enter на полях входу
   ['email-input', 'password-input'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); signInWithPassword(); } });
@@ -464,8 +474,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   async function insertWordsBatchForEmail(email, wordsArray) {
     const recordsToInsert = wordsArray.map(w => {
       let conjPayload = w.conj || w.conjugation || null;
-      if (w.context_quiz) {
-        conjPayload = Object.assign({}, conjPayload || {}, { context_quiz: w.context_quiz });
+      if (w.context_quiz || w.context_translation) {
+        conjPayload = Object.assign({}, conjPayload || {});
+        if (w.context_quiz) conjPayload.context_quiz = w.context_quiz;
+        if (w.context_translation) conjPayload.context_translation = w.context_translation;
       }
       return {
         user_email: email,
@@ -507,7 +519,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (!currentUser) return;
     const { data, error } = await sbClient.from('cards').select('*').eq('user_email', currentUser.email);
     if (!error && data) {
-      // Завжди беремо актуальний стан із хмари як єдине джерело правди
       state.words = data.map(row => normalizeWordRow(row));
       saveLocalStats();
       updateNavBadge();
@@ -538,7 +549,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     }).eq('id', word.dbId);
   }
 
-  // 3. ЗБЕРЕЖЕННЯ ТА ВІДНОВЛЕННЯ ПРОГРЕСУ СЕСІЇ (Пункт 5)
+  // 3. ЗБЕРЕЖЕННЯ ТА ВІДНОВЛЕННЯ ПРОГРЕСУ СЕСІЇ ПРИ ПЕРЕМИКАННІ ЗАСТОСУНКІВ
   function saveActiveSessionProgress() {
     if (!activeRoundState || currentTab !== 'study') return;
     try {
@@ -641,17 +652,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/œ/g, 'oe').replace(/æ/g, 'ae');
   }
   
-  // Очищення виразу від службових позначень у дужках та маркерів qqn/qqch зі збереженням керування
+  // Очищення виразу від службових позначень (qqn, qqch, + taille, дужок) зі збереженням керування прийменниками (à, de, pour)
   function getTestableFr(frText) {
     let s = String(frText || '').trim();
     if (s.includes('≠')) s = s.split('≠')[0].trim();
-    // Прибираємо службові уточнення у дужках, напр. "vivre dans la précarité (vivre dans qqch)" -> "vivre dans la précarité"
     s = s.replace(/\s*\([^)]*\)/g, '').trim();
-    // Прибираємо конструкції з плюсом на кінці: "+ taille", "+ pointure", "+ adjectif", "+ inf."
     s = s.replace(/\s*\+\s*[a-zàâäéèêëîïôöùûüÿçœæ.\s/]+$/i, '').trim();
-    // Прибираємо службові займенники-маркери qqn / qqch / qch / qn, але залишаємо прийменники перед ними
     s = s.replace(/\b(qqch|qqn|qch|qn)\b/gi, '').replace(/\s+/g, ' ').trim();
-    // Прибираємо трикрапки в кінці
     s = s.replace(/\.\.\.\s*\??$/, '').trim();
     return s || String(frText || '').trim();
   }
@@ -774,7 +781,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     return { dueReview, newToday, combined: [...dueReview, ...newToday] };
   }
 
-  // 5. ОЗВУЧЕННЯ БЕЗ ДУБЛЮВАННЯ ГОЛОСІВ (Пункт 1)
+  // 5. ОЗВУЧЕННЯ БЕЗ ДУБЛЮВАННЯ ГОЛОСІВ
   const speechSupported = ('speechSynthesis' in window);
   let frenchVoices = [];
   let activeUtterances = [];
@@ -784,7 +791,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     const allVoices = window.speechSynthesis.getVoices();
     const rawFr = allVoices.filter(v => /^fr(-|_|$)/i.test(v.lang));
     
-    // Строга дедуплікація за парою ім'я + мова, щоб голоси "Томас (fr-FR)" та "Амели (fr-CA)" ніколи не дублювалися
+    // Жорстка дедуплікація за парою ім'я + мова
     const uniqueMap = new Map();
     rawFr.forEach(v => {
       const cleanName = String(v.name || '').trim().toLowerCase();
@@ -822,7 +829,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   function speakFrench(text, rate = 1.0) {
     if (!speechSupported) return;
     let cleanText = String(text || '').replace(/\[|\]/g, '').trim();
-    // Прибираємо службові дужки типу "(vivre dans qqch)" при читанні вголос
     cleanText = cleanText.replace(/\s*\([^)]*\)/g, '').trim();
     cleanText = cleanText
       .replace(/\bqqch\b/gi, 'quelque chose')
@@ -863,7 +869,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     return /\[.+?\]/.test(safe) ? safe.replace(/\[(.+?)\]/g, '<span class="hl-word">$1</span>') : safe;
   }
 
-  // Підтримка відображення відмінювання як для масивів рядків ("je vis"), так і для об'єктів ({p, v})
+  // Відображення відмінювання для всіх 6 часів
   function formatConjugationRow(item) {
     if (typeof item === 'string') {
       const str = item.trim();
@@ -923,7 +929,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     container.innerHTML = `<div class="forms-grid">${forms.map(item => formatConjugationRow(item)).join('')}</div>`;
   };
 
-  // Опис карток без технічного "SM-2" (Пункт 2)
+  // Опис режимів (без технічного "SM-2")
   const MODES_META = [
     { id: 'cards', name: 'Картки', svg: '<rect x="4" y="4" width="16" height="16" rx="2"/><line x1="4" y1="9" x2="20" y2="9"/>', desc: 'Класичні картки з прикладами та інтервальним повторенням' },
     { id: 'choice', name: 'Вибір', svg: '<circle cx="6" cy="7" r="1.5"/><line x1="10" y1="7" x2="20" y2="7"/><circle cx="6" cy="12" r="1.5"/><line x1="10" y1="12" x2="20" y2="12"/>', desc: '10 запитань із 4 варіантами (прямий і зворотний)' },
@@ -1149,7 +1155,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       if (deck.length === 0) { renderRoundSummary(container, 'cards', Array.from(sum.values())); return; }
       syncSession();
       const w = deck[0];
-      const hasC = w.conj && w.conj.tenses;
+      const hasC = Boolean(w.conj && w.conj.tenses);
       if (hasC) currentVerbData = w.conj;
       const showBothUkAndDef = (state.settings.langMode === 'UK_FR' && w.uk && w.def);
 
@@ -1234,7 +1240,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 2. РЕЖИМ ВИБІР (Вимкнено автоозвучення при кліку - Пункт 6)
+   * 2. РЕЖИМ ВИБІР
    * ========================================================= */
   function runChoiceMode(container, restored = null) {
     let qs = [];
@@ -1295,10 +1301,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           ${opts.map((o,i) => {
             let cls = '';
             if (ansd) { if (o.id === w.id) cls = 'correct'; else if (o.id === chId) cls = 'wrong'; }
-            return `<button class="option-btn ${cls}" data-opt="${o.id}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="${areOptionsFrench ? 'opt-fr' : 'opt-uk'}">${escapeHtml(rev ? o.fr : getPromptText(o))}</span></button>`;
+            return `<button type="button" class="option-btn ${cls}" data-opt="${o.id}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="${areOptionsFrench ? 'opt-fr' : 'opt-uk'}">${escapeHtml(rev ? o.fr : getPromptText(o))}</span></button>`;
           }).join('')}
         </div>
-        ${ansd ? `<div style="margin-top:14px;display:flex;justify-content:space-between;">${speakerBtnHtml(w.fr)}<button class="btn btn-primary" id="bNx">Далі (Enter)</button></div>` : ''}
+        ${ansd ? `<div style="margin-top:14px;display:flex;justify-content:space-between;">${speakerBtnHtml(w.fr)}<button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>` : ''}
       </section>`;
       container.querySelector('#btnEx').addEventListener('click', exitToDashboard);
       container.querySelectorAll('[data-opt]').forEach(b => b.addEventListener('click', () => choose(b.dataset.opt)));
@@ -1334,7 +1340,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 3. РЕЖИМ НАПИШИ (Виправлено Enter та автоозвучення - Пункти 3 і 6)
+   * 3. РЕЖИМ НАПИШИ
    * ========================================================= */
   function levenshtein(a, b) {
     const m = a.length, n = b.length;
@@ -1525,7 +1531,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 4. РЕЖИМ ДИКТАНТ (Виправлено evaluateWrittenAnswer та Enter - Пункт 3)
+   * 4. РЕЖИМ ДИКТАНТ
    * ========================================================= */
   function runDictationMode(container, restored = null) {
     let qs = [];
@@ -1647,13 +1653,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 5. РЕЖИМ У КОНТЕКСТІ (Підтримка context_quiz + Вимкнено автоозвучення - Пункт 6)
+   * 5. РЕЖИМ У КОНТЕКСТІ
    * ========================================================= */
   function runContextMode(container, restored = null) {
     let qs = [];
     let idx = 0;
     let ansd = false;
-    let opts = []; // [{ text, isCorrect }]
+    let opts = [];
     const res = [];
 
     if (restored && Array.isArray(restored.wordIds)) {
@@ -1687,13 +1693,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     function setup() {
       syncSession();
       const w = qs[idx];
-      // Якщо картка має згенерований за новим промптом блок context_quiz — беремо однорідні форми звідти
       if (w.context_quiz && w.context_quiz.correct && Array.isArray(w.context_quiz.distractors) && w.context_quiz.distractors.length > 0) {
         const cText = String(w.context_quiz.correct).trim();
         const dList = w.context_quiz.distractors.slice(0, 3).map(d => ({ text: String(d).trim(), isCorrect: false }));
         opts = shuffle([{ text: cText, isCorrect: true }, ...dList]);
       } else {
-        // Fallback для старіших карток: беремо точну форму з квадратних дужок [...] або очищену від артиклів форму
         const bracketMatch = String(w.ex || '').match(/\[(.+?)\]/);
         const correctForm = bracketMatch ? bracketMatch[1].trim() : getContextOptionText(w.fr);
         const otherWords = shuffle(getActiveWordsPool().filter(x => x.id !== w.id)).slice(0, 3);
@@ -1747,7 +1751,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       handleMiniGameResult(w, ok);
       res.push({ word: w, ok });
       render(w, i);
-      // Автоозвучення при кліку на варіант вимкнено (Пункт 6) — звук лише за кнопкою динаміка
     }
     function next() {
       idx++;
@@ -1870,7 +1873,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 7. РЕЖИМ ПАРИ (Вимкнено автоозвучення - Пункт 6)
+   * 7. РЕЖИМ ПАРИ
    * ========================================================= */
   function runPairsMode(container) {
     const pool = pickStudyWords(10);
@@ -2138,7 +2141,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * 10. РЕЖИМ АНАГРАМА (Вимкнено автоозвучення - Пункт 6)
+   * 10. РЕЖИМ АНАГРАМА
    * ========================================================= */
   function runAnagramMode(container, restored = null) {
     let questions = [];
@@ -2265,7 +2268,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* =========================================================
-   * СЛОВА, ВИДАЛЕННЯ СЛОВА ТА ВИДАЛЕННЯ ТЕМИ (Пункт 4)
+   * СЛОВА, РЕДАГУВАННЯ, ІМПОРТ ТА НАДІЙНЕ ВИДАЛЕННЯ В SUPABASE
    * ========================================================= */
   let wordSearchQuery = '';
   let wordFilterStatus = 'all';
@@ -2344,7 +2347,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         const toDelete = state.words.filter(w => w.src === deletedTopic);
         const dbIds = toDelete.map(w => w.dbId).filter(Boolean);
         
-        // 1. Спочатку гарантовано видаляємо з бази Supabase
         try {
           if (dbIds.length > 0) {
             await sbClient.from('cards').delete().in('id', dbIds);
@@ -2356,7 +2358,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           console.error("Помилка видалення теми з Supabase:", err);
         }
 
-        // 2. Видаляємо з локального стану та синхронізуємо локальне сховище
         state.words = state.words.filter(w => w.src !== deletedTopic);
         if (state.settings.focusTopic === deletedTopic) {
           state.settings.focusTopic = 'all';
@@ -2386,7 +2387,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       listEl.innerHTML = filtered.map(w => {
         const st = getWordStatus(w);
         const d = formatDueDate(w);
-        const hasC = w.conj && w.conj.tenses;
+        const hasC = Boolean(w.conj && w.conj.tenses);
         const isConfirming = (confirmingDeleteWordId === w.id);
         return `<article class="word-item" data-status="${st}">
           <div class="word-item-header">
@@ -2450,7 +2451,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           const targetWord = state.words.find(item => item.id === btn.dataset.confirmdel);
           if (!targetWord) return;
 
-          // 1. Спочатку видаляємо з Supabase, щоб при перезавантаженні сторінки запис не відновився
           try {
             if (targetWord.dbId) {
               await sbClient.from('cards').delete().eq('id', targetWord.dbId);
@@ -2461,7 +2461,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             console.error("Помилка видалення слова з Supabase:", err);
           }
 
-          // 2. Видаляємо з пам'яті й оновлюємо кеш localStorage
           state.words = state.words.filter(item => item.id !== targetWord.id);
           confirmingDeleteWordId = null;
           saveLocalStats();
@@ -2531,15 +2530,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           throw new Error('Користувач не авторизований. Будь ласка, увійдіть у свій акаунт.');
         }
 
-        // 1. Зберігаємо слова в базі даних Supabase для поточного учня
         const inserted = await insertWordsBatchForEmail(currentUser.email, arr);
 
-        // 2. Оновлюємо або додаємо слова в локальний масив застосунку
         inserted.forEach(row => {
           const norm = normalizeWordRow(row);
           const existingIdx = state.words.findIndex(w => w.id === norm.id || (w.dbId && w.dbId === norm.dbId));
           if (existingIdx > -1) {
-            // Зберігаємо історію повторень (iv, r, due), оновлюючи контент
             state.words[existingIdx] = Object.assign({}, norm, {
               iv: state.words[existingIdx].iv,
               ef: state.words[existingIdx].ef,
@@ -2553,7 +2549,6 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           }
         });
 
-        // 3. Зберігаємо оновлений кеш та оновлюємо екран
         saveLocalStats();
         updateNavBadge();
         closeModal();
