@@ -194,3 +194,23 @@ test('Теми: тема лишається у списку, навіть якщ
   const opts = options(el.innerHTML, 'selFilterSrc');
   assert.ok(opts.some(o => /Робота \(0\)/.test(o)), `тема має лишатись видимою з нулем: ${opts.join(' | ')}`);
 });
+
+// ───────────── Прогноз на 7 днів ─────────────
+test('Прогноз: сьогодні має справжній день тижня, а не скорочення «Сьог»', () => {
+  assert.equal(/'Сьог'/.test(HTML), false, 'обрізане «Сьог» повернулось замість дня тижня');
+  assert.match(HTML, /dayNames\[new Date\(start\)\.getDay\(\)\], count: cnt, isToday: d === 0/);
+});
+
+test('Прогноз: сьогодні позначається кольором, а не текстом', () => {
+  const rule = HTML.match(/\.forecast-col\.is-today \.forecast-day \{[^}]*\}/);
+  assert.ok(rule, 'немає стилю для позначки «сьогодні»');
+  assert.match(rule[0], /background: var\(--accent\)/);
+  assert.match(rule[0], /color: var\(--accent-contrast\)/, 'текст на кольоровій плашці має бути контрастним');
+});
+
+test('Прогноз: у дні без повторень смужка не малюється взагалі', () => {
+  const tpl = HTML.slice(HTML.indexOf('class="forecast-chart"'), HTML.indexOf('class="forecast-chart"') + 900);
+  assert.match(tpl, /f\.count > 0 \? `<div class="forecast-bar"/, 'нуль має давати порожній стовпчик');
+  assert.equal(/height:\$\{f\.count>0\?Math\.max\(8/.test(tpl), false,
+    'повернувся варіант, де нуль малює смужку в 3px через min-height');
+});
