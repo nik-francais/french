@@ -118,7 +118,9 @@ test('Баг 9: evaluateWrittenAnswer — точно / без акцентів /
   const app = await loadApp();
   const ev = app.fn('evaluateWrittenAnswer');
   assert.equal(ev('aller à', 'aller à qqn'), 'ok');
-  assert.equal(ev('aller a', 'aller à qqn'), 'almost');   // відсутній акцент
+  // Рішення викладача (30.10): відсутній акцент — помилка, не «майже правильно»
+  assert.equal(ev('aller a', 'aller à qqn'), 'accent');
+  assert.equal(app.fn('isWrittenAnswerCorrect')('accent'), false);
   assert.equal(ev('', 'aller à qqn'), 'err');
   assert.equal(ev('manger', 'aller à qqn'), 'err');
   assert.equal(ev('la précarité', 'la précarité'), 'ok');

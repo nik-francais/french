@@ -97,6 +97,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .lang-switch button { min-height: 38px; padding: 0 12px; border: none; background: transparent; border-radius: calc(var(--radius) - 2px); font-size: 0.8125rem; font-family: var(--font-mono); font-weight: 600; cursor: pointer; color: var(--text-muted); }
 .lang-switch button.active { background: var(--bg-card); color: var(--accent); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
 
+/* Перемикач напрямку в режимі «Вибір» */
+.dir-switch-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.dir-switch-label { font-size: 0.78rem; color: var(--text-muted); }
+.dir-switch button { min-height: 34px; padding: 0 10px; font-size: 0.72rem; }
+
 .nav-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--bg-elevated); padding: 4px; border-radius: var(--radius); border: 1px solid var(--border); }
 .nav-tab { min-height: 44px; border: none; background: transparent; border-radius: calc(var(--radius) - 2px); font-weight: 600; font-size: 0.9375rem; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background-color 0.15s, color 0.15s; }
 .nav-tab.active { background: var(--bg-card); color: var(--text-main); box-shadow: var(--shadow); }
@@ -160,7 +165,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .study-word-title { font-family: var(--font-fr); font-size: 2rem; font-weight: 700; line-height: 1.25; margin-bottom: 4px; color: var(--text-main); }
 .study-pos { font-family: var(--font-fr); font-size: 0.88rem; color: var(--text-muted); font-style: italic; margin-bottom: 16px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .study-divider { border: none; border-top: 1px dashed var(--border); margin: 16px 0; }
-.study-meaning { font-family: var(--font-ui); font-size: 1.4rem; font-weight: 700; line-height: 1.3; color: var(--accent); margin-bottom: 8px; }
+/* Слово-значення у завданнях: той самий шрифт, що й французькі варіанти (Literata має кирилицю),
+   інакше питання і відповіді виглядають як різні сутності. Інтерфейс лишається в Golos Text. */
+.study-meaning { font-family: var(--font-fr); font-size: 1.4rem; font-weight: 700; line-height: 1.3; color: var(--accent); margin-bottom: 8px; }
 .study-def { font-family: var(--font-fr); font-size: 0.98rem; line-height: 1.5; color: var(--text-muted); margin-bottom: 12px; padding-left: 10px; border-left: 2px solid var(--border); }
 .study-synonyms { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
 .study-example { font-family: var(--font-fr); font-size: 1.05rem; line-height: 1.45; padding: 12px 14px; background: var(--bg-elevated); border-left: 3px solid var(--card-top-line); border-radius: 4px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -185,13 +192,17 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .tabs-nav { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; }
 .tab-btn { background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; font-size: 13px; border-radius: 6px; white-space: nowrap; cursor: pointer; }
 .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-.forms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; background: var(--bg-card); border-radius: 8px; padding: 14px; border: 1px solid var(--border); }
-@media (max-width: 480px) { .forms-grid { grid-template-columns: 1fr; } }
+/* Ліва колонка — однина (je, tu, il), права — множина (nous, vous, ils): заповнення по колонках. */
+.forms-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, auto); grid-auto-flow: column; gap: 8px 16px; background: var(--bg-card); border-radius: 8px; padding: 14px; border: 1px solid var(--border); }
+@media (max-width: 480px) { .forms-grid { grid-template-columns: 1fr; grid-template-rows: auto; grid-auto-flow: row; } }
 .form-row-c { font-family: var(--font-mono); font-size: 14px; display: flex; align-items: baseline; }
-.pronoun { color: var(--text-muted); margin-right: 6px; font-family: var(--font-ui); font-size: 13px; min-width: 42px; display: inline-block; }
+/* Фіксована ширина, щоб дієслівні форми вишикувались в рівний стовпчик (найдовше: qu'il/elle/on) */
+.pronoun { color: var(--text-muted); margin-right: 6px; font-family: var(--font-ui); font-size: 12px; width: 86px; flex-shrink: 0; white-space: nowrap; display: inline-block; }
 .passe-compose-banner { background: var(--bg-card); padding: 12px; border-radius: 8px; font-size: 14px; border: 1px solid var(--border); line-height: 1.6; }
 
 /* ОПЦІЇ ТА ЗВОРОТНИЙ ЗВ'ЯЗОК */
+/* Кнопка «Далі» у звичайному потоці: float виносив її за межі картки */
+.next-row { display: flex; justify-content: flex-end; margin-top: 14px; }
 .options-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .option-btn { min-height: 48px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px; font-family: var(--font-ui); font-size: 1rem; color: var(--text-main); }
 .option-btn:hover:not(:disabled) { border-color: var(--accent); background: var(--bg-elevated); }
@@ -208,7 +219,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .feedback-box { margin-top: 12px; padding: 12px; border-radius: var(--radius); font-size: 0.9375rem; }
 .feedback-box.ok { background: var(--success-soft); color: var(--success); border: 1px solid var(--success); }
 .feedback-box.err { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger); }
-.feedback-box.almost { background: var(--warning-soft); color: var(--warning); border: 1px solid var(--warning); }
+.accent-miss { background: var(--bg-card); color: var(--warning); border-bottom: 2px solid var(--warning); border-radius: 3px; padding: 0 2px; }
 
 /* РЕЖИМ НАПИШИ ТА АНАГРАМА */
 .template-mask { display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 16px 0; align-items: center; }
@@ -247,7 +258,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 /* СЛОВА */
 .words-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
 .filters-bar { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 14px; }
-@media (min-width: 540px) { .filters-bar { grid-template-columns: 1.6fr 1fr 1fr; } }
+/* Контейнер застосунку завжди ≤760px, тож 4 контроли в один ряд тісні:
+   пошук займає весь верхній рядок, три фільтри — нижній. */
+@media (min-width: 540px) { .filters-bar { grid-template-columns: repeat(3, 1fr); } .filters-bar .f-search { grid-column: 1 / -1; } }
 .word-list { display: flex; flex-direction: column; gap: 10px; }
 .word-item { background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--st-new); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
 .word-item[data-status="learn"] { border-left-color: var(--st-learn); }
@@ -347,6 +360,17 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    * 10. У кросворді немає апострофів і дефісів.
    * 11. Помилки Supabase не кидають виняток, а повертають {error}: завжди перевіряти.
    *     Оцінки йдуть через чергу pendingProgress, а не «стріляються й забуваються».
+   * 12. Відмінювання: ліва колонка — однина, права — множина (grid-auto-flow: column).
+   *     Займенник відрізається по межі слова, інакше «ils/elles» ріжеться на «il» + «s/elles».
+   * 13. Питання і варіанти відповіді — однією гарнітурою (--font-fr має кирилицю).
+   * 14. Кнопки «Далі» — у потоці (.next-row), ніякого float: він виносить кнопку за картку.
+   * 15. «Вибір»: напрямок обирає учень (choiceDir), напрямки питань живуть у revs
+   *     і не перевертаються при перемальовуванні.
+   * 16. «Повільно» в диктанті: SLOW_RATE і звичайний (не Siri/enhanced) голос,
+   *     бо iOS ігнорує rate на покращених голосах.
+   * 17. Письмова відповідь зараховується ЛИШЕ при точному написанні
+   *     (isWrittenAnswerCorrect). Пропущений акцент — помилка, як на DELF.
+   *     Регістр лишається пробачним: телефони автоматично ставлять велику літеру.
    * Перед змінами: npm test
    * ===================================================================== */
   // 1. ІНІЦІАЛІЗАЦІЯ SUPABASE ТА ЗМІННИХ СТАНУ
@@ -368,7 +392,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   
   const defaultState = () => ({ 
     words: [], 
-    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', focusTopic: 'all' }, 
+    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', focusTopic: 'all', choiceDir: 'random' },
     stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0 } 
   });
   let state = defaultState();
@@ -981,8 +1005,31 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     window.speechSynthesis.onvoiceschanged = refreshVoices;
   }
 
-  function speakFrench(text, rate = 1.0) {
-    if (!speechSupported) return;
+  // Швидкість «повільно» для диктанту. Нижче 0.4 мова розсипається на склади і вчить неправильної вимови.
+  const SLOW_RATE = 0.45;
+  const ENHANCED_VOICE_RE = /siri|premium|enhanced|neural|natural/i;
+
+  // iOS/Safari ігнорує rate на «покращених» (Siri) голосах: повільне озвучення звучало так само швидко.
+  // Якщо учень сам не обрав голос у налаштуваннях, для сповільненого темпу беремо звичайний голос.
+  function pickVoiceForRate(voices, preferredURI, rate) {
+    const list = Array.isArray(voices) ? voices : [];
+    if (preferredURI) {
+      const exact = list.find(v => v.voiceURI === preferredURI);
+      if (exact) return exact;
+    }
+    if (list.length === 0) return null;
+    const slow = rate < 0.9;
+    if (slow) {
+      const plain = list.filter(v => !ENHANCED_VOICE_RE.test(v.name || ''));
+      if (plain.length > 0) {
+        return plain.find(v => /thomas|audrey|aurelie|amélie|amelie|marie/i.test(v.name || '')) || plain[0];
+      }
+    }
+    return list.find(v => /premium|enhanced|natural|thomas|audrey|aurelie|amélie|amelie|marie/i.test(v.name || '')) || list[0];
+  }
+
+  // На повільному темпі додаємо паузи між словами виразу (кома читається як пауза в усіх рушіях).
+  function prepareSpeechText(text, rate) {
     let cleanText = String(text || '').replace(/\[|\]/g, '').trim();
     cleanText = cleanText.replace(/\s*\([^)]*\)/g, '').trim();
     cleanText = cleanText
@@ -990,20 +1037,25 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       .replace(/\bqch\b/gi, 'quelque chose')
       .replace(/\bqqn\b/gi, "quelqu'un")
       .replace(/\bqn\b/gi, "quelqu'un");
+    if (rate < 0.9) {
+      const parts = cleanText.split(/\s+/).filter(Boolean);
+      if (parts.length > 1) cleanText = parts.join(', ');
+    }
+    return cleanText;
+  }
+
+  function speakFrench(text, rate = 1.0) {
+    if (!speechSupported) return;
+    const safeRate = Math.min(2, Math.max(0.1, Number(rate) || 1));
+    const cleanText = prepareSpeechText(text, safeRate);
     if (!cleanText) return;
     if (frenchVoices.length === 0) refreshVoices();
     window.speechSynthesis.cancel();
     setTimeout(() => {
       const u = new SpeechSynthesisUtterance(cleanText);
       u.lang = 'fr-FR';
-      u.rate = rate;
-      let chosenVoice = null;
-      if (state.settings.voiceURI) {
-        chosenVoice = frenchVoices.find(v => v.voiceURI === state.settings.voiceURI);
-      }
-      if (!chosenVoice && frenchVoices.length > 0) {
-        chosenVoice = frenchVoices.find(v => /premium|enhanced|natural|thomas|audrey|aurelie|amélie|amelie|marie/i.test(v.name)) || frenchVoices[0];
-      }
+      u.rate = safeRate;
+      const chosenVoice = pickVoiceForRate(frenchVoices, state.settings.voiceURI, safeRate);
       if (chosenVoice) u.voice = chosenVoice;
       activeUtterances.push(u);
       u.onend = () => { const i = activeUtterances.indexOf(u); if (i > -1) activeUtterances.splice(i, 1); };
@@ -1024,13 +1076,35 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     return /\[.+?\]/.test(safe) ? safe.replace(/\[(.+?)\]/g, '<span class="hl-word">$1</span>') : safe;
   }
 
-  // Відображення відмінювання для всіх 6 часів
+  // Відображення відмінювання для всіх 6 часів.
+  // Займенники впорядковані від довшого до коротшого і вимагають межі слова,
+  // інакше "ils/elles ont porté" різалось як "il" + "s/elles ont porté".
+  const CONJ_PRONOUNS = ['il/elle/on', 'ils/elles', 'elle/on', 'il/elle', 'elles', 'nous', 'vous', 'elle', 'ils', 'je', 'tu', 'il', 'on'];
+  function splitConjugatedForm(raw) {
+    let rest = String(raw == null ? '' : raw).trim();
+    if (!rest) return { pronoun: '', verb: '' };
+    let prefix = '';
+    const que = rest.match(/^(que\s+|qu['’])/i);
+    if (que) { prefix = que[1]; rest = rest.slice(que[1].length); }
+    // Елізія: j' (а також qu'elle тощо вже знято вище) — дієслово йде одразу за апострофом
+    const elided = rest.match(/^j['’]/i);
+    if (elided) return { pronoun: prefix + elided[0], verb: rest.slice(elided[0].length).trim() };
+    const lower = rest.toLowerCase();
+    for (const p of CONJ_PRONOUNS) {
+      if (!lower.startsWith(p)) continue;
+      const after = rest.slice(p.length);
+      if (after === '' || /^\s/.test(after)) {
+        return { pronoun: prefix + rest.slice(0, p.length), verb: after.trim() };
+      }
+    }
+    return { pronoun: '', verb: prefix + rest };
+  }
   function formatConjugationRow(item) {
     if (typeof item === 'string') {
       const str = item.trim();
-      const match = str.match(/^((?:que\s+|qu')?(?:je|j'|tu|il\/elle\/on|il\/elle|il|elle|on|nous|vous|ils\/elles|ils|elles))\s*(.*)$/i);
-      if (match) {
-        return `<div class="form-row-c"><span class="pronoun">${escapeHtml(match[1])}</span><span><b>${escapeHtml(match[2])}</b></span></div>`;
+      const { pronoun, verb } = splitConjugatedForm(str);
+      if (pronoun) {
+        return `<div class="form-row-c"><span class="pronoun">${escapeHtml(pronoun)}</span><span><b>${escapeHtml(verb)}</b></span></div>`;
       }
       return `<div class="form-row-c"><span><b>${escapeHtml(str)}</b></span></div>`;
     } else if (item && typeof item === 'object') {
@@ -1404,9 +1478,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     const res = [];
     let opts = [];
 
+    // Напрямок кожного питання запам'ятовується, щоб перемальовування не перевертало вже показане питання.
+    let revs = [];
+
     if (restored && Array.isArray(restored.wordIds)) {
       qs = restored.wordIds.map(id => state.words.find(w => w.id === id)).filter(Boolean);
       idx = restored.idx || 0;
+      if (Array.isArray(restored.revs)) revs = restored.revs.slice();
       if (Array.isArray(restored.results)) {
         restored.results.forEach(r => {
           const w = state.words.find(x => x.id === r.id);
@@ -1418,11 +1496,23 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     }
     if (qs.length === 0 || idx >= qs.length) { exitToDashboard(); return; }
 
+    function directionForIndex(i) {
+      if (typeof revs[i] === 'boolean') return revs[i];
+      const dir = state.settings.choiceDir || 'random';
+      let rev;
+      if (dir === 'uk_fr') rev = true;          // дано значення → обрати французьке слово
+      else if (dir === 'fr_uk') rev = false;    // дано французьке слово → обрати значення
+      else rev = Math.random() < 0.5;           // мікс
+      revs[i] = rev;
+      return rev;
+    }
+
     function syncSession() {
       activeRoundState = {
         mode: 'choice',
         wordIds: qs.map(w => w.id),
         idx,
+        revs: revs.slice(),
         results: res.map(r => ({ id: r.word.id, ok: r.ok }))
       };
       saveActiveSessionProgress();
@@ -1438,13 +1528,25 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     }
 
     function render(w, chId = null) {
-      const rev = (idx % 2 === 1);
+      const rev = directionForIndex(idx);
       const isPromptFrench = !rev || state.settings.langMode === 'FR_FR';
       const areOptionsFrench = rev || state.settings.langMode === 'FR_FR';
+      const meaningLabel = state.settings.langMode === 'FR_FR' ? 'DÉF' : 'УКР';
+      const curDir = state.settings.choiceDir || 'random';
+      const dirBtn = (id, label, title) =>
+        `<button type="button" data-dir="${id}" class="${curDir === id ? 'active' : ''}" title="${escapeHtml(title)}">${escapeHtml(label)}</button>`;
       container.innerHTML = `
       <div class="session-header">
         <button class="btn btn-sm" id="btnEx">← До режимів</button>
         <span class="session-progress">Вибір · ${idx+1} / ${qs.length}</span>
+      </div>
+      <div class="dir-switch-row">
+        <span class="dir-switch-label">Напрямок:</span>
+        <div class="lang-switch dir-switch">
+          ${dirBtn('uk_fr', `${meaningLabel} → ФР`, 'Дано значення — обрати французьке слово')}
+          ${dirBtn('fr_uk', `ФР → ${meaningLabel}`, 'Дано французьке слово — обрати значення')}
+          ${dirBtn('random', 'Мікс', 'Випадковий напрямок у кожному питанні')}
+        </div>
       </div>
       <section class="index-card">
         <div class="instruction-text">${rev ? 'Оберіть французьке слово за значенням:' : 'Оберіть правильне значення слова:'}</div>
@@ -1462,8 +1564,20 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         ${ansd ? `<div style="margin-top:14px;display:flex;justify-content:space-between;">${speakerBtnHtml(w.fr)}<button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>` : ''}
       </section>`;
       container.querySelector('#btnEx').addEventListener('click', exitToDashboard);
+      container.querySelectorAll('[data-dir]').forEach(b => b.addEventListener('click', () => setDirection(b.dataset.dir)));
       container.querySelectorAll('[data-opt]').forEach(b => b.addEventListener('click', () => choose(b.dataset.opt)));
       if (ansd) container.querySelector('#bNx').addEventListener('click', next);
+    }
+
+    function setDirection(dir) {
+      if (!['uk_fr', 'fr_uk', 'random'].includes(dir)) return;
+      if (state.settings.choiceDir === dir) return;
+      state.settings.choiceDir = dir;
+      saveLocalStats();
+      // На вже відповідане питання не впливаємо: новий напрямок діє з поточного (якщо не відповіли) або з наступного.
+      if (!ansd) revs[idx] = undefined;
+      syncSession();
+      render(qs[idx]);
     }
 
     function choose(id) {
@@ -1544,13 +1658,43 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         if (m) exactTargets.push(`${m[1]}${m[3]} / ${m[2]}`.trim().toLowerCase());
       }
       if (exactTargets.includes(rawLower)) return 'ok';
-      return 'almost';
+      return 'accent';
     }
 
     for (const t of validTargets) {
-      if (t.length >= 4 && levenshtein(inp, t) <= 1) return 'almost';
+      if (t.length >= 4 && levenshtein(inp, t) <= 1) return 'typo';
     }
     return 'err';
+  }
+
+  // Зараховується ЛИШЕ точне написання: пропущений акцент — орфографічна помилка
+  // і на DELF, і в будь-якому диктанті. Вердикт розрізняє причину, щоб учень бачив,
+  // що саме не так, але на інтервальне повторення і 'accent', і 'typo' впливають як помилка.
+  function isWrittenAnswerCorrect(verdict) {
+    return verdict === 'ok';
+  }
+
+  function writtenVerdictMeta(verdict) {
+    if (verdict === 'ok') return { cls: 'ok', title: 'Бездоганно!' };
+    if (verdict === 'accent') return { cls: 'err', title: 'Літери правильні, але діакритика — це теж орфографія:' };
+    if (verdict === 'typo') return { cls: 'err', title: 'Одруківка. Правильне написання:' };
+    return { cls: 'err', title: 'Правильна відповідь:' };
+  }
+
+  // Підсвічує саме ті літери, де загубився акцент, щоб помилка запам'яталась візуально.
+  function markAccentDiff(inputRaw, targetText) {
+    const target = String(targetText || '');
+    const input = String(inputRaw || '').trim();
+    const norm = s => stripDiacritics(s).toLowerCase().replace(/[’‘]/g, "'");
+    if (!input || norm(input) !== norm(target)) return escapeHtml(target);
+    const inChars = Array.from(input);
+    const tChars = Array.from(target);
+    if (inChars.length !== tChars.length) return escapeHtml(target);
+    return tChars.map((ch, i) => (
+      ch.toLowerCase() === inChars[i].toLowerCase()
+        ? escapeHtml(ch)
+        : `<mark class="accent-miss">${escapeHtml(ch)}</mark>`
+    )).join('');
   }
 
   function buildMaskTemplate(fr, revealedCount = 0) {
@@ -1624,7 +1768,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <div class="study-pos">${escapeHtml(cleanPos)} <span class="badge" style="font-style:normal; font-family:var(--font-mono);">Слів у виразі: ${wCount}</span></div>
         <div class="template-mask">${buildMaskTemplate(targetFr, hintCount)}</div>
         <input type="text" id="inpW" class="input" placeholder="Введіть слово або вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk ? 'disabled' : ''}>
-        ${!chk ? `<div style="display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button><button type="button" class="btn" id="bHint">Підказка (+1 літера)</button></div>` : `<div class="feedback-box ${chk}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div>${chk==='ok'?'Бездоганно!':(chk==='almost'?'Майже правильно (зверніть увагу на діакритику):':'Правильна відповідь:')}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.25rem;margin-top:2px;">${escapeHtml(targetFr)} ${targetFr !== w.fr ? `<span style="font-weight:400;font-size:0.95rem;color:var(--text-muted);">(${escapeHtml(w.fr)})</span>` : ''}</div></div>${speakerBtnHtml(w.fr)}</div></div><button type="button" class="btn btn-primary" id="bNx" style="margin-top:12px;float:right;">Далі (Enter)</button>`}
+        ${!chk ? `<div style="display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button><button type="button" class="btn" id="bHint">Підказка (+1 літера)</button></div>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div>${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.25rem;margin-top:2px;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} ${targetFr !== w.fr ? `<span style="font-weight:400;font-size:0.95rem;color:var(--text-muted);">(${escapeHtml(w.fr)})</span>` : ''}</div></div>${speakerBtnHtml(w.fr)}</div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>`}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       const inp = container.querySelector('#inpW');
@@ -1661,7 +1805,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       last = v;
       const w = qs[idx];
       chk = evaluateWrittenAnswer(v, w.fr);
-      const ok = (chk === 'ok' || chk === 'almost');
+      const ok = isWrittenAnswerCorrect(chk);
       handleMiniGameResult(w, ok);
       res.push({ word: w, ok });
       render();
@@ -1742,11 +1886,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
         ${showHint ? `<div style="margin-bottom:12px;padding:8px 12px;background:var(--bg-elevated);border-radius:4px;">Значення: <strong>${escapeHtml(getPromptText(w))}</strong></div>` : ''}
         <input type="text" id="inpD" class="input" placeholder="Напишіть почутий вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk ? 'disabled' : ''}>
-        ${!chk ? `<button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button>` : `<div class="feedback-box ${chk}"><div style="font-family:var(--font-fr);font-weight:700;font-size:1.2rem;">${escapeHtml(targetFr)} — <span style="font-weight:400;font-size:1rem;font-family:var(--font-ui);">${escapeHtml(getPromptText(w))}</span></div></div><button type="button" class="btn btn-primary" id="bNx" style="margin-top:12px;float:right;">Далі (Enter)</button>`}
+        ${!chk ? `<button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="margin-bottom:2px;">${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.2rem;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} — <span style="font-weight:400;font-size:1rem;font-family:var(--font-ui);">${escapeHtml(getPromptText(w))}</span></div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>`}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       container.querySelector('#bL').addEventListener('click', () => speakFrench(targetFr));
-      container.querySelector('#bS').addEventListener('click', () => speakFrench(targetFr, 0.6));
+      container.querySelector('#bS').addEventListener('click', () => speakFrench(targetFr, SLOW_RATE));
       if (!showHint) {
         container.querySelector('#bH').addEventListener('click', () => {
           const inpEl = container.querySelector('#inpD');
@@ -1783,7 +1927,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       last = v;
       const w = qs[idx];
       chk = evaluateWrittenAnswer(v, w.fr);
-      const ok = (chk === 'ok' || chk === 'almost');
+      const ok = isWrittenAnswerCorrect(chk);
       handleMiniGameResult(w, ok);
       res.push({ word: w, ok });
       render(false);
@@ -1891,7 +2035,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             return `<button type="button" class="option-btn ${cls}" data-idx="${i}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span style="font-family:var(--font-fr);font-weight:700;">${escapeHtml(o.text)}</span></button>`;
           }).join('')}
         </div>
-        ${ansd ? `<button type="button" class="btn btn-primary" id="bNx" style="margin-top:14px;float:right;">Далі (Enter)</button>` : ''}
+        ${ansd ? `<div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>` : ''}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       container.querySelectorAll('[data-idx]').forEach(b => b.addEventListener('click', () => choose(Number(b.dataset.idx))));
@@ -1993,7 +2137,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             return `<button type="button" class="option-btn ${cls}" data-s="${escapeHtml(o)}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="opt-fr">${escapeHtml(o)}</span></button>`;
           }).join('')}
         </div>
-        ${ansd ? `<button type="button" class="btn btn-primary" id="bNx" style="margin-top:14px;float:right;">Далі (Enter)</button>` : ''}
+        ${ansd ? `<div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>` : ''}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       container.querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => choose(b.dataset.s)));
@@ -2425,8 +2569,29 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   /* =========================================================
    * СЛОВА, РЕДАГУВАННЯ, ІМПОРТ ТА НАДІЙНЕ ВИДАЛЕННЯ В SUPABASE
    * ========================================================= */
+  // Частини мови: у картках pos — вільний текст ("nom masculin", "verbe pronominal"), тож зводимо до груп.
+  // Порядок важливий: "adverbe" перевіряємо до "verbe", "locution" до решти.
+  const POS_GROUPS = [
+    { id: 'expression', label: 'Вирази', re: /expression|locution/i },
+    { id: 'adverbe', label: 'Прислівники', re: /adverbe/i },
+    { id: 'verbe', label: 'Дієслова', re: /\bverbe\b/i },
+    { id: 'adjectif', label: 'Прикметники', re: /adjectif/i },
+    { id: 'nom', label: 'Іменники', re: /\bnoms?\b|substantif/i }
+  ];
+  function posGroupId(pos) {
+    const s = String(pos || '').trim();
+    if (!s) return 'autre';
+    const hit = POS_GROUPS.find(g => g.re.test(s));
+    return hit ? hit.id : 'autre';
+  }
+  function posGroupLabel(id) {
+    const hit = POS_GROUPS.find(g => g.id === id);
+    return hit ? hit.label : 'Інше';
+  }
+
   let wordSearchQuery = '';
   let wordFilterStatus = 'all';
+  let wordFilterPos = 'all';
   let wordFilterSrc = 'all';
   let confirmingDeleteWordId = null;
   let confirmingTopicDelete = false;
@@ -2437,6 +2602,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       wordFilterSrc = 'all';
       confirmingTopicDelete = false;
     }
+    // Показуємо лише ті частини мови, які реально є у словнику (щоб не було порожніх фільтрів)
+    const posTally = new Map();
+    state.words.forEach(w => {
+      const id = posGroupId(w.pos);
+      posTally.set(id, (posTally.get(id) || 0) + 1);
+    });
+    const posOrder = POS_GROUPS.map(g => g.id).concat('autre');
+    const posCounts = posOrder.filter(id => posTally.has(id)).map(id => [id, posTally.get(id)]);
+    if (wordFilterPos !== 'all' && !posTally.has(wordFilterPos)) wordFilterPos = 'all';
     const canBulkDeleteTopic = (wordFilterSrc !== 'all');
     const topicWordCount = canBulkDeleteTopic ? state.words.filter(w => w.src === wordFilterSrc).length : 0;
 
@@ -2462,7 +2636,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           ` : ''}
         </div>
         <div class="filters-bar">
-          <input type="search" id="inpWordSearch" class="input" style="margin-bottom:0;" placeholder="Пошук виразу або перекладу…" value="${escapeHtml(wordSearchQuery)}">
+          <input type="search" id="inpWordSearch" class="input f-search" style="margin-bottom:0;" placeholder="Пошук виразу або перекладу…" value="${escapeHtml(wordSearchQuery)}">
+          <select id="selFilterPos" class="select">
+            <option value="all" ${wordFilterPos === 'all' ? 'selected' : ''}>Усі частини мови</option>
+            ${posCounts.map(([id, n]) => `<option value="${escapeHtml(id)}" ${wordFilterPos === id ? 'selected' : ''}>${escapeHtml(posGroupLabel(id))} (${n})</option>`).join('')}
+          </select>
           <select id="selFilterStatus" class="select">
             <option value="all" ${wordFilterStatus === 'all' ? 'selected' : ''}>Усі статуси (${state.words.length})</option>
             <option value="new" ${wordFilterStatus === 'new' ? 'selected' : ''}>Нове</option>
@@ -2543,6 +2721,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       const query = wordSearchQuery.trim().toLowerCase();
       const filtered = state.words.filter(w => {
         if (wordFilterStatus !== 'all' && getWordStatus(w) !== wordFilterStatus) return false;
+        if (wordFilterPos !== 'all' && posGroupId(w.pos) !== wordFilterPos) return false;
         if (wordFilterSrc !== 'all' && w.src !== wordFilterSrc) return false;
         if (query && !(w.fr.toLowerCase().includes(query) || (w.uk||'').toLowerCase().includes(query) || (w.def||'').toLowerCase().includes(query))) return false;
         return true;
@@ -2647,6 +2826,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     });
     container.querySelector('#selFilterStatus').addEventListener('change', e => {
       wordFilterStatus = e.target.value;
+      renderList();
+    });
+    container.querySelector('#selFilterPos').addEventListener('change', e => {
+      wordFilterPos = e.target.value;
       renderList();
     });
     container.querySelector('#selFilterSrc').addEventListener('change', e => {
