@@ -155,3 +155,42 @@ test('Типографіка: значення у списку слів тієї
   assert.match(fr, /font-family: var\(--font-fr\)/);
   assert.match(uk, /font-family: var\(--font-fr\)/);
 });
+
+// ───────────── Порядок фільтрів: тема задає область, решта звужує всередині ─────────────
+test('Фільтри: порядок — пошук, тема, частина мови, статус', async () => {
+  const app = await appWith();
+  const el = app.el('x');
+  app.fn('renderWordsTab')(el);
+  const bar = el.innerHTML.slice(el.innerHTML.indexOf('class="filters-bar"'));
+  const order = [...bar.matchAll(/id="(inpWordSearch|selFilterSrc|selFilterPos|selFilterStatus)"/g)].map(m => m[1]);
+  assert.deepEqual(order.slice(0, 4), ['inpWordSearch', 'selFilterSrc', 'selFilterPos', 'selFilterStatus']);
+});
+
+test('Теми: випадайок рахує слова, а не кількість тем', async () => {
+  const app = await appWith();
+  const el = app.el('x');
+  app.fn('renderWordsTab')(el);
+  const opts = options(el.innerHTML, 'selFilterSrc');
+  assert.ok(opts.some(o => /Усі теми \(4\)/.test(o)), `4 слова всього, а показано: ${opts.join(' | ')}`);
+  assert.ok(opts.some(o => /Одяг \(3\)/.test(o)), opts.join(' | '));
+  assert.ok(opts.some(o => /Робота \(1\)/.test(o)), opts.join(' | '));
+});
+
+test('Теми: лічильники враховують обрану частину мови', async () => {
+  const app = await appWith();
+  app.api.wordFilterPos = 'verbe';
+  const el = app.el('x');
+  app.fn('renderWordsTab')(el);
+  const opts = options(el.innerHTML, 'selFilterSrc');
+  assert.ok(opts.some(o => /Одяг \(1\)/.test(o)), `дієслово в темі «Одяг» одне, показано: ${opts.join(' | ')}`);
+  assert.ok(opts.some(o => /Робота \(1\)/.test(o)), opts.join(' | '));
+});
+
+test('Теми: тема лишається у списку, навіть якщо в ній нічого не підходить', async () => {
+  const app = await appWith();
+  app.api.wordFilterPos = 'nom';
+  const el = app.el('x');
+  app.fn('renderWordsTab')(el);
+  const opts = options(el.innerHTML, 'selFilterSrc');
+  assert.ok(opts.some(o => /Робота \(0\)/.test(o)), `тема має лишатись видимою з нулем: ${opts.join(' | ')}`);
+});

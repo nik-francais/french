@@ -2655,6 +2655,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (wordFilterPos !== 'all' && !posEverywhere.has(wordFilterPos)) wordFilterPos = 'all';
     const currentFilters = () => ({ status: wordFilterStatus, pos: wordFilterPos, src: wordFilterSrc, query: wordSearchQuery });
 
+    function srcOptionsHtml() {
+      const f = currentFilters();
+      const tally = tallyWords(state.words, f, 'src', w => w.src || '');
+      const total = [...tally.values()].reduce((a, b) => a + b, 0);
+      return `<option value="all" ${wordFilterSrc === 'all' ? 'selected' : ''}>🌟 Усі теми (${total})</option>`
+        + sources.map(src => `<option value="${escapeHtml(src)}" ${wordFilterSrc === src ? 'selected' : ''}>${escapeHtml(src)} (${tally.get(src) || 0})</option>`).join('');
+    }
     function posOptionsHtml() {
       const f = currentFilters();
       const tally = tallyWords(state.words, f, 'pos', w => posGroupId(w.pos));
@@ -2699,12 +2706,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
         <div class="filters-bar">
           <input type="search" id="inpWordSearch" class="input f-search" style="margin-bottom:0;" placeholder="Пошук виразу або перекладу…" value="${escapeHtml(wordSearchQuery)}">
+          <select id="selFilterSrc" class="select">${srcOptionsHtml()}</select>
           <select id="selFilterPos" class="select">${posOptionsHtml()}</select>
           <select id="selFilterStatus" class="select">${statusOptionsHtml()}</select>
-          <select id="selFilterSrc" class="select">
-            <option value="all" ${wordFilterSrc === 'all' ? 'selected' : ''}>Усі теми (${sources.length})</option>
-            ${sources.map(s => `<option value="${escapeHtml(s)}" ${wordFilterSrc === s ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
-          </select>
         </div>
         <div id="wordsListContainer" class="word-list"></div>
       </section>`;
@@ -2771,8 +2775,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 
     const listEl = container.querySelector('#wordsListContainer');
     function refreshFilterCounts() {
+      const srcSel = container.querySelector('#selFilterSrc');
       const posSel = container.querySelector('#selFilterPos');
       const stSel = container.querySelector('#selFilterStatus');
+      if (srcSel) srcSel.innerHTML = srcOptionsHtml();
       if (posSel) posSel.innerHTML = posOptionsHtml();
       if (stSel) stSel.innerHTML = statusOptionsHtml();
     }
