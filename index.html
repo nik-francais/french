@@ -2504,46 +2504,66 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     openModal(`
       <h2 id="modalTitle" style="font-family:var(--font-fr); font-size:1.25rem;">Додати слова з коду</h2>
       <p style="font-size:0.85rem; color:var(--text-muted);">
-        Вставте надісланий JSON-масив виразів. Підтримується розширений формат із відмінюванням (conj) та тестами контексту (context_quiz).
+        Вставте згенерований JSON-масив виразів. Підтримуються всі розширені поля: відмінювання (conj), тести контексту (context_quiz), приклади та теми.
       </p>
-      <textarea id="inpCodeJson" class="textarea" rows="7" placeholder='[{"fr":"vivre dans la précarité","uk":"жити в скрутних умовах",...}]'></textarea>
+      <textarea id="inpCodeJson" class="textarea" rows="8" placeholder='[{"fr":"vivre dans la précarité","uk":"жити в скрутних умовах",...}]'></textarea>
       <div id="codeErrorMsg" style="color:var(--danger); font-size:0.85rem; display:none;"></div>
-      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:6px;">
-        <button type="button" class="btn" id="btnModalCancel">Скасувати</button>
-        <button type="button" class="btn btn-primary" id="btnModalSubmit">Імпортувати</button>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:6px;">
+        <span style="font-size:0.75rem; color:var(--text-muted);">Слова збережуться у вашому акаунті на всіх пристроях</span>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn" id="btnModalCancel">Скасувати</button>
+          <button type="button" class="btn btn-primary" id="btnModalSubmit">Імпортувати в мій словник</button>
+        </div>
       </div>
     `);
     const ta = document.getElementById('inpCodeJson');
     const errEl = document.getElementById('codeErrorMsg');
+    const submitBtn = document.getElementById('btnModalSubmit');
     document.getElementById('btnModalCancel').addEventListener('click', closeModal);
-    document.getElementById('btnModalSubmit').addEventListener('click', async () => {
+
+    submitBtn.addEventListener('click', async () => {
+      errEl.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Збереження...';
       try {
         const arr = parseTolerantWordsJson(ta.value);
-        if (currentUser && currentUser.email) {
-          const inserted = await insertWordsBatchForEmail(currentUser.email, arr);
-          inserted.forEach(row => {
-            const norm = normalizeWordRow(row);
-            const existingIdx = state.words.findIndex(w => w.id === norm.id);
-            if (existingIdx > -1) state.words[existingIdx] = norm;
-            else state.words.push(norm);
-          });
-        } else {
-          arr.forEach(raw => {
-            const norm = normalizeWordRow(raw);
-            if (!norm.fr) return;
-            const existingIdx = state.words.findIndex(w => w.id === norm.id);
-            if (existingIdx > -1) state.words[existingIdx] = norm;
-            else state.words.push(norm);
-          });
+        if (!currentUser || !currentUser.email) {
+          throw new Error('Користувач не авторизований. Будь ласка, увійдіть у свій акаунт.');
         }
+
+        // 1. Зберігаємо слова в базі даних Supabase для поточного учня
+        const inserted = await insertWordsBatchForEmail(currentUser.email, arr);
+
+        // 2. Оновлюємо або додаємо слова в локальний масив застосунку
+        inserted.forEach(row => {
+          const norm = normalizeWordRow(row);
+          const existingIdx = state.words.findIndex(w => w.id === norm.id || (w.dbId && w.dbId === norm.dbId));
+          if (existingIdx > -1) {
+            // Зберігаємо історію повторень (iv, r, due), оновлюючи контент
+            state.words[existingIdx] = Object.assign({}, norm, {
+              iv: state.words[existingIdx].iv,
+              ef: state.words[existingIdx].ef,
+              r: state.words[existingIdx].r,
+              l: state.words[existingIdx].l,
+              due: state.words[existingIdx].due,
+              t: state.words[existingIdx].t
+            });
+          } else {
+            state.words.push(norm);
+          }
+        });
+
+        // 3. Зберігаємо оновлений кеш та оновлюємо екран
         saveLocalStats();
         updateNavBadge();
         closeModal();
-        showToast(`Успішно імпортовано слів: ${arr.length}`);
+        showToast(`✅ Успішно додано ${arr.length} слів до вашого словника!`);
         renderCurrentTab();
       } catch (err) {
-        errEl.textContent = err.message;
+        errEl.textContent = err.message || 'Помилка імпорту коду';
         errEl.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Імпортувати в мій словник';
       }
     });
   }
