@@ -141,7 +141,9 @@ test('Шкала заокруглень визначена', () => {
 
 test('Кнопки, вкладки й картки беруть радіус зі шкали, а не з випадкових пікселів', () => {
   const rule = s => (HTML.match(new RegExp('\\n' + s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{[^}]*\\}')) || [''])[0];
-  for (const s of ['.btn', '.nav-tab', '.grade-btn']) {
+  // .nav-tab більше не в списку: у нижній панелі це колонка на всю висоту смуги,
+  // заокруглювати її нема чого — pill лишився на бейджі лічильника.
+  for (const s of ['.btn', '.nav-badge', '.grade-btn']) {
     assert.match(rule(s), /border-radius: var\(--radius-pill\)/, `${s} має бути pill`);
   }
   for (const s of ['.index-card', '.panel-card', '.word-item', '.mode-tile']) {
@@ -152,6 +154,9 @@ test('Кнопки, вкладки й картки беруть радіус з�
 test('Гострих дрібних радіусів не лишилось (окрім клітинок кросворда й підсвітки)', () => {
   const stray = [...HTML.matchAll(/border-radius: (\d+)px/g)].map(m => Number(m[1])).filter(n => n > 3);
   assert.deepEqual(stray, [], `лишились фіксовані радіуси: ${stray.join(', ')}`);
+  // Шкала закрита: чотири значення й жодного більше, інакше заокруглення знову поповзуть
+  const scale = [...HTML.matchAll(/--radius[\w-]*: (\d+)px/g)].map(m => Number(m[1])).sort((a, b) => a - b);
+  assert.deepEqual(scale, [8, 14, 20, 999], `шкала заокруглень змінилась: ${scale.join(', ')}`);
 });
 
 // ───────────── Вибір акценту ─────────────

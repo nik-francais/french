@@ -180,6 +180,8 @@ async function loadApp(opts = {}) {
   get wordFilterStatus() { return wordFilterStatus; }, set wordFilterStatus(v) { wordFilterStatus = v; },
   get wordSearchQuery() { return wordSearchQuery; }, set wordSearchQuery(v) { wordSearchQuery = v; },
   get MODES_META() { return MODES_META; },
+  get ICONS() { return ICONS; },
+  icon, ukPlural, userGreetingName, sessionInvite, updateNavBadge,
   get STORAGE_KEY() { return STORAGE_KEY; },
   get SESSION_PROGRESS_KEY() { return SESSION_PROGRESS_KEY; },
   get pendingProgress() { return typeof pendingProgress !== 'undefined' ? pendingProgress : undefined; },
