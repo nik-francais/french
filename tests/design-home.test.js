@@ -146,3 +146,35 @@ test('На головній немає даних, яких застосунок
     assert.ok(!re.test(dash), why);
   }
 });
+
+// ───────────── Підказки клавіатури, відступи, привітання ─────────────
+
+test('На кнопках немає «(Enter)»: на телефоні клавіші Enter немає, а клавіатурні скорочення працюють і без підпису', () => {
+  const labels = [...HTML.matchAll(/<button[^>]*>([^<]*)<\/button>/g)].map(m => m[1]);
+  const bad = labels.filter(t => /\(Enter\)/.test(t));
+  assert.deepEqual(bad, [], `підпис із (Enter) лишився на кнопках: ${bad.join(' | ')}`);
+  // Сама клавіша має працювати: прибрали підпис, а не обробник
+  assert.ok(/e\.key === 'Enter'/.test(HTML), 'обробник Enter зник разом із підписом');
+});
+
+test('Шапка й початок головної мають відступи, а не злипаються', () => {
+  assert.match(rule('.topic-focus-bar'), /margin-bottom: 18px/, 'поле теми впритул до привітання');
+  assert.match(rule('.greeting-block'), /margin-bottom: 18px/, 'привітання впритул до картки');
+  const gap = /gap: (\d+)px/.exec(rule('.app-header'));
+  assert.ok(gap && Number(gap[1]) >= 16, 'логотип і перемикачі в шапці надто близько');
+  // Підпис автора ховаємо на всіх телефонах: він і робив шапку тісною
+  assert.match(CSS, /@media \(max-width: 559px\) \{ \.brand-sub \{ display: none; \} \}/);
+});
+
+test('Рядок привітання залежить від години доби, а вночі не каже «вечірнє» чи «ранкова»', async () => {
+  const app = await loadApp();
+  const at = h => {
+    app.sandbox.Date = class extends Date { constructor(...a) { if (a.length) super(...a); else super(2026, 0, 15, h, 30); } };
+    return app.api.sessionInvite();
+  };
+  const [night, morning, day, evening] = [at(3), at(8), at(14), at(21)];
+  assert.equal(new Set([night, morning, day, evening]).size, 4, 'чотири проміжки мають дати чотири різні фрази');
+  assert.match(morning, /ранков/i);
+  assert.match(evening, /Вечірнє/);
+  assert.ok(!/ранков|Вечірнє/i.test(night), `о 3-й ночі фраза не має бути ранковою чи вечірньою: «${night}»`);
+});

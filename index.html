@@ -112,13 +112,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ШАПКА ТА НАВІГАЦІЯ */
 /* Нижній відступ = висота панелі навігації + safe-area iPhone, інакше остання картка під неї ховається */
 .app-shell { max-width: 760px; margin: 0 auto; padding: 16px 16px calc(80px + env(safe-area-inset-bottom, 0px)); display: none; flex-direction: column; gap: 16px; }
-.app-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.app-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 16px; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
 .brand { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .brand-title { font-family: var(--font-fr); font-size: 1.375rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.15; }
 .brand-sub { font-size: var(--fs-micro); font-family: var(--font-mono); color: var(--text-muted); white-space: nowrap; }
 /* На вузькому екрані підпис автора з'їдає два рядки шапки — ховаємо, назва лишається */
-@media (max-width: 439px) { .brand-sub { display: none; } }
-.header-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+@media (max-width: 559px) { .brand-sub { display: none; } }
+.header-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .icon-btn { width: 40px; height: 40px; flex-shrink: 0; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); border-radius: var(--radius-pill); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
 .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
 .icon-btn .icon { width: 18px; height: 18px; }
@@ -181,11 +181,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .textarea { width: 100%; min-height: 120px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); color: var(--text-main); font-size: 0.85rem; font-family: var(--font-mono); resize: vertical; box-sizing: border-box; }
 
 /* ДАШБОРД */
-.topic-focus-bar { display: flex; align-items: center; gap: 10px; padding: 0 14px; min-height: 44px; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); font-size: var(--fs-body); }
+.topic-focus-bar { display: flex; align-items: center; gap: 10px; padding: 0 14px; min-height: 44px; margin-bottom: 18px; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); font-size: var(--fs-body); }
 .topic-focus-bar .icon { width: 18px; height: 18px; color: var(--text-muted); flex-shrink: 0; }
 .topic-focus-select { flex: 1; min-width: 0; padding: 6px 0; background: transparent; border: none; font-family: var(--font-ui); font-size: var(--fs-body); font-weight: 600; color: var(--text-main); cursor: pointer; }
+.greeting-block { margin-bottom: 18px; }
 .greeting-title { font-family: var(--font-fr); font-size: var(--fs-greet); font-weight: 700; line-height: 1.25; color: var(--text-main); }
-.greeting-sub { font-size: var(--fs-small); line-height: 1.45; color: var(--text-muted); margin-top: 4px; }
+.greeting-sub { font-size: var(--fs-small); line-height: 1.45; color: var(--text-muted); margin-top: 6px; }
 .card-caption { font-size: var(--fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
 .due-row { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 16px; }
 .due-number { font-family: var(--font-fr); font-size: var(--fs-hero); font-weight: 700; line-height: 1; color: var(--text-main); }
@@ -1334,6 +1335,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
   function sessionInvite() {
     const h = new Date().getHours();
+    if (h < 5) return 'Пізно вже — кілька слів, і можна відпочивати.';
     if (h < 12) return 'Час для спокійної ранкової сесії з французької.';
     if (h < 18) return 'Кілька хвилин французької серед дня — і слова лишаються.';
     return 'Вечірнє повторення закріплює те, що вчили вдень.';
@@ -1447,7 +1449,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </select>
       </div>
       
-      <div>
+      <div class="greeting-block">
         <h2 class="greeting-title">Bonjour, ${escapeHtml(userGreetingName())}</h2>
         <p class="greeting-sub">${escapeHtml(sessionInvite())}</p>
       </div>
@@ -1614,7 +1616,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             </div>
           ` : ''}
           ${!revealed ? `
-            <button type="button" class="btn btn-primary" id="btnRev" style="width:100%; margin-top:18px;">Показати значення (Enter)</button>
+            <button type="button" class="btn btn-primary" id="btnRev" style="width:100%; margin-top:18px;">Показати значення</button>
           ` : `
             <hr class="study-divider">
             <div class="study-meaning">${escapeHtml(getPromptText(w))}</div>
@@ -1759,7 +1761,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             return `<button type="button" class="option-btn ${cls}" data-opt="${o.id}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="opt-word">${escapeHtml(rev ? o.fr : getPromptText(o))}</span></button>`;
           }).join('')}
         </div>
-        ${ansd ? `<div style="margin-top:14px;display:flex;justify-content:space-between;">${speakerBtnHtml(w.fr)}<button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>` : ''}
+        ${ansd ? `<div style="margin-top:14px;display:flex;justify-content:space-between;">${speakerBtnHtml(w.fr)}<button type="button" class="btn btn-primary" id="bNx">Далі</button></div>` : ''}
       </section>`;
       container.querySelector('#btnEx').addEventListener('click', exitToDashboard);
       container.querySelectorAll('[data-dir]').forEach(b => b.addEventListener('click', () => setDirection(b.dataset.dir)));
@@ -1966,7 +1968,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <div class="study-pos">${escapeHtml(cleanPos)} <span class="badge" style="font-style:normal; font-family:var(--font-mono);">Слів у виразі: ${wCount}</span></div>
         <div class="template-mask">${buildMaskTemplate(targetFr, hintCount)}</div>
         <input type="text" id="inpW" class="input" placeholder="Введіть слово або вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk ? 'disabled' : ''}>
-        ${!chk ? `<div style="display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button><button type="button" class="btn" id="bHint">Підказка (+1 літера)</button></div>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div>${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.25rem;margin-top:2px;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} ${targetFr !== w.fr ? `<span style="font-weight:400;font-size:0.95rem;color:var(--text-muted);">(${escapeHtml(w.fr)})</span>` : ''}</div></div>${speakerBtnHtml(w.fr)}</div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>`}
+        ${!chk ? `<div style="display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn btn-primary" id="bCh">Перевірити</button><button type="button" class="btn" id="bHint">Підказка (+1 літера)</button></div>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div>${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.25rem;margin-top:2px;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} ${targetFr !== w.fr ? `<span style="font-weight:400;font-size:0.95rem;color:var(--text-muted);">(${escapeHtml(w.fr)})</span>` : ''}</div></div>${speakerBtnHtml(w.fr)}</div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі</button></div>`}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       const inp = container.querySelector('#inpW');
@@ -2084,7 +2086,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
         ${showHint ? `<div style="margin-bottom:12px;padding:8px 12px;background:var(--bg-elevated);border-radius:4px;">Значення: <strong>${escapeHtml(getPromptText(w))}</strong></div>` : ''}
         <input type="text" id="inpD" class="input" placeholder="Напишіть почутий вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk ? 'disabled' : ''}>
-        ${!chk ? `<button type="button" class="btn btn-primary" id="bCh">Перевірити (Enter)</button>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="margin-bottom:2px;">${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.2rem;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} — <span style="font-weight:400;font-size:1rem;font-family:var(--font-fr);">${escapeHtml(getPromptText(w))}</span></div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>`}
+        ${!chk ? `<button type="button" class="btn btn-primary" id="bCh">Перевірити</button>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="margin-bottom:2px;">${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.2rem;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} — <span style="font-weight:400;font-size:1rem;font-family:var(--font-fr);">${escapeHtml(getPromptText(w))}</span></div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі</button></div>`}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       container.querySelector('#bL').addEventListener('click', () => speakFrench(targetFr));
@@ -2233,7 +2235,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             return `<button type="button" class="option-btn ${cls}" data-idx="${i}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span style="font-family:var(--font-fr);font-weight:700;">${escapeHtml(o.text)}</span></button>`;
           }).join('')}
         </div>
-        ${ansd ? `<div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>` : ''}
+        ${ansd ? `<div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі</button></div>` : ''}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       container.querySelectorAll('[data-idx]').forEach(b => b.addEventListener('click', () => choose(Number(b.dataset.idx))));
@@ -2335,7 +2337,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             return `<button type="button" class="option-btn ${cls}" data-s="${escapeHtml(o)}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="opt-word">${escapeHtml(o)}</span></button>`;
           }).join('')}
         </div>
-        ${ansd ? `<div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі (Enter)</button></div>` : ''}
+        ${ansd ? `<div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі</button></div>` : ''}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       container.querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', () => choose(b.dataset.s)));
@@ -2717,7 +2719,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
               ${speakerBtnHtml(w.fr)}
             </div>
             <div style="margin-top:12px; display:flex; justify-content:flex-end;">
-              <button type="button" class="btn btn-primary" id="btnNextAna">Далі (Enter)</button>
+              <button type="button" class="btn btn-primary" id="btnNextAna">Далі</button>
             </div>
           `}
         </section>
