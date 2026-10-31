@@ -13,22 +13,20 @@ const rule = s => (CSS.match(new RegExp('\\n' + s.replace(/[.*+?^${}()|[\]\\]/g,
 
 // ───────────── Чиста картка ─────────────
 
-test('Лінії зошита лишились лише в режимі «Картки»', () => {
-  assert.match(rule('.index-card'), /repeating-linear-gradient/, 'режим «Картки» має зберегти зошит');
-  assert.ok(!/repeating-linear-gradient|border-top: 3px/.test(rule('.study-card')),
-    'на навчальній картці ліній і помаранчевої смуги бути не повинно');
+test('Ліній зошита не лишилось у жодному режимі', () => {
+  // Смуги сперечалися з блоками відповідей; картка всюди — рівна поверхня.
+  assert.ok(!/index-card/.test(HTML), 'клас .index-card має зникнути повністю');
+  assert.ok(!/card-seyes|card-margin-line|card-top-line/.test(HTML), 'токени зошита більше не потрібні');
+  assert.ok(!/repeating-linear-gradient/.test(CSS), 'лінії зошита лишились у стилях');
+  assert.ok(!/border-top: 3px/.test(rule('.study-card')), 'помаранчева смуга зверху картки');
 
-  // Кожен режим, окрім «Карток», малює чисту картку
-  const modes = ['runChoiceMode', 'runWriteMode', 'runDictationMode', 'runContextMode',
+  const modes = ['runCardsMode', 'runChoiceMode', 'runWriteMode', 'runDictationMode', 'runContextMode',
                  'runSynonymsMode', 'runPairsMode', 'runBlitzMode', 'runAnagramMode'];
   for (const m of modes) {
     const from = HTML.indexOf('function ' + m);
     assert.ok(from > 0, `немає ${m}`);
-    const body = HTML.slice(from, from + 6000);
-    assert.ok(!/<section class="index-card"/.test(body), `${m}: лишилась картка з лініями зошита`);
+    assert.match(HTML.slice(from, from + 6000), /<section class="study-card/, `${m}: немає чистої картки`);
   }
-  const cards = HTML.slice(HTML.indexOf('function runCardsMode'), HTML.indexOf('function runChoiceMode'));
-  assert.match(cards, /<section class="index-card"/, 'режим «Картки» має лишитись на зошиті');
 });
 
 test('Приклад-речення без помаранчевої смуги, цільове слово на акцентній плашці', () => {
@@ -98,8 +96,8 @@ test('Правильна відповідь веде далі сама, поми
   app.timers.runAll();
   assert.equal(fired, 1);
 
-  // Усі три режими переходять лише після правильної відповіді
-  for (const m of ['runChoiceMode', 'runContextMode', 'runSynonymsMode']) {
+  // «Вибір» і «Синоніми» переходять лише після правильної відповіді
+  for (const m of ['runChoiceMode', 'runSynonymsMode']) {
     const body = HTML.slice(HTML.indexOf('function ' + m), HTML.indexOf('function ' + m) + 6000);
     assert.match(body, /if \(ok\) scheduleAutoNext\(next\);/, `${m}: немає автопереходу після правильної`);
   }
@@ -124,9 +122,56 @@ test('Таймер не «вистрілює» після виходу з реж
   assert.equal(fired, 0, 'після виходу запланований перехід має скасуватись');
 
   // Подвійного переходу теж не буває: next() гасить таймер
-  for (const m of ['runChoiceMode', 'runContextMode', 'runSynonymsMode']) {
+  for (const m of ['runChoiceMode', 'runSynonymsMode']) {
     const body = HTML.slice(HTML.indexOf('function ' + m), HTML.indexOf('function ' + m) + 6000);
     const nextFn = body.slice(body.indexOf('function next()'));
     assert.match(nextFn.slice(0, 120), /cancelAutoNext\(\)/, `${m}: next() має гасити таймер`);
   }
+});
+
+// ───────────── «У контексті»: речення не можна почути заздалегідь ─────────────
+
+test('Озвучення речення відкривається ЛИШЕ після відповіді', () => {
+  // Інакше режим не має сенсу: учень слухає речення й тикає почуте слово.
+  const body = HTML.slice(HTML.indexOf('function runContextMode'), HTML.indexOf('function runSynonymsMode'));
+  const calls = [...body.matchAll(/speakerBtnHtml\(w\.ex[^)]*\)/g)];
+  assert.ok(calls.length > 0, 'озвучення речення зникло зовсім');
+  for (const c of calls) {
+    const before = body.slice(Math.max(0, c.index - 40), c.index);
+    assert.match(before, /ansd \?/, 'динамік має бути під умовою «вже відповів»');
+  }
+  // Сам текст речення теж не має показувати пропущене слово до відповіді
+  assert.match(body, /ansd \? highlightBracketExample\(w\.ex\)/, 'повне речення лише після відповіді');
+});
+
+test('У «контексті» автопереходу немає: учень сам вирішує, коли дослухав', () => {
+  const body = HTML.slice(HTML.indexOf('function runContextMode'), HTML.indexOf('function runSynonymsMode'));
+  assert.ok(!/scheduleAutoNext/.test(body),
+    'таймер обірвав би озвучення повного речення, яке відкривається після відповіді');
+});
+
+test('Натискання динаміка гасить запланований перехід у «Вибір» і «Синоніми»', async () => {
+  const app = await loadApp();
+  assert.match(HTML, /function speakerCancelsAutoNext/);
+  for (const m of ['runChoiceMode', 'runSynonymsMode']) {
+    const body = HTML.slice(HTML.indexOf('function ' + m), HTML.indexOf('function ' + m) + 6000);
+    assert.match(body, /speakerCancelsAutoNext\(container\)/, `${m}: динамік не скасовує автоперехід`);
+  }
+  const src = app.fn('speakerCancelsAutoNext').toString();
+  assert.match(src, /js-speak-btn/, 'селектор має збігатися з тим, що малює speakerBtnHtml');
+  assert.match(HTML.slice(HTML.indexOf('function speakerBtnHtml'), HTML.indexOf('function speakerBtnHtml') + 600), /js-speak-btn/);
+});
+
+test('Пауза автопереходу — 2 секунди', () => {
+  assert.match(HTML, /const AUTO_NEXT_MS = 2000;/);
+});
+
+test('«Далі» — кнопка на всю ширину зі стрілкою, без підказки про Enter', () => {
+  assert.match(rule('.next-row .btn'), /width: 100%/);
+  assert.match(rule('.btn-next'), /width: 100%/);
+  for (const m of HTML.matchAll(/<button[^>]*id="(bNx|btnNextAna)"[^>]*>([^<]*)/g)) {
+    assert.match(m[2], /^Далі /, `кнопка ${m[1]}: несподіваний підпис «${m[2]}»`);
+    assert.ok(!/Enter/.test(m[2]), 'на телефоні клавіші Enter немає');
+  }
+  assert.ok(HTML.includes("arrowRight:"), 'немає іконки стрілки');
 });

@@ -146,7 +146,7 @@ test('Кнопки, вкладки й картки беруть радіус з�
   for (const s of ['.btn', '.nav-badge', '.grade-btn']) {
     assert.match(rule(s), /border-radius: var\(--radius-pill\)/, `${s} має бути pill`);
   }
-  for (const s of ['.index-card', '.panel-card', '.word-item', '.mode-tile']) {
+  for (const s of ['.study-card', '.panel-card', '.word-item', '.mode-tile']) {
     assert.match(rule(s), /border-radius: var\(--radius-card\)/, `${s} має бути великою заокругленою поверхнею`);
   }
 });
