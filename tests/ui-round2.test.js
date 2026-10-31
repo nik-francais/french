@@ -78,8 +78,9 @@ test('Шрифт: слово-значення використовує ту са
 test('Верстка: жодна кнопка «Далі» не висить на float', () => {
   assert.equal(/float:\s*right/.test(HTML), false, 'float виносить кнопку за межі картки');
   assert.ok(HTML.includes('class="next-row"'), 'обгортка .next-row зникла');
-  const rule = HTML.match(/\.next-row \{[^}]*\}/);
-  assert.ok(rule && /justify-content:\s*flex-end/.test(rule[0]));
+  // Кнопка тепер на всю ширину картки: у кут її більше не тиснуть
+  const rule = HTML.match(/\.next-row \.btn \{[^}]*\}/);
+  assert.ok(rule && /width:\s*100%/.test(rule[0]), '«Далі» має займати всю ширину');
 });
 
 // ───────────── Фільтр по частинах мови ─────────────

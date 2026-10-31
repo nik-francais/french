@@ -254,8 +254,11 @@ test('На кнопках немає «(Enter)»: на телефоні клав
 });
 
 test('Шапка й початок головної мають відступи, а не злипаються', () => {
-  assert.match(rule('.topic-focus-bar'), /margin-bottom: 18px/, 'поле теми впритул до привітання');
-  assert.match(rule('.greeting-block'), /margin-bottom: 18px/, 'привітання впритул до картки');
+  assert.match(rule('.topic-focus-bar'), /margin-bottom: 18px/, 'поле теми впритул до картки');
+  assert.match(rule('.greeting-block'), /margin-bottom: 14px/, 'привітання впритул до поля теми');
+  // Порядок: спершу вітаємо, потім пропонуємо вибір теми — інакше фільтр стоїть перед «ким і навіщо»
+  const dash = HTML.slice(HTML.indexOf('function renderStudyDashboard'), HTML.indexOf('function startMode'));
+  assert.ok(dash.indexOf('greeting-block') < dash.indexOf('topic-focus-bar'), 'поле теми має бути ПІД привітанням');
   const gap = /gap: (\d+)px/.exec(rule('.app-header'));
   assert.ok(gap && Number(gap[1]) >= 16, 'логотип і перемикачі в шапці надто близько');
   // Підпис автора ховаємо на всіх телефонах: він і робив шапку тісною
