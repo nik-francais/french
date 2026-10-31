@@ -121,6 +121,22 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
 .icon-btn .icon { width: 18px; height: 18px; }
 /* Підпис лишається для зчитувача екрана, хоча на екрані його заміняє іконка */
+/* Панель викладача живе в тій самій оболонці, що й застосунок учня,
+   але без нижньої навігації — вкладок тут лише дві. */
+.teacher-shell { padding-bottom: 32px; }
+.seg-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: var(--bg-elevated); padding: 4px; border-radius: var(--radius-card); border: 1px solid var(--border); }
+.seg-tab { min-height: 44px; border: none; background: transparent; border-radius: var(--radius-pill); font-family: var(--font-ui); font-weight: 600; font-size: var(--fs-action); color: var(--text-muted); cursor: pointer; }
+.seg-tab.active { background: var(--bg-card); color: var(--text-main); box-shadow: var(--shadow); }
+.student-card { width: 100%; text-align: left; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 16px; cursor: pointer; display: block; margin-bottom: 10px; }
+.student-card:hover { border-color: var(--accent); }
+.student-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.student-name { font-family: var(--font-fr); font-size: var(--fs-title); font-weight: 700; color: var(--text-main); }
+.student-email { font-size: var(--fs-micro); color: var(--text-muted); overflow-wrap: anywhere; }
+.student-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px 14px; background: var(--bg-elevated); border-radius: var(--radius); }
+/* «Мовчить» — не докір, а підказка, кому написати першим */
+.student-quiet { margin-top: 10px; font-size: var(--fs-small); color: var(--warning); font-weight: 600; }
+.stat-mini-lbl { font-size: var(--fs-micro); color: var(--text-muted); line-height: 1.3; }
+.stat-mini-val { font-size: var(--fs-body); font-weight: 700; line-height: 1.3; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 .lang-switch { display: inline-flex; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 2px; }
@@ -400,17 +416,22 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 </div>
 
 <!-- ПАНЕЛЬ ВИКЛАДАЧА -->
-<div id="teacher-screen" class="auth-wrapper" style="display:none;">
-  <div class="auth-container" style="max-width:600px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h2 style="font-family:var(--font-fr);">Панель викладача 👨‍🏫</h2><button class="btn btn-sm" onclick="signOut()">Вийти</button></div>
-    <input type="email" id="target-student-email" class="input" placeholder="Email учня">
-    <div style="display:flex; gap:8px; margin-bottom:12px;">
-      <input type="text" id="target-student-name" class="input" maxlength="60" autocomplete="off" placeholder="Ім'я учня" style="margin-bottom:0; flex:1; min-width:0;">
-      <button type="button" onclick="saveStudentNameFromPanel()" class="btn" style="flex-shrink:0;">Зберегти ім'я</button>
+<div id="teacher-screen" class="app-shell teacher-shell" style="display:none;">
+  <header class="app-header">
+    <div class="brand">
+      <h1 class="brand-title">Панель викладача</h1>
+      <span class="brand-sub">Boîte à Mots</span>
     </div>
-    <textarea id="json-code" class="teacher-textarea" placeholder="Вставте JSON масив слів..."></textarea>
-    <button onclick="addWordsToStudent()" class="btn btn-primary" style="width:100%;">Відправити слова</button>
+    <div class="header-controls">
+      <button type="button" class="icon-btn" id="btnTeacherTheme" title="Тема оформлення" aria-label="Тема оформлення"></button>
+      <button type="button" class="icon-btn" id="btnTeacherSignOut" title="Вийти" aria-label="Вийти"></button>
+    </div>
+  </header>
+  <div class="seg-tabs" role="tablist">
+    <button type="button" class="seg-tab active" data-tt="students" role="tab">Учні</button>
+    <button type="button" class="seg-tab" data-tt="add" role="tab">Додати слова</button>
   </div>
+  <main id="teacherView"></main>
 </div>
 
 <!-- ГОЛОВНИЙ ДОДАТОК -->
@@ -531,6 +552,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 
     return {
       dbId: row.id || row.dbId || null,
+      // Чия це картка: учневі байдуже, але панель викладача без цього не розділить учнів
+      userEmail: String(row.user_email || row.userEmail || '').toLowerCase(),
       id: makeWordId(frText),
       fr: frText,
       uk: String(row.uk || row.translation || '').trim(),
@@ -560,6 +583,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         currentUser = session.user;
         if (String(currentUser.email || '').toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
           document.getElementById('teacher-screen').style.display = 'flex';
+          loadLocalStats();
+          initTeacherPanel();
         } else {
           document.getElementById('app-screen').style.display = 'flex';
           loadLocalStats();
@@ -704,6 +729,237 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (!isValidEmail(email)) return alert('Перевірте email учня: схоже, в адресі є помилка.');
     const res = await saveStudentName(email, nameRaw);
     alert(res.ok ? `✅ Ім'я «${res.name}» збережено для ${email}. Учень побачить його при наступному вході.` : `⚠️ Не вдалося: ${res.message}`);
+  }
+
+  /* =========================================================
+   * ПАНЕЛЬ ВИКЛАДАЧА: УЧНІ
+   * Читаємо всі картки одним запитом і рахуємо на місці — учнів десятки,
+   * а не тисячі, тож окремі запити на кожного були б зайвим навантаженням.
+   * ========================================================= */
+  const teacher = { tab: 'students', rows: [], names: {}, openEmail: null, query: '', topic: 'all', loaded: false, error: '' };
+
+  function teacherView() { return document.getElementById('teacherView'); }
+
+  async function loadTeacherData() {
+    teacher.error = '';
+    const cards = await sbClient.from('cards').select('*');
+    if (cards.error) {
+      teacher.error = /permission|policy|row-level/i.test(cards.error.message || '')
+        ? 'Немає доступу до карток учнів. Виконайте supabase/003_teacher_manages_cards.sql (один раз).'
+        : (cards.error.message || 'Не вдалося завантажити слова.');
+      teacher.rows = [];
+    } else {
+      teacher.rows = (cards.data || []).map(r => normalizeWordRow(r));
+    }
+    const profs = await sbClient.from('student_profiles').select('user_email, name');
+    teacher.names = {};
+    if (!profs.error) (profs.data || []).forEach(r => { teacher.names[String(r.user_email).toLowerCase()] = r.name; });
+    teacher.loaded = true;
+  }
+
+  /* Що саме ми можемо порахувати: у хмарі лежить лише стан кожної картки.
+     Серії днів і «відповідей за день» тут немає — вони живуть на пристрої учня.
+     «Повторено за 7 днів» = скільки РІЗНИХ слів учень відповідав цього тижня. */
+  function teacherStudentStats(email) {
+    const words = teacher.rows.filter(w => w.userEmail === email);
+    const now = Date.now();
+    const weekAgo = now - 7 * DAY_MS;
+    const counts = { new: 0, learn: 0, know: 0, master: 0 };
+    let due = 0, week = 0, last = 0;
+    words.forEach(w => {
+      counts[getWordStatus(w)]++;
+      if (w.r > 0 && w.due && w.due <= now) due++;
+      if (w.t && w.t >= weekAgo) week++;
+      if (w.t && w.t > last) last = w.t;
+    });
+    return { email, words, total: words.length, counts, due, week, last };
+  }
+
+  function teacherStudents() {
+    const emails = Array.from(new Set(teacher.rows.map(w => w.userEmail).filter(Boolean)));
+    Object.keys(teacher.names).forEach(e => { if (!emails.includes(e)) emails.push(e); });
+    return emails.map(teacherStudentStats).sort((a, b) => b.last - a.last || a.email.localeCompare(b.email));
+  }
+
+  function studentLabel(email) { return teacher.names[email] || email.split('@')[0]; }
+
+  function sinceLabel(ts) {
+    if (!ts) return 'ще не починав';
+    const days = Math.floor((Date.now() - ts) / DAY_MS);
+    if (days <= 0) return 'сьогодні';
+    if (days === 1) return 'учора';
+    return `${days} ${ukPlural(days, 'день', 'дні', 'днів')} тому`;
+  }
+
+  function renderTeacherPanel() {
+    const view = teacherView();
+    if (!view) return;
+    if (teacher.tab === 'add') return renderTeacherAddTab(view);
+    if (!teacher.loaded) { view.innerHTML = '<section class="study-card">Завантаження…</section>'; return; }
+    if (teacher.error) {
+      view.innerHTML = `<section class="study-card"><div class="feedback-box err">${escapeHtml(teacher.error)}</div></section>`;
+      return;
+    }
+    if (teacher.openEmail) return renderTeacherStudent(view, teacher.openEmail);
+    renderTeacherStudentsList(view);
+  }
+
+  function renderTeacherStudentsList(view) {
+    const list = teacherStudents();
+    view.innerHTML = `
+      <div class="card-head"><h2 class="card-title">Учні</h2><span class="pill-badge">${list.length}</span></div>
+      ${list.length === 0 ? '<section class="study-card">Поки жодного учня. Додайте слова на вкладці «Додати слова».</section>' : ''}
+      ${list.map(st => `
+        <button type="button" class="student-card" data-student="${escapeHtml(st.email)}">
+          <div class="student-head">
+            <span class="student-name">${escapeHtml(studentLabel(st.email))}</span>
+            <span class="pill-badge">${st.total} ${ukPlural(st.total, 'слово', 'слова', 'слів')}</span>
+          </div>
+          <div class="student-email">${escapeHtml(st.email)}</div>
+          <div class="student-stats" style="margin-top:12px;">
+            <div><div class="stat-mini-lbl">Повторено за тиждень</div><div class="stat-mini-val">${st.week}</div></div>
+            <div><div class="stat-mini-lbl">Чекає сьогодні</div><div class="stat-mini-val">${st.due}</div></div>
+            <div><div class="stat-mini-lbl">Остання активність</div><div class="stat-mini-val">${escapeHtml(sinceLabel(st.last))}</div></div>
+          </div>
+          ${st.last && (Date.now() - st.last) > 7 * DAY_MS ? '<div class="student-quiet">Не займався понад тиждень</div>' : ''}
+        </button>`).join('')}
+    `;
+    view.querySelectorAll('[data-student]').forEach(b => b.addEventListener('click', () => {
+      teacher.openEmail = b.dataset.student; teacher.query = ''; teacher.topic = 'all'; renderTeacherPanel();
+    }));
+  }
+
+  function renderTeacherStudent(view, email) {
+    const st = teacherStudentStats(email);
+    const total = st.total || 1;
+    const topics = Array.from(new Set(st.words.map(w => w.src).filter(Boolean))).sort();
+    if (teacher.topic !== 'all' && !topics.includes(teacher.topic)) teacher.topic = 'all';
+    const q = teacher.query.trim().toLowerCase();
+    const shown = st.words.filter(w =>
+      (teacher.topic === 'all' || w.src === teacher.topic) &&
+      (!q || `${w.fr} ${w.uk} ${w.def}`.toLowerCase().includes(q))
+    ).sort((a, b) => (b.l - a.l) || a.fr.localeCompare(b.fr));
+    // Проблемні слова: найбільше забувань. Саме їх варто розібрати на занятті.
+    const tough = st.words.filter(w => w.l > 0).sort((a, b) => b.l - a.l).slice(0, 5);
+
+    view.innerHTML = `
+      <button type="button" class="btn btn-sm" id="btnBackStudents" style="margin-bottom:14px;">← До списку</button>
+      <section class="study-card" style="margin-bottom:16px;">
+        <div class="card-head">
+          <h2 class="card-title">${escapeHtml(studentLabel(email))}</h2>
+          <span class="pill-badge">${st.total} ${ukPlural(st.total, 'слово', 'слова', 'слів')}</span>
+        </div>
+        <div class="student-email" style="margin-bottom:14px;">${escapeHtml(email)}</div>
+        <div class="segment-bar">
+          <div class="seg-part" style="width:${(st.counts.new / total) * 100}%; background:var(--st-new);"></div>
+          <div class="seg-part" style="width:${(st.counts.learn / total) * 100}%; background:var(--st-learn);"></div>
+          <div class="seg-part" style="width:${(st.counts.know / total) * 100}%; background:var(--st-know);"></div>
+          <div class="seg-part" style="width:${(st.counts.master / total) * 100}%; background:var(--st-master);"></div>
+        </div>
+        <div class="segment-legend">
+          <div class="legend-item"><span class="legend-dot" style="background:var(--st-new);"></span><span>Нові</span><span class="legend-count">${st.counts.new}</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--st-learn);"></span><span>Вчу</span><span class="legend-count">${st.counts.learn}</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--st-know);"></span><span>Знаю</span><span class="legend-count">${st.counts.know}</span></div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--st-master);"></span><span>Засвоєно</span><span class="legend-count">${st.counts.master}</span></div>
+        </div>
+        <div class="student-stats" style="margin-top:14px;">
+          <div><div class="stat-mini-lbl">Повторено за тиждень</div><div class="stat-mini-val">${st.week}</div></div>
+          <div><div class="stat-mini-lbl">Чекає сьогодні</div><div class="stat-mini-val">${st.due}</div></div>
+          <div><div class="stat-mini-lbl">Остання активність</div><div class="stat-mini-val">${escapeHtml(sinceLabel(st.last))}</div></div>
+        </div>
+      </section>
+
+      ${tough.length ? `<section class="study-card" style="margin-bottom:16px;">
+        <div class="card-head"><h2 class="card-title">Даються важко</h2></div>
+        ${tough.map(w => `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-subtle);">
+          <span style="font-family:var(--font-fr);font-weight:700;">${escapeHtml(w.fr)}</span>
+          <span style="color:var(--text-muted);font-size:var(--fs-small);white-space:nowrap;">забув ${w.l} ${ukPlural(w.l, 'раз', 'рази', 'разів')}</span></div>`).join('')}
+      </section>` : ''}
+
+      <div class="card-head"><h2 class="card-title">Слова</h2><span class="pill-badge">${shown.length}</span></div>
+      <input type="search" id="tSearch" class="input" placeholder="Пошук слова або перекладу…" value="${escapeHtml(teacher.query)}">
+      <select id="tTopic" class="select" style="width:100%; margin-bottom:12px;">
+        <option value="all">Усі теми (${st.total})</option>
+        ${topics.map(t => `<option value="${escapeHtml(t)}" ${teacher.topic === t ? 'selected' : ''}>${escapeHtml(t)} (${st.words.filter(w => w.src === t).length})</option>`).join('')}
+      </select>
+      ${shown.length === 0 ? '<section class="study-card">Нічого не знайдено.</section>' : ''}
+      ${shown.map(w => `
+        <div class="word-item" data-status="${getWordStatus(w)}">
+          <div class="word-item-header">
+            <div style="font-family:var(--font-fr);font-weight:700;font-size:1.05rem;">${escapeHtml(w.fr)}</div>
+            <div style="color:var(--text-muted);">${escapeHtml(w.uk || w.def)}</div>
+            <div style="font-size:var(--fs-micro);color:var(--text-muted);">${escapeHtml(getStatusLabel(getWordStatus(w)))} · ${escapeHtml(w.src || '—')} · повторень: ${w.r}${w.l ? ` · забував ${w.l}` : ''}</div>
+          </div>
+          <div class="word-item-actions">
+            <button type="button" class="btn btn-sm" data-edit="${escapeHtml(w.dbId || '')}">Редагувати</button>
+            <button type="button" class="btn btn-sm" data-del="${escapeHtml(w.dbId || '')}">Видалити</button>
+          </div>
+        </div>`).join('')}
+    `;
+    view.querySelector('#btnBackStudents').addEventListener('click', () => { teacher.openEmail = null; renderTeacherPanel(); });
+    const search = view.querySelector('#tSearch');
+    search.addEventListener('input', e => {
+      teacher.query = e.target.value;
+      renderTeacherPanel();
+      const el = teacherView().querySelector('#tSearch');
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    });
+    view.querySelector('#tTopic').addEventListener('change', e => { teacher.topic = e.target.value; renderTeacherPanel(); });
+    view.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => teacherEditWord(b.dataset.edit)));
+    view.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => teacherDeleteWord(b.dataset.del)));
+  }
+
+  function teacherFindWord(dbId) { return teacher.rows.find(w => String(w.dbId) === String(dbId)) || null; }
+
+  function teacherEditWord(dbId) {
+    const w = teacherFindWord(dbId);
+    if (!w) return;
+    // Форма та сама, що й в учня: редагується лише текст, прогрес не чіпається
+    openWordFormModal(w, () => renderTeacherPanel());
+  }
+
+  async function teacherDeleteWord(dbId) {
+    const w = teacherFindWord(dbId);
+    if (!w) return;
+    if (!confirm(`Видалити «${w.fr}» в учня ${studentLabel(w.userEmail)}? Прогрес за цим словом зникне.`)) return;
+    const { error } = await sbClient.from('cards').delete().eq('id', w.dbId);
+    if (error) { alert('Не вдалося видалити: ' + (error.message || '')); return; }
+    teacher.rows = teacher.rows.filter(x => x !== w);
+    renderTeacherPanel();
+    showToast('Слово видалено');
+  }
+
+  function renderTeacherAddTab(view) {
+    view.innerHTML = `
+      <section class="study-card">
+        <div class="card-head"><h2 class="card-title">Додати слова</h2></div>
+        <input type="email" id="target-student-email" class="input" placeholder="Email учня">
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <input type="text" id="target-student-name" class="input" maxlength="60" autocomplete="off" placeholder="Ім'я учня" style="margin-bottom:0; flex:1; min-width:0;">
+          <button type="button" class="btn" id="btnSaveName" style="flex-shrink:0;">Зберегти ім'я</button>
+        </div>
+        <textarea id="json-code" class="teacher-textarea" placeholder="Вставте JSON масив слів..."></textarea>
+        <button type="button" class="btn btn-primary" id="btnSendWords" style="width:100%;">Відправити слова</button>
+      </section>`;
+    view.querySelector('#btnSaveName').addEventListener('click', saveStudentNameFromPanel);
+    view.querySelector('#btnSendWords').addEventListener('click', addWordsToStudent);
+  }
+
+  async function initTeacherPanel() {
+    document.querySelectorAll('.seg-tab').forEach(b => b.addEventListener('click', () => {
+      teacher.tab = b.dataset.tt;
+      document.querySelectorAll('.seg-tab').forEach(x => x.classList.toggle('active', x === b));
+      renderTeacherPanel();
+    }));
+    const set = (id, name) => { const el = document.getElementById(id); if (el) el.innerHTML = icon(name); };
+    set('btnTeacherSignOut', 'signOut');
+    const tt = document.getElementById('btnTeacherTheme');
+    if (tt) { tt.innerHTML = icon(THEME_ICON[THEME_CYCLE.includes(state.settings.theme) ? state.settings.theme : 'auto']); tt.addEventListener('click', cycleTheme); }
+    const so = document.getElementById('btnTeacherSignOut');
+    if (so) so.addEventListener('click', () => signOut());
+    renderTeacherPanel();
+    await loadTeacherData();
+    renderTeacherPanel();
   }
 
   async function addWordsToStudent() {
@@ -3253,7 +3509,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     });
   }
   
-  function openWordFormModal(editWord = null) {
+  function openWordFormModal(editWord = null, onSaved = null) {
     const isEdit = Boolean(editWord);
     openModal(`
       <h2 id="modalTitle" style="font-family:var(--font-fr); font-size:1.25rem;">${isEdit ? 'Редагувати вираз' : 'Додати вираз'}</h2>
@@ -3285,7 +3541,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         const savedToCloud = await updateWordInCloud(editWord);
         closeModal();
         showToast(savedToCloud ? 'Вираз оновлено' : 'Змінено лише на цьому пристрої: не вдалося зберегти в хмарі');
-        renderCurrentTab();
+        if (onSaved) onSaved(); else renderCurrentTab();
       } else {
         try {
           if (currentUser && currentUser.email) {
