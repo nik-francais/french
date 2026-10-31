@@ -142,6 +142,11 @@ async function loadApp(opts = {}) {
   const localStorage = makeStorage(opts.storageLimit);
   const sessionStorage = makeStorage();
   const timers = [];
+  let timerSeq = 0;
+  // Запустити всі заплановані таймери (скасовані пропускаються)
+  Object.defineProperty(timers, 'runAll', { value: function () {
+    this.splice(0).forEach(t => { if (!t.cancelled && typeof t.fn === 'function') t.fn(); });
+  }, enumerable: false });
 
   const doc = {
     visibilityState: 'visible',
@@ -168,8 +173,11 @@ async function loadApp(opts = {}) {
     speechSynthesis: speech,
     SpeechSynthesisUtterance: class { constructor(t) { this.text = t; } },
     supabase: { createClient: () => sb.client },
-    setTimeout: (fn, ms) => { timers.push({ fn, ms }); return timers.length; },
-    clearTimeout() {}, setInterval: () => 0, clearInterval() {},
+    // Справжні ідентифікатори: без них clearTimeout — порожня заглушка,
+    // і тест «скасований перехід не спрацьовує» проходив би завжди.
+    setTimeout: (fn, ms) => { const id = ++timerSeq; timers.push({ id, fn, ms, cancelled: false }); return id; },
+    clearTimeout: id => { const t = timers.find(x => x.id === id); if (t) t.cancelled = true; },
+    setInterval: () => 0, clearInterval() {},
     alert() {}, confirm: () => true,
     addEventListener: (ev, fn) => { (listeners['win:' + ev] = listeners['win:' + ev] || []).push(fn); },
     removeEventListener() {},
@@ -194,6 +202,7 @@ async function loadApp(opts = {}) {
   get wordFilterStatus() { return wordFilterStatus; }, set wordFilterStatus(v) { wordFilterStatus = v; },
   get wordSearchQuery() { return wordSearchQuery; }, set wordSearchQuery(v) { wordSearchQuery = v; },
   get MODES_META() { return MODES_META; },
+  optionHtml,
   get ICONS() { return ICONS; },
   icon, ukPlural, userGreetingName, sessionInvite, updateNavBadge,
   get STORAGE_KEY() { return STORAGE_KEY; },

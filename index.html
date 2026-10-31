@@ -40,6 +40,9 @@
 
   --danger: #a6453c;
   --danger-soft: #f9efed;
+  /* текст НА суцільному кольорі: у темній темі success/danger світлішають, і білий стає нечитабельним */
+  --on-success: #ffffff;
+  --on-danger: #ffffff;
   --warning: #8a5010;
   --warning-soft: #f8f1e4;
   --success: #296d46;
@@ -79,7 +82,7 @@
     --accent: oklch(0.692 0.059 var(--accent-h)); --accent-hover: oklch(0.769 0.059 var(--accent-h)); --accent-contrast: oklch(0.200 0.008 var(--accent-h)); --accent-soft: oklch(0.295 0.021 var(--accent-h));
     --border: oklch(0.356 0.011 var(--accent-h)); --border-subtle: oklch(0.300 0.009 var(--accent-h));
     --card-top-line: #c96a5e; --card-seyes-main: oklch(0.692 0.059 var(--accent-h) / 0.08); --card-margin-line: rgba(201, 106, 94, 0.3);
-    --danger: #e5847c; --danger-soft: #2e1d1a; --warning: #d9a441; --warning-soft: #2e2415;
+    --danger: #e5847c; --danger-soft: #2e1d1a; --on-success: #10241a; --on-danger: #2a1512; --warning: #d9a441; --warning-soft: #2e2415;
     --success: #86d9a5; --success-soft: #1c2a22;
     --st-new: #8d8373; --st-learn: #d9a441; --st-know: #7fb0c2; --st-master: #7ba891;
     --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
@@ -92,7 +95,7 @@
   --accent: oklch(0.692 0.059 var(--accent-h)); --accent-hover: oklch(0.769 0.059 var(--accent-h)); --accent-contrast: oklch(0.200 0.008 var(--accent-h)); --accent-soft: oklch(0.295 0.021 var(--accent-h));
   --border: oklch(0.356 0.011 var(--accent-h)); --border-subtle: oklch(0.300 0.009 var(--accent-h));
   --card-top-line: #c96a5e; --card-seyes-main: oklch(0.692 0.059 var(--accent-h) / 0.08); --card-margin-line: rgba(201, 106, 94, 0.3);
-  --danger: #e5847c; --danger-soft: #2e1d1a; --warning: #d9a441; --warning-soft: #2e2415;
+  --danger: #e5847c; --danger-soft: #2e1d1a; --on-success: #10241a; --on-danger: #2a1512; --warning: #d9a441; --warning-soft: #2e2415;
   --success: #86d9a5; --success-soft: #1c2a22;
   --st-new: #8d8373; --st-learn: #d9a441; --st-know: #7fb0c2; --st-master: #7ba891;
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
@@ -241,8 +244,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .study-meaning { font-family: var(--font-fr); font-size: 1.4rem; font-weight: 700; line-height: 1.3; color: var(--accent); margin-bottom: 8px; }
 .study-def { font-family: var(--font-fr); font-size: 0.98rem; line-height: 1.5; color: var(--text-muted); margin-bottom: 12px; padding-left: 10px; border-left: 2px solid var(--border); }
 .study-synonyms { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
-.study-example { font-family: var(--font-fr); font-size: 1.05rem; line-height: 1.45; padding: 12px 14px; background: var(--bg-elevated); border-left: 3px solid var(--card-top-line); border-radius: var(--radius); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.hl-word { color: var(--card-top-line); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.study-example { font-family: var(--font-fr); font-size: 1.05rem; line-height: 1.45; padding: 12px 14px; background: var(--bg-elevated); border-radius: var(--radius); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* Цільове слово в прикладі: м'яка акцентна плашка замість помаранчевого підкреслення зошита */
+.hl-word { background: var(--accent-soft); color: var(--accent); font-weight: 700; border-radius: var(--radius-bar); padding: 1px 5px; }
 
 .grade-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 16px; }
 @media (min-width: 480px) { .grade-grid { grid-template-columns: repeat(4, 1fr); } }
@@ -274,18 +278,32 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 /* ОПЦІЇ ТА ЗВОРОТНИЙ ЗВ'ЯЗОК */
 /* Кнопка «Далі» у звичайному потоці: float виносив її за межі картки */
 .next-row { display: flex; justify-content: flex-end; margin-top: 14px; }
-.options-grid { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-.option-btn { min-height: 48px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px; font-family: var(--font-ui); font-size: 1rem; color: var(--text-main); }
-.option-btn:hover:not(:disabled) { border-color: var(--accent); background: var(--bg-elevated); }
+/* Картка навчального екрана: без ліній зошита — вони сперечалися з блоками відповідей.
+   Лінії лишилися тільки в режимі «Картки», де метафора зошита доречна. */
+.study-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); padding: 20px; position: relative; }
+@media (max-width: 480px) { .study-card { padding: 16px; } }
+.options-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.option-btn { min-height: 56px; padding: 12px 14px; border: 1px solid transparent; border-radius: var(--radius); background: var(--bg-elevated); text-align: left; cursor: pointer; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; font-family: var(--font-ui); font-size: 1rem; color: var(--text-main); transition: background-color 0.15s, border-color 0.15s, opacity 0.15s; }
+.option-btn:hover:not(:disabled) { border-color: var(--accent); }
+.option-btn:disabled { cursor: default; }
 /* Варіант відповіді має однаковий вигляд, якою б мовою він не був:
    різний шрифт для латиниці й кирилиці читався як різна важливість. */
-.option-btn .opt-word { font-family: var(--font-fr); font-weight: 700; font-size: 1.05rem; }
+.option-btn .opt-word { font-family: var(--font-fr); font-weight: 700; font-size: 1.05rem; flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 /* Питання у вікторині: один розмір і колір незалежно від напрямку */
 .study-sub { font-family: var(--font-fr); color: var(--text-muted); }
 .study-prompt { font-family: var(--font-fr); font-size: 1.6rem; font-weight: 700; line-height: 1.25; color: var(--text-main); margin-bottom: 4px; }
-.option-key { font-family: var(--font-mono); font-size: 0.75rem; width: 26px; height: 26px; border-radius: 50%; background: var(--bg-elevated); color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;}
-.option-btn.correct { border-color: var(--success); background: var(--success-soft); }
-.option-btn.wrong { border-color: var(--danger); background: var(--danger-soft); }
+.option-key { font-family: var(--font-mono); font-size: var(--fs-small); font-weight: 600; width: 30px; height: 30px; border-radius: 50%; background: var(--bg-card); color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.option-key .icon { width: 16px; height: 16px; }
+/* Правильна — зелена, обрана помилкова — червона, решта просто гасне.
+   Статус дублюється підписом і значком: самим кольором його позначати не можна. */
+.option-btn.correct { background: var(--success-soft); }
+.option-btn.correct .option-key { background: var(--success); color: var(--on-success); }
+.option-btn.wrong { background: var(--danger-soft); }
+.option-btn.wrong .option-key { background: var(--danger); color: var(--on-danger); }
+.option-btn.faded { opacity: 0.5; }
+.option-tag { margin-left: auto; flex-shrink: 0; font-size: var(--fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 4px 10px; border-radius: var(--radius-pill); }
+.option-btn.correct .option-tag { background: var(--success); color: var(--on-success); }
+.option-btn.wrong .option-tag { background: var(--danger); color: var(--on-danger); }
 
 .feedback-toast { position: absolute; top: 12px; right: 16px; padding: 6px 14px; border-radius: var(--radius-pill); font-weight: 600; font-size: 14px; opacity: 0; transition: all 0.3s ease; pointer-events: none; }
 .feedback-toast.show { opacity: 1; transform: translateY(0); }
@@ -496,7 +514,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   
   const defaultState = () => ({ 
     words: [], 
-    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random', profileName: '' },
+    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random', profileName: '', autoNext: true },
     stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0 } 
   });
   let state = defaultState();
@@ -1348,11 +1366,37 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     moon:       '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
     monitor:    '<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
     folder:     '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
-    play:       '<polygon points="6 3 20 12 6 21 6 3"/>'
+    play:       '<polygon points="6 3 20 12 6 21 6 3"/>',
+    check:      '<path d="M20 6 9 17l-5-5"/>',
+    cross:      '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'
   };
   function icon(name, cls) {
     const body = ICONS[name] || '';
     return `<svg class="icon${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+  }
+
+  /* Один вигляд варіантів для «Вибір», «У контексті» та «Синоніми»:
+     раніше кожен режим малював їх по-своєму, і стилі розходилися при кожній правці.
+     state: 'correct' | 'wrong' | '' — обрану помилкову підсвічуємо червоним,
+     решту після відповіді гасимо, щоб погляд ішов до правильної. */
+  function optionHtml(i, text, state, attr, answered) {
+    const cls = ['option-btn', state, answered && !state ? 'faded' : ''].filter(Boolean).join(' ');
+    const key = state === 'correct' ? icon('check') : state === 'wrong' ? icon('cross') : String(i + 1);
+    const tag = state === 'correct' ? '<span class="option-tag">Правильно</span>'
+      : state === 'wrong' ? '<span class="option-tag">Ваша відповідь</span>' : '';
+    return `<button type="button" class="${cls}" ${attr} ${answered ? 'disabled' : ''}>` +
+      `<span class="option-key">${key}</span><span class="opt-word">${escapeHtml(text)}</span>${tag}</button>`;
+  }
+
+  /* Правильна відповідь веде далі сама: учень не тисне «Далі» після кожного влучання.
+     Пауза дає побачити підсвітку. Вимикається в «Налаштуваннях». */
+  const AUTO_NEXT_MS = 1100;
+  let autoNextTimer = null;
+  function cancelAutoNext() { if (autoNextTimer) { clearTimeout(autoNextTimer); autoNextTimer = null; } }
+  function scheduleAutoNext(fn) {
+    cancelAutoNext();
+    if (!state.settings.autoNext) return;
+    autoNextTimer = setTimeout(() => { autoNextTimer = null; fn(); }, AUTO_NEXT_MS);
   }
 
   /* Українська множина: 1 картка, 2–4 картки, 5+ карток. 11–14 — завжди форма «карток». */
@@ -1409,6 +1453,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   let currentTab = 'study';
   let activeSessionCleanup = null;
   function cleanupSession() {
+    cancelAutoNext();
     if (typeof activeSessionCleanup === 'function') {
       activeSessionCleanup();
       activeSessionCleanup = null;
@@ -1583,7 +1628,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   function renderRoundSummary(container, modeId, results) {
     cleanupSession();
     clearActiveSessionProgress();
-    container.innerHTML = `<section class="index-card"><div class="session-header"><h2 style="font-family:var(--font-fr); font-size:1.35rem;">Підсумок раунду</h2><span class="session-progress">${results.filter(r=>r.ok).length} / ${results.length}</span></div>
+    container.innerHTML = `<section class="study-card"><div class="session-header"><h2 style="font-family:var(--font-fr); font-size:1.35rem;">Підсумок раунду</h2><span class="session-progress">${results.filter(r=>r.ok).length} / ${results.length}</span></div>
       <div class="summary-list">${results.map(r => `<div class="summary-row"><div><strong style="font-family:var(--font-fr);">${escapeHtml(r.word.fr)}</strong><span style="color:var(--text-muted); margin-left:8px;">— ${escapeHtml(getPromptText(r.word))}</span></div><div style="display:flex; align-items:center; gap:8px;">${speakerBtnHtml(r.word.fr)}<span class="${r.ok?'mark-ok':'mark-err'}">${r.ok?'✓':'✗'}</span></div></div>`).join('')}</div>
       <div style="display:flex; gap:10px; margin-top:16px;"><button type="button" class="btn btn-primary" id="btnSummaryAgain">Ще раунд</button><button type="button" class="btn" id="btnSummaryBack">До режимів</button></div></section>`;
     container.querySelector('#btnSummaryAgain').addEventListener('click', () => startMode(modeId));
@@ -1799,7 +1844,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           ${dirBtn('random', 'Мікс', 'Випадковий напрямок у кожному питанні')}
         </div>
       </div>
-      <section class="index-card">
+      <section class="study-card">
         <div class="instruction-text">${rev ? 'Оберіть французьке слово за значенням:' : 'Оберіть правильне значення слова:'}</div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
           <div class="study-prompt">${escapeHtml(rev ? getPromptText(w) : w.fr)}</div>
@@ -1807,9 +1852,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
         <div class="options-grid">
           ${opts.map((o,i) => {
-            let cls = '';
-            if (ansd) { if (o.id === w.id) cls = 'correct'; else if (o.id === chId) cls = 'wrong'; }
-            return `<button type="button" class="option-btn ${cls}" data-opt="${o.id}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="opt-word">${escapeHtml(rev ? o.fr : getPromptText(o))}</span></button>`;
+            const st = !ansd ? '' : (o.id === w.id ? 'correct' : (o.id === chId ? 'wrong' : ''));
+            return optionHtml(i, rev ? o.fr : getPromptText(o), st, `data-opt="${o.id}"`, ansd);
           }).join('')}
         </div>
         ${ansd ? `<div style="margin-top:14px;display:flex;justify-content:space-between;">${speakerBtnHtml(w.fr)}<button type="button" class="btn btn-primary" id="bNx">Далі</button></div>` : ''}
@@ -1839,8 +1883,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       handleMiniGameResult(w, ok);
       res.push({ word: w, ok });
       render(w, id);
+      if (ok) scheduleAutoNext(next);
     }
     function next() {
+      cancelAutoNext();
       idx++;
       if (idx >= qs.length) renderRoundSummary(container, 'choice', res);
       else setup();
@@ -2014,7 +2060,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <button class="btn btn-sm" id="bEx">← До режимів</button>
         <span class="session-progress">Напиши · ${idx+1} / ${qs.length}</span>
       </div>
-      <section class="index-card">
+      <section class="study-card">
         <div class="${isPromptFr ? 'study-def' : 'study-meaning'}">${escapeHtml(getPromptText(w))}</div>
         <div class="study-pos">${escapeHtml(cleanPos)} <span class="badge" style="font-style:normal; font-family:var(--font-mono);">Слів у виразі: ${wCount}</span></div>
         <div class="template-mask">${buildMaskTemplate(targetFr, hintCount)}</div>
@@ -2129,7 +2175,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <button class="btn btn-sm" id="bEx">← До режимів</button>
         <span class="session-progress">Диктант · ${idx+1} / ${qs.length}</span>
       </div>
-      <section class="index-card">
+      <section class="study-card">
         <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
           <button type="button" class="btn btn-primary" id="bL">Слухати</button>
           <button type="button" class="btn" id="bS">Повільно</button>
@@ -2267,7 +2313,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <button class="btn btn-sm" id="bEx">← До режимів</button>
         <span class="session-progress">У контексті · ${idx+1} / ${qs.length}</span>
       </div>
-      <section class="index-card">
+      <section class="study-card">
         <div class="instruction-text">Доповніть речення відповідним словом (${escapeHtml(getPromptText(w))}):</div>
         <div class="study-example">
           <div>
@@ -2278,12 +2324,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
         <div class="options-grid">
           ${opts.map((o, i) => {
-            let cls = '';
-            if (ansd) {
-              if (o.isCorrect) cls = 'correct';
-              else if (i === chosenIndex) cls = 'wrong';
-            }
-            return `<button type="button" class="option-btn ${cls}" data-idx="${i}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span style="font-family:var(--font-fr);font-weight:700;">${escapeHtml(o.text)}</span></button>`;
+            const st = !ansd ? '' : (o.isCorrect ? 'correct' : (i === chosenIndex ? 'wrong' : ''));
+            return optionHtml(i, o.text, st, `data-idx="${i}"`, ansd);
           }).join('')}
         </div>
         ${ansd ? `<div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі</button></div>` : ''}
@@ -2301,8 +2343,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       handleMiniGameResult(w, ok);
       res.push({ word: w, ok });
       render(w, i);
+      if (ok) scheduleAutoNext(next);
     }
     function next() {
+      cancelAutoNext();
       idx++;
       if (idx >= qs.length) renderRoundSummary(container, 'context', res);
       else setup();
@@ -2375,7 +2419,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <button class="btn btn-sm" id="bEx">← До режимів</button>
         <span class="session-progress">Синоніми · ${idx+1} / ${qs.length}</span>
       </div>
-      <section class="index-card">
+      <section class="study-card">
         <div class="instruction-text">Оберіть синонім до виразу:</div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
           <div><div class="study-word-title">${escapeHtml(w.fr)}</div><div class="study-sub">${escapeHtml(getPromptText(w))}</div></div>
@@ -2383,9 +2427,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
         <div class="options-grid">
           ${opts.map((o,i) => {
-            let cls = '';
-            if (ansd) { if (o === tSyn) cls = 'correct'; else if (o === ch) cls = 'wrong'; }
-            return `<button type="button" class="option-btn ${cls}" data-s="${escapeHtml(o)}" ${ansd ? 'disabled' : ''}><span class="option-key">${i+1}</span><span class="opt-word">${escapeHtml(o)}</span></button>`;
+            const st = !ansd ? '' : (o === tSyn ? 'correct' : (o === ch ? 'wrong' : ''));
+            return optionHtml(i, o, st, `data-s="${escapeHtml(o)}"`, ansd);
           }).join('')}
         </div>
         ${ansd ? `<div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі</button></div>` : ''}
@@ -2402,8 +2445,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       handleMiniGameResult(w, ok);
       res.push({ word: w, ok });
       render(w, v);
+      if (ok) scheduleAutoNext(next);
     }
     function next() {
+      cancelAutoNext();
       idx++;
       if (idx >= qs.length) renderRoundSummary(container, 'synonyms', res);
       else setup();
@@ -2449,7 +2494,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <button class="btn btn-sm" id="bEx">← До режимів</button>
         <span class="session-progress">Пари · Раунд ${rIdx+1} / ${rounds.length} · <span id="pT">${t}</span> с</span>
       </div>
-      <section class="index-card">
+      <section class="study-card">
         <div class="instruction-text">З'єднайте французький вираз та його значення:</div>
         <div class="pairs-columns">
           <div style="display:flex;flex-direction:column;gap:8px;">${L.map(w=>`<button type="button" class="pair-btn pair-left ${mat.has(w.id)?'matched':''} ${sL===w.id?'selected':''}" data-l="${w.id}">${escapeHtml(w.fr)}</button>`).join('')}</div>
@@ -2506,7 +2551,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <button class="btn btn-sm" id="btnExit">← До режимів</button>
         <span class="session-progress">Бліц · ${time} с · Рахунок: ${score}</span>
       </div>
-      <section class="index-card" style="text-align:center;position:relative;">
+      <section class="study-card" style="text-align:center;position:relative;">
         <div id="fb" class="feedback-toast"></div>
         <div class="study-word-title" style="margin-top:16px;">${escapeHtml(w.fr)}</div>
         <hr class="study-divider">
@@ -2757,7 +2802,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           <button type="button" class="btn btn-sm" id="btnExitMode">← До режимів</button>
           <span class="session-progress">Анаграма · ${idx + 1} / ${questions.length}</span>
         </div>
-        <section class="index-card">
+        <section class="study-card">
           <div class="study-meaning">${escapeHtml(getPromptText(w))}</div>
           <div class="instruction-text">Складіть французький вираз із літер:</div>
           <div class="anagram-slots">${slotsHtml}</div>
@@ -3288,6 +3333,16 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
               <option value="dark" ${state.settings.theme==='dark'?'selected':''}>Темна</option>
             </select>
           </div>
+          <div class="setting-row">
+            <div>
+              <div style="font-weight:600;">Автоперехід після правильної відповіді</div>
+              <div style="font-size:var(--fs-small); color:var(--text-muted);">У «Вибір», «У контексті» та «Синоніми»</div>
+            </div>
+            <select id="selAutoNext" class="select" style="width:auto; min-width:120px;">
+              <option value="on" ${state.settings.autoNext ? 'selected' : ''}>Увімкнено</option>
+              <option value="off" ${state.settings.autoNext ? '' : 'selected'}>Вимкнено</option>
+            </select>
+          </div>
         </section>
         <section class="panel-card setting-group">
           <div class="section-label">Озвучення (Web Speech API)</div>
@@ -3305,6 +3360,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       </div>`;
     refreshVoices();
     container.querySelector('#selTheme').addEventListener('change', e => { state.settings.theme = e.target.value; applyTheme(); saveLocalStats(); });
+    container.querySelector('#selAutoNext').addEventListener('change', e => { state.settings.autoNext = e.target.value === 'on'; saveLocalStats(); });
     container.querySelectorAll('[data-accent-id]').forEach(btn => btn.addEventListener('click', () => {
       state.settings.accent = btn.dataset.accentId;
       applyAccent();
