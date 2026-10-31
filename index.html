@@ -1326,12 +1326,14 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (mod10 >= 2 && mod10 <= 4) return few;
     return many;
   }
-  /* Імені в базі немає — беремо частину пошти до «@». Це єдине, що ми справді знаємо про учня. */
+  /* Ім'я учня задає викладач, коли створює акаунт (поле user_metadata.name у Supabase Auth).
+     З пошти ім'я НЕ вгадуємо: «olena1992@…» дало б «Olena1992». Немає імені — просто «Bonjour».
+     Береться перше слово: «Олена Коваль» → «Олена». */
   function userGreetingName() {
-    const email = (currentUser && currentUser.email) || '';
-    const local = String(email).split('@')[0].replace(/[._-]+/g, ' ').trim();
-    if (!local) return 'друже';
-    return local.charAt(0).toUpperCase() + local.slice(1);
+    const meta = (currentUser && currentUser.user_metadata) || {};
+    const raw = meta.name || meta.full_name || meta.first_name || '';
+    const first = String(raw).trim().split(/\s+/)[0];
+    return first || '';
   }
   function sessionInvite() {
     const h = new Date().getHours();
@@ -1450,7 +1452,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       </div>
       
       <div class="greeting-block">
-        <h2 class="greeting-title">Bonjour, ${escapeHtml(userGreetingName())}</h2>
+        <h2 class="greeting-title">Bonjour${userGreetingName() ? ', ' + escapeHtml(userGreetingName()) : ''}</h2>
         <p class="greeting-sub">${escapeHtml(sessionInvite())}</p>
       </div>
 

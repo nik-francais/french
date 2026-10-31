@@ -125,12 +125,24 @@ test('Описи режимів однорядкові й без англійс�
   }
 });
 
-test('Привітання бере ім’я з пошти, бо іншого джерела немає', async () => {
+test('Привітання бере ім’я з профілю, який задає викладач, і ніколи не вгадує з пошти', async () => {
   const app = await loadApp();
-  app.api.currentUser = { email: 'nik.peredela@gmail.com' };
-  assert.equal(app.api.userGreetingName(), 'Nik peredela');
-  app.api.currentUser = null;
-  assert.equal(app.api.userGreetingName(), 'друже', 'без пошти вітаємося нейтрально');
+  const name = u => { app.api.currentUser = u; return app.api.userGreetingName(); };
+  assert.equal(name({ email: 'a@b.com', user_metadata: { name: 'Олена' } }), 'Олена');
+  assert.equal(name({ email: 'a@b.com', user_metadata: { name: '  Олена Коваль ' } }), 'Олена', 'береться лише перше слово');
+  assert.equal(name({ email: 'a@b.com', user_metadata: { full_name: 'Марія' } }), 'Марія', 'full_name теж підходить');
+  // Без імені — порожньо, а не «Olena1992» з пошти
+  assert.equal(name({ email: 'olena1992@gmail.com' }), '');
+  assert.equal(name({ email: 'olena1992@gmail.com', user_metadata: {} }), '');
+  assert.equal(name(null), '');
+});
+
+test('Заголовок: з іменем «Bonjour, Олена», без імені просто «Bonjour»', () => {
+  const dash = HTML.slice(HTML.indexOf('function renderStudyDashboard'), HTML.indexOf('function startMode'));
+  const m = /<h2 class="greeting-title">([^<]*)<\/h2>/.exec(dash);
+  assert.ok(m, 'не знайдено заголовок привітання');
+  assert.match(m[1], /userGreetingName\(\) \?/, 'порожнє ім’я не має лишати «Bonjour, » з комою');
+  assert.match(m[1], /escapeHtml\(userGreetingName\(\)\)/, 'ім’я йде в HTML і мусить екрануватись');
 });
 
 // ───────────── Нічого вигаданого ─────────────
