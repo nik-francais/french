@@ -63,6 +63,8 @@ function makeStorage(limitChars = Infinity) {
 function makeFakeSupabase(opts = {}) {
   const db = {
     rows: (opts.rows || []).map(r => ({ ...r })),
+    tables: JSON.parse(JSON.stringify(opts.tables || {})),   // інші таблиці (student_profiles тощо); cards лишається в rows
+    tableError: opts.tableError || null,                      // {table: {code,message}} — імітація відсутньої таблиці
     canDelete: opts.canDelete !== false,
     canUpdate: opts.canUpdate !== false,
     canInsert: opts.canInsert !== false,
@@ -75,6 +77,7 @@ function makeFakeSupabase(opts = {}) {
   class Q {
     constructor(table) { this.table = table; this.op = null; this.filters = []; this.returning = false; this.payload = null; }
     select() { if (this.op === null) this.op = 'select'; else this.returning = true; return this; }
+    upsert(v, o) { this.op = 'upsert'; this.payload = v; this.onConflict = (o && o.onConflict) || 'id'; return this; }
     insert(v) { this.op = 'insert'; this.payload = v; return this; }
     update(v) { this.op = 'update'; this.payload = v; return this; }
     delete() { this.op = 'delete'; return this; }
@@ -84,7 +87,18 @@ function makeFakeSupabase(opts = {}) {
     exec() {
       db.log.push({ op: this.op, filters: this.filters.length, payload: this.payload });
       if (db.networkDown) return { data: null, error: { message: 'Failed to fetch' } };
-      const match = () => db.rows.filter(r => this.filters.every(f => f(r)));
+      if (db.tableError && db.tableError[this.table]) return { data: null, error: db.tableError[this.table] };
+      const store = this.table === 'cards' ? null : (db.tables[this.table] = db.tables[this.table] || []);
+      const all = () => (store || db.rows);
+      const match = () => all().filter(r => this.filters.every(f => f(r)));
+      if (this.op === 'upsert') {
+        const arr = Array.isArray(this.payload) ? this.payload : [this.payload];
+        for (const row of arr) {
+          const hit = all().find(r => r[this.onConflict] === row[this.onConflict]);
+          if (hit) Object.assign(hit, row); else all().push({ ...row });
+        }
+        return { data: null, error: null };
+      }
       if (this.op === 'select') return { data: match().map(r => ({ ...r })), error: null };
       if (this.op === 'insert') {
         if (!db.canInsert) return { data: null, error: { message: 'new row violates row-level security policy' } };

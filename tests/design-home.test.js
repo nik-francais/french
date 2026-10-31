@@ -125,16 +125,100 @@ test('Описи режимів однорядкові й без англійс�
   }
 });
 
-test('Привітання бере ім’я з профілю, який задає викладач, і ніколи не вгадує з пошти', async () => {
-  const app = await loadApp();
-  const name = u => { app.api.currentUser = u; return app.api.userGreetingName(); };
-  assert.equal(name({ email: 'a@b.com', user_metadata: { name: 'Олена' } }), 'Олена');
-  assert.equal(name({ email: 'a@b.com', user_metadata: { name: '  Олена Коваль ' } }), 'Олена', 'береться лише перше слово');
-  assert.equal(name({ email: 'a@b.com', user_metadata: { full_name: 'Марія' } }), 'Марія', 'full_name теж підходить');
+const settle = async (n = 12) => { for (let k = 0; k < n; k++) await new Promise(r => setImmediate(r)); };
+const student = (email, extra = {}) => ({ session: { user: { id: 'u-' + email, email } }, ...extra });
+
+test('Привітання бере перше слово імені з профілю і ніколи не вгадує з пошти', async () => {
+  const app = await loadApp({ supabase: student('olena1992@gmail.com') });
+  const name = v => { app.api.state.settings.profileName = v; return app.api.userGreetingName(); };
+  assert.equal(name('Олена'), 'Олена');
+  assert.equal(name('  Олена Коваль '), 'Олена', 'береться лише перше слово');
   // Без імені — порожньо, а не «Olena1992» з пошти
-  assert.equal(name({ email: 'olena1992@gmail.com' }), '');
-  assert.equal(name({ email: 'olena1992@gmail.com', user_metadata: {} }), '');
-  assert.equal(name(null), '');
+  assert.equal(name(''), '');
+  assert.equal(name(undefined), '');
+});
+
+test('Учень, якому викладач вписав ім’я, бачить його після входу', async () => {
+  const app = await loadApp({ supabase: student('olena@x.com', {
+    tables: { student_profiles: [{ user_email: 'inshyi@x.com', name: 'Чужий' }, { user_email: 'olena@x.com', name: 'Олена Коваль' }] }
+  }) });
+  await settle();
+  assert.equal(app.api.state.settings.profileName, 'Олена Коваль');
+  assert.equal(app.api.userGreetingName(), 'Олена', 'ім’я іншого учня потрапити не може');
+});
+
+test('Імені в таблиці немає або таблиці ще немає — вхід працює, привітання просто «Bonjour»', async () => {
+  const noRow = await loadApp({ supabase: student('olena@x.com', { tables: { student_profiles: [] } }) });
+  await settle();
+  assert.equal(noRow.api.userGreetingName(), '');
+
+  // Міграцію 002 ще не виконали: Supabase віддає помилку, а застосунок не падає й не лякає учня
+  const noTable = await loadApp({ supabase: student('olena@x.com', {
+    rows: [{ id: 'w1', user_email: 'olena@x.com', fr: 'le béret', uk: 'берет', r: 0, iv: 0, ef: 2.5, l: 0, due: 0, t: 0 }],
+    tableError: { student_profiles: { code: '42P01', message: 'relation "public.student_profiles" does not exist' } }
+  }) });
+  await settle();
+  assert.equal(noTable.api.userGreetingName(), '');
+  assert.equal(noTable.api.state.words.length, 1, 'слова мають завантажитись попри збій імені');
+});
+
+test('Збій мережі не стирає вже відоме ім’я (воно кешується на пристрої)', async () => {
+  const app = await loadApp({ supabase: student('olena@x.com', {
+    tables: { student_profiles: [{ user_email: 'olena@x.com', name: 'Олена' }] }
+  }) });
+  await settle();
+  assert.equal(app.api.userGreetingName(), 'Олена');
+  app.db.tableError = { student_profiles: { message: 'Failed to fetch' } };
+  await app.fn('loadStudentProfile')();
+  assert.equal(app.api.userGreetingName(), 'Олена', 'офлайн ім’я лишається');
+  // а якщо викладач видалив ім’я, воно зникає
+  app.db.tableError = null;
+  app.db.tables.student_profiles.length = 0;
+  await app.fn('loadStudentProfile')();
+  assert.equal(app.api.userGreetingName(), '');
+});
+
+test('Викладач зберігає ім’я: email у нижньому регістрі, повторно оновлює, а не дублює', async () => {
+  const app = await loadApp({ supabase: student('nikita.francais@gmail.com') });
+  const save = app.fn('saveStudentName');
+  await save('inshyi@x.com', 'Тарас');
+  assert.deepEqual(await save('olena@x.com', '  Олена   Коваль '), { ok: true, name: 'Олена Коваль' }, 'зайві пробіли стискаються');
+  const rows = () => app.db.tables.student_profiles.map(r => [r.user_email, r.name]);
+  assert.deepEqual(rows(), [['inshyi@x.com', 'Тарас'], ['olena@x.com', 'Олена Коваль']], 'ім’я одного учня не має затирати іншого');
+  await save('olena@x.com', 'Олена');
+  assert.deepEqual(rows(), [['inshyi@x.com', 'Тарас'], ['olena@x.com', 'Олена']], 'повторне збереження оновлює свій рядок і не дублює');
+  assert.equal((await save('olena@x.com', '   ')).ok, false, 'порожнє ім’я відхиляється');
+  assert.equal((await save('olena@x.com', 'А'.repeat(61))).ok, false, 'задовге ім’я відхиляється');
+});
+
+test('Якщо міграції 002 ще не було, викладач бачить, що саме зробити', async () => {
+  const app = await loadApp({ supabase: student('nikita.francais@gmail.com', {
+    tableError: { student_profiles: { code: '42P01', message: 'relation "public.student_profiles" does not exist' } }
+  }) });
+  const res = await app.fn('saveStudentName')('olena@x.com', 'Олена');
+  assert.equal(res.ok, false);
+  assert.match(res.message, /002_student_profiles\.sql/);
+});
+
+test('Відправка слів з іменем зберігає обидва, а збій імені не скасовує слова', async () => {
+  const alerts = [];
+  const app = await loadApp({ supabase: student('nikita.francais@gmail.com') });
+  app.sandbox.alert = m => alerts.push(m);
+  app.el('target-student-email').value = 'Olena@X.com';
+  app.el('target-student-name').value = 'Олена';
+  app.el('json-code').value = '[{"fr":"le béret","uk":"берет","def":"Couvre-chef plat"}]';
+  await app.fn('addWordsToStudent')();
+  assert.equal(app.db.rows.filter(r => r.user_email === 'olena@x.com').length, 1, 'слово додано');
+  assert.equal(app.db.tables.student_profiles[0].name, 'Олена', 'ім’я збережено разом зі словами');
+  assert.match(alerts.at(-1), /Ім'я збережено/);
+
+  // тепер ім'я падає, а слова все одно додаються
+  alerts.length = 0;
+  app.db.tableError = { student_profiles: { code: '42P01', message: 'relation does not exist' } };
+  app.el('json-code').value = '[{"fr":"l\'écharpe","uk":"шарф","def":"Bande de tissu"}]';
+  await app.fn('addWordsToStudent')();
+  assert.equal(app.db.rows.filter(r => r.user_email === 'olena@x.com').length, 2, 'слово додано попри збій імені');
+  assert.match(alerts.at(-1), /Ім'я не збережено/);
 });
 
 test('Заголовок: з іменем «Bonjour, Олена», без імені просто «Bonjour»', () => {

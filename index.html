@@ -390,6 +390,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   <div class="auth-container" style="max-width:600px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;"><h2 style="font-family:var(--font-fr);">Панель викладача 👨‍🏫</h2><button class="btn btn-sm" onclick="signOut()">Вийти</button></div>
     <input type="email" id="target-student-email" class="input" placeholder="Email учня">
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <input type="text" id="target-student-name" class="input" maxlength="60" autocomplete="off" placeholder="Ім'я учня" style="margin-bottom:0; flex:1; min-width:0;">
+      <button type="button" onclick="saveStudentNameFromPanel()" class="btn" style="flex-shrink:0;">Зберегти ім'я</button>
+    </div>
     <textarea id="json-code" class="teacher-textarea" placeholder="Вставте JSON масив слів..."></textarea>
     <button onclick="addWordsToStudent()" class="btn btn-primary" style="width:100%;">Відправити слова</button>
   </div>
@@ -452,6 +456,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    * 20. Список слів і лічильники у фільтрах рахуються ОДНИМ предикатом
    *     wordPassesFilters. Інакше вони розходяться: лічильник частин мови
    *     показував весь словник, ігноруючи обрану тему.
+   * 22. Ім'я для привітання бере ТІЛЬКИ з таблиці student_profiles (його вводить
+   *     викладач у панелі). Не з пошти й не з user_metadata: «olena1992@…» дало б
+   *     «Olena1992», а метадані чужого акаунта з браузера змінити неможливо.
+   *     Немає імені — заголовок просто «Bonjour», без коми. Збій завантаження імені
+   *     ніколи не блокує вхід і не показує помилок.
    * 21. УСЯ палітра виводиться з ОДНОГО відтінку (--accent-h): і акцент, і фони,
    *     і текст. Світлота та насиченість кожної ролі зафіксовані, змінюється лише
    *     відтінок — саме це гарантує контраст при будь-якому виборі учня.
@@ -487,7 +496,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   
   const defaultState = () => ({ 
     words: [], 
-    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random' },
+    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random', profileName: '' },
     stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0 } 
   });
   let state = defaultState();
@@ -542,6 +551,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           loadLocalStats();
           loadPendingProgress();
           await flushPendingProgress(); // догнати те, що не встигло зберегтись минулого разу
+          await loadStudentProfile();
           await loadStudentWords();
         }
       } else {
@@ -658,6 +668,30 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     return inserted;
   }
 
+  /* Зберігає ім'я учня для привітання. Повертає {ok, name} або {ok:false, message}, а не кидає виняток:
+     ім'я другорядне, і його збій не повинен ламати відправку слів. */
+  async function saveStudentName(email, rawName) {
+    const name = String(rawName || '').trim().replace(/\s+/g, ' ');
+    if (!name) return { ok: false, message: 'порожнє ім\'я.' };
+    if (name.length > 60) return { ok: false, message: 'ім\'я довше за 60 символів.' };
+    const { error } = await sbClient.from('student_profiles').upsert({ user_email: email, name, updated_at: new Date().toISOString() }, { onConflict: 'user_email' });
+    if (error) {
+      const missing = error.code === '42P01' || (/student_profiles/i.test(error.message || '') && /does not exist|schema cache|relation/i.test(error.message || ''));
+      return { ok: false, message: missing
+        ? 'у Supabase ще немає таблиці student_profiles. Виконайте supabase/002_student_profiles.sql (один раз).'
+        : (error.message || 'невідома помилка.') };
+    }
+    return { ok: true, name };
+  }
+  async function saveStudentNameFromPanel() {
+    const email = document.getElementById('target-student-email').value.trim().toLowerCase();
+    const nameRaw = document.getElementById('target-student-name').value;
+    if (!email || !nameRaw.trim()) return alert('Заповніть пошту та ім\'я учня');
+    if (!isValidEmail(email)) return alert('Перевірте email учня: схоже, в адресі є помилка.');
+    const res = await saveStudentName(email, nameRaw);
+    alert(res.ok ? `✅ Ім'я «${res.name}» збережено для ${email}. Учень побачить його при наступному вході.` : `⚠️ Не вдалося: ${res.message}`);
+  }
+
   async function addWordsToStudent() {
     const email = document.getElementById('target-student-email').value.trim().toLowerCase();
     const code = document.getElementById('json-code').value.trim();
@@ -667,7 +701,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       const wordsArray = parseTolerantWordsJson(code);
       if (!confirm(`Додати ${wordsArray.length} слів учню ${email}?`)) return;
       const inserted = await insertWordsBatchForEmail(email, wordsArray);
-      alert(`✅ Додано ${inserted.length} слів учню ${email}.` + (inserted.skipped ? `\n⚠️ Пропущено карток без перекладу або тлумачення: ${inserted.skipped}.` : ''));
+      // Ім'я не обов'язкове: слова вже додані, тож збій імені не має їх «скасовувати», лише додає застереження
+      const nameInput = document.getElementById('target-student-name');
+      const nameRes = nameInput && nameInput.value.trim() ? await saveStudentName(email, nameInput.value) : null;
+      alert(`✅ Додано ${inserted.length} слів учню ${email}.` +
+        (inserted.skipped ? `\n⚠️ Пропущено карток без перекладу або тлумачення: ${inserted.skipped}.` : '') +
+        (nameRes ? (nameRes.ok ? `\n✅ Ім'я збережено: ${nameRes.name}.` : `\n⚠️ Ім'я не збережено: ${nameRes.message}`) : ''));
       document.getElementById('json-code').value = '';
     } catch (err) {
       alert('Помилка: ' + err.message);
@@ -1326,15 +1365,25 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (mod10 >= 2 && mod10 <= 4) return few;
     return many;
   }
-  /* Ім'я учня задає викладач, коли створює акаунт (поле user_metadata.name у Supabase Auth).
+  /* Ім'я учня вводить викладач у панелі поруч з email (таблиця student_profiles).
      З пошти ім'я НЕ вгадуємо: «olena1992@…» дало б «Olena1992». Немає імені — просто «Bonjour».
      Береться перше слово: «Олена Коваль» → «Олена». */
   function userGreetingName() {
-    const meta = (currentUser && currentUser.user_metadata) || {};
-    const raw = meta.name || meta.full_name || meta.first_name || '';
-    const first = String(raw).trim().split(/\s+/)[0];
-    return first || '';
+    const raw = (state && state.settings && state.settings.profileName) || '';
+    return String(raw).trim().split(/\s+/)[0] || '';
   }
+  /* Не критично: якщо таблиці ще немає або мережа впала, привітання просто лишається без імені.
+     Попереднє ім'я з пристрою не затираємо — воно показується й офлайн. */
+  async function loadStudentProfile() {
+    if (!currentUser) return;
+    try {
+      const { data, error } = await sbClient.from('student_profiles').select('name').eq('user_email', String(currentUser.email).toLowerCase());
+      if (error) { console.warn('[profile]', error.message || error); return; }
+      const name = data && data[0] && data[0].name ? String(data[0].name).trim() : '';
+      if (name !== state.settings.profileName) { state.settings.profileName = name; saveLocalStats(); }
+    } catch (e) { console.warn('[profile]', e); }
+  }
+
   function sessionInvite() {
     const h = new Date().getHours();
     if (h < 5) return 'Пізно вже — кілька слів, і можна відпочивати.';
