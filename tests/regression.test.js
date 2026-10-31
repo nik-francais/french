@@ -53,8 +53,10 @@ test('Баг 3: Enter обробляється в Напиши, Диктанті
 test('Баг 4: в описах режимів немає технічного «SM-2»', async () => {
   const app = await loadApp();
   for (const m of app.api.MODES_META) assert.ok(!/SM-?2/i.test(m.desc), `${m.name}: «${m.desc}»`);
+  // Описи стали однорядковими (дизайн), тож «інтервальне повторення» в них уже не згадується —
+  // важливо лише, щоб жоден опис не показував учневі технічну назву алгоритму.
   const cards = app.api.MODES_META.find(m => m.id === 'cards');
-  assert.match(cards.desc, /інтервальн/i);
+  assert.ok(cards && cards.desc.length > 0, 'у режиму «Картки» має бути опис');
 });
 
 // ───────────── Баг 6: втрата прогресу при згортанні ─────────────

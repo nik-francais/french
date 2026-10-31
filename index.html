@@ -55,9 +55,20 @@
   --radius: 14px;
   --radius-card: 20px;
   --radius-pill: 999px;
+  --radius-bar: 8px;   /* стовпчики прогнозу: вужчі за 14px, інакше заокруглення з'їдає сам стовпчик */
   --font-ui: 'Golos Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-fr: 'Literata', Georgia, 'Times New Roman', serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Шкала розмірів зі spec-листа дизайну. Нижче 12px не опускатися: на телефоні
+     дрібніший текст нечитабельний, і тест tests/design-home.test.js це стереже. */
+  --fs-micro: 12px;   /* підписи статистики, дні тижня, вкладки, чіпи */
+  --fs-small: 13px;   /* описи режимів, підзаголовок привітання */
+  --fs-body: 14px;    /* значення статистики, звичайний текст */
+  --fs-action: 15px;  /* кнопки, назви режимів */
+  --fs-title: 20px;   /* заголовки карток */
+  --fs-greet: 26px;   /* привітання */
+  --fs-hero: 36px;    /* велике число «до повторення» */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -99,12 +110,20 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .teacher-textarea { width: 100%; min-height: 200px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg-input); font-family: var(--font-mono); font-size: 13px; resize: vertical; margin-bottom: 16px; }
 
 /* ШАПКА ТА НАВІГАЦІЯ */
-.app-shell { max-width: 760px; margin: 0 auto; padding: 16px 16px 54px; display: none; flex-direction: column; gap: 16px; }
-.app-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-.brand { display: flex; align-items: baseline; gap: 8px; }
-.brand-title { font-family: var(--font-fr); font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-main); }
-.brand-sub { font-size: 0.8rem; font-family: var(--font-mono); color: var(--text-muted); }
-.header-controls { display: flex; align-items: center; gap: 8px; }
+/* Нижній відступ = висота панелі навігації + safe-area iPhone, інакше остання картка під неї ховається */
+.app-shell { max-width: 760px; margin: 0 auto; padding: 16px 16px calc(80px + env(safe-area-inset-bottom, 0px)); display: none; flex-direction: column; gap: 16px; }
+.app-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.brand { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.brand-title { font-family: var(--font-fr); font-size: 1.375rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.15; }
+.brand-sub { font-size: var(--fs-micro); font-family: var(--font-mono); color: var(--text-muted); white-space: nowrap; }
+/* На вузькому екрані підпис автора з'їдає два рядки шапки — ховаємо, назва лишається */
+@media (max-width: 439px) { .brand-sub { display: none; } }
+.header-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.icon-btn { width: 40px; height: 40px; flex-shrink: 0; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); border-radius: var(--radius-pill); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+.icon-btn .icon { width: 18px; height: 18px; }
+/* Підпис лишається для зчитувача екрана, хоча на екрані його заміняє іконка */
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 .lang-switch { display: inline-flex; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 2px; }
 .lang-switch button { min-height: 38px; padding: 0 12px; border: none; background: transparent; border-radius: var(--radius-pill); font-size: 0.8125rem; font-family: var(--font-mono); font-weight: 600; cursor: pointer; color: var(--text-muted); }
@@ -130,9 +149,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .dir-switch-label { font-size: 0.78rem; color: var(--text-muted); }
 .dir-switch button { min-height: 34px; padding: 0 10px; font-size: 0.72rem; }
 
-.nav-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--bg-elevated); padding: 4px; border-radius: var(--radius-card); border: 1px solid var(--border); }
-.nav-tab { min-height: 44px; border: none; background: transparent; border-radius: var(--radius-pill); font-weight: 600; font-size: 0.9375rem; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background-color 0.15s, color 0.15s; }
-.nav-tab.active { background: var(--bg-card); color: var(--text-main); box-shadow: var(--shadow); }
+/* Панель навігації живе внизу екрана: великий палець дістає її без перехоплення телефона.
+   Колонки рівні, іконки й підписи на одній лінії — бейдж накладається, а не розсовує. */
+.nav-tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; background: var(--bg-card); border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.nav-tabs-inner { width: 100%; max-width: 760px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
+.nav-tab { min-height: 64px; border: none; background: transparent; font-family: var(--font-ui); font-weight: 600; font-size: var(--fs-micro); color: var(--text-muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: color 0.15s; padding: 0; }
+.nav-tab .icon { width: 22px; height: 22px; }
+.nav-tab.active { color: var(--accent); }
+.nav-tab-ico { position: relative; display: inline-flex; }
+/* Акцент, а не амбра: білий на #b07c33 дає 3.6:1 — замало для 11px. Акцент перевірений на всіх пресетах. */
+.nav-badge { position: absolute; top: -5px; right: -9px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--radius-pill); background: var(--accent); color: var(--accent-contrast); font-size: var(--fs-micro); font-weight: 700; line-height: 18px; text-align: center; }
 
 /* КАРТКИ (ЗОШИТ SÉYÈS) */
 .index-card { background-color: var(--bg-card); background-image: linear-gradient(90deg, transparent 42px, var(--card-margin-line) 42px, var(--card-margin-line) 43px, transparent 43px), repeating-linear-gradient(to bottom, transparent 0px, transparent 31px, var(--card-seyes-main) 31px, var(--card-seyes-main) 32px); border: 1px solid var(--border); border-top: 3px solid var(--card-top-line); border-radius: var(--radius-card); box-shadow: var(--shadow); padding: 22px 22px 22px 52px; position: relative; }
@@ -155,39 +181,52 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .textarea { width: 100%; min-height: 120px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); color: var(--text-main); font-size: 0.85rem; font-family: var(--font-mono); resize: vertical; box-sizing: border-box; }
 
 /* ДАШБОРД */
-.topic-focus-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; background: var(--bg-elevated); border-radius: var(--radius-card); border: 1px solid var(--border); font-size: 0.875rem; margin-bottom: 16px; }
-.topic-focus-select { padding: 6px 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); font-weight: 600; color: var(--text-main); max-width: 260px; }
-.hero-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
-.due-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; display: block; }
-.due-number { font-family: var(--font-mono); font-size: 2.8rem; font-weight: 700; line-height: 1.1; color: var(--accent); display: block; margin-top: 4px; }
-.hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 14px; border-top: 1px solid var(--border-subtle); }
-.stat-item { display: flex; flex-direction: column; }
-.stat-val { font-family: var(--font-mono); font-size: 1.15rem; font-weight: 600; }
-.stat-lbl { font-size: 0.75rem; color: var(--text-muted); }
-.section-label { font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 10px; }
-.segment-bar { height: 14px; width: 100%; background: var(--bg-elevated); border-radius: var(--radius-pill); overflow: hidden; display: flex; margin-bottom: 10px; }
+.topic-focus-bar { display: flex; align-items: center; gap: 10px; padding: 0 14px; min-height: 44px; background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); font-size: var(--fs-body); }
+.topic-focus-bar .icon { width: 18px; height: 18px; color: var(--text-muted); flex-shrink: 0; }
+.topic-focus-select { flex: 1; min-width: 0; padding: 6px 0; background: transparent; border: none; font-family: var(--font-ui); font-size: var(--fs-body); font-weight: 600; color: var(--text-main); cursor: pointer; }
+.greeting-title { font-family: var(--font-fr); font-size: var(--fs-greet); font-weight: 700; line-height: 1.25; color: var(--text-main); }
+.greeting-sub { font-size: var(--fs-small); line-height: 1.45; color: var(--text-muted); margin-top: 4px; }
+.card-caption { font-size: var(--fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+.due-row { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 16px; }
+.due-number { font-family: var(--font-fr); font-size: var(--fs-hero); font-weight: 700; line-height: 1; color: var(--text-main); }
+.due-label { font-family: var(--font-fr); font-size: 18px; font-weight: 600; color: var(--text-main); }
+/* Значення вирівняні по низу: підпис «Повторено за тиждень» лягає у два рядки й не зсуває сусідів */
+.hero-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 12px 14px; background: var(--bg-elevated); border-radius: var(--radius); }
+.stat-item { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; }
+.stat-lbl { font-size: var(--fs-micro); font-weight: 500; line-height: 1.3; color: var(--text-muted); }
+.stat-val { font-size: var(--fs-body); font-weight: 700; line-height: 1.3; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.card-title { font-family: var(--font-fr); font-size: var(--fs-title); font-weight: 700; line-height: 1.3; color: var(--text-main); }
+.pill-badge { font-size: var(--fs-micro); font-weight: 600; padding: 4px 10px; background: var(--bg-elevated); border-radius: var(--radius-pill); color: var(--text-muted); white-space: nowrap; }
+.section-label { font-size: var(--fs-micro); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 10px; }
+.segment-bar { height: 10px; width: 100%; background: var(--bg-elevated); border-radius: var(--radius-pill); overflow: hidden; display: flex; margin-bottom: 12px; }
 .seg-part { height: 100%; transition: width 0.3s ease; }
-.segment-legend { display: flex; align-items: center; gap: 14px; font-size: 0.8125rem; flex-wrap: wrap; }
+.segment-legend { display: flex; align-items: center; gap: 14px; font-size: var(--fs-micro); flex-wrap: wrap; color: var(--text-muted); }
 .legend-item { display: flex; align-items: center; gap: 6px; }
-.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.legend-count { font-family: var(--font-mono); font-weight: 600; }
-.forecast-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 110px; padding-top: 18px; margin-bottom: 4px;}
-.forecast-col { display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 4px; }
-.forecast-val { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
-.forecast-bar-wrap { width: 100%; max-width: 32px; flex: 1; display: flex; align-items: flex-end; background: var(--bg-elevated); border-radius: var(--radius-pill); overflow: hidden; }
-.forecast-bar { width: 100%; background: var(--accent); border-radius: var(--radius-pill); min-height: 3px; }
-.forecast-day { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); padding: 2px 7px; border-radius: var(--radius-pill); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.legend-count { font-weight: 700; color: var(--text-main); }
+.forecast-chart { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; }
+.forecast-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.forecast-val { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.forecast-bar-wrap { width: 26px; height: 48px; display: flex; align-items: flex-end; background: var(--bg-elevated); border-radius: var(--radius-bar); overflow: hidden; }
+.forecast-bar { width: 100%; background: var(--accent); border-radius: var(--radius-bar); min-height: 4px; }
+.forecast-day { width: 26px; height: 26px; font-size: var(--fs-micro); font-weight: 600; color: var(--text-muted); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-pill); }
 /* Сьогодні позначаємо кольором, а не скороченням «Сьог»: день тижня лишається на місці */
 .forecast-col.is-today .forecast-day { background: var(--accent); color: var(--accent-contrast); font-weight: 700; }
 .forecast-col.is-today .forecast-val { color: var(--accent); font-weight: 700; }
-.modes-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-@media (min-width: 520px) { .modes-grid { grid-template-columns: repeat(2, 1fr); } }
-.mode-tile { text-align: left; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 12px; transition: border-color 0.15s; min-height: 76px; }
+/* Дві колонки навіть на 360px: іконка зверху, назва й опис знизу — усі плитки однакової висоти.
+   min-height, а не фіксована: на вузькому екрані опис має право перенестися, а не обрізатися. */
+.modes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+/* Текст притиснутий до іконки, а не до низу плитки: інакше опис у два рядки
+   зсуває назву вгору й назви в сусідніх плитках стоять на різній висоті. */
+.mode-tile { text-align: left; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 16px; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-start; gap: 14px; transition: border-color 0.15s; min-height: 108px; }
 .mode-tile:hover:not(.disabled) { border-color: var(--accent); }
 .mode-tile.disabled { opacity: 0.55; cursor: not-allowed; }
-.mode-icon-box { width: 40px; height: 40px; border-radius: var(--radius); background: var(--bg-elevated); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.mode-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 2px; }
-.mode-desc { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.35; }
+.mode-icon-box { width: 36px; height: 36px; border-radius: var(--radius-pill); background: var(--bg-elevated); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.mode-icon-box .icon { width: 18px; height: 18px; }
+/* Назва має бути помітнішою за опис — інакше ієрархія читається навпаки */
+.mode-title { font-weight: 600; font-size: var(--fs-action); line-height: 1.25; margin-bottom: 2px; color: var(--text-main); }
+.mode-desc { font-size: var(--fs-small); color: var(--text-muted); line-height: 1.3; }
 
 /* НАВЧАЛЬНІ ЕКРАНИ ТА ТИПОГРАФІКА */
 .session-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
@@ -363,16 +402,19 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       <span class="brand-sub">fait par nik.peredela</span>
     </div>
     <div class="header-controls">
-      <div class="lang-switch"><button type="button" id="btnModeUkFr" class="active">UK + FR</button><button type="button" id="btnModeFrFr">FR + FR</button></div>
-      <button class="btn btn-sm" style="margin-left:8px;" onclick="signOut()">Вийти</button>
+      <div class="lang-switch"><button type="button" id="btnModeUkFr" class="active">UK·FR</button><button type="button" id="btnModeFrFr">FR·FR</button></div>
+      <button type="button" class="icon-btn" id="btnThemeToggle" title="Тема оформлення" aria-label="Тема оформлення"></button>
+      <button type="button" class="icon-btn" id="btnSignOut" title="Вийти" aria-label="Вийти"></button>
     </div>
   </header>
-  <nav class="nav-tabs">
-    <button type="button" class="nav-tab active" data-tab="study">Вчити</button>
-    <button type="button" class="nav-tab" data-tab="words">Слова <span id="navWordCount" style="font-size:11px;background:var(--bg-elevated);padding:2px 6px;border-radius:4px;margin-left:4px;">0</span></button>
-    <button type="button" class="nav-tab" data-tab="settings">Налаштування</button>
-  </nav>
   <main id="mainView"></main>
+  <nav class="nav-tabs">
+    <div class="nav-tabs-inner">
+      <button type="button" class="nav-tab active" data-tab="study"><span class="nav-tab-ico" id="navIcoStudy"></span>Вчити</button>
+      <button type="button" class="nav-tab" data-tab="words"><span class="nav-tab-ico" id="navIcoWords"></span>Слова</button>
+      <button type="button" class="nav-tab" data-tab="settings"><span class="nav-tab-ico" id="navIcoSettings"></span>Налаштування</button>
+    </div>
+  </nav>
 </div>
 
 <div id="modalBackdrop" class="modal-backdrop">
@@ -885,6 +927,27 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (state.settings.theme === 'light' || state.settings.theme === 'dark') root.setAttribute('data-theme', state.settings.theme);
     else root.removeAttribute('data-theme');
     applyAccent();
+    syncThemeButton();
+  }
+  /* Кнопка в шапці циклить ту саму настройку, що й список у «Налаштуваннях» —
+     одне джерело правди, щоб два місця не розходилися. */
+  const THEME_CYCLE = ['auto', 'light', 'dark'];
+  const THEME_ICON = { auto: 'monitor', light: 'sun', dark: 'moon' };
+  const THEME_NAME = { auto: 'Системна', light: 'Світла', dark: 'Темна' };
+  function syncThemeButton() {
+    const btn = document.getElementById('btnThemeToggle');
+    if (!btn) return;
+    const t = THEME_CYCLE.includes(state.settings.theme) ? state.settings.theme : 'auto';
+    btn.innerHTML = icon(THEME_ICON[t]);
+    btn.setAttribute('title', `Тема: ${THEME_NAME[t]}`);
+    btn.setAttribute('aria-label', `Тема: ${THEME_NAME[t]}`);
+  }
+  function cycleTheme() {
+    const cur = THEME_CYCLE.indexOf(state.settings.theme);
+    state.settings.theme = THEME_CYCLE[(cur + 1) % THEME_CYCLE.length];
+    applyTheme();
+    saveLocalStats();
+    if (currentTab === 'settings') renderCurrentTab();
   }
   function applyAccent() {
     const id = ACCENTS.some(a => a.id === state.settings.accent) ? state.settings.accent : 'forest';
@@ -1224,18 +1287,70 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     container.innerHTML = `<div class="forms-grid">${forms.map(item => formatConjugationRow(item)).join('')}</div>`;
   };
 
-  // Опис режимів (без технічного "SM-2")
+  /* Іконки Lucide (ISC, lucide.dev) — інлайн, без мережі й залежностей.
+     Контур 24×24, товщина 2, круглі кінці: стиль однаковий для всіх. */
+  const ICONS = {
+    cards:      '<path d="M2 7v10"/><path d="M6 5v14"/><rect width="12" height="18" x="10" y="3" rx="2"/>',
+    choice:     '<path d="M21.8 10A10 10 0 1 1 17 3.3"/><path d="m9 11 3 3L22 4"/>',
+    write:      '<path d="M2 6h9"/><path d="M2 11h6"/><path d="M2 16h4"/><path d="M18.4 2.6a2 2 0 0 1 2.8 2.8L14 12.7l-3.5.8.8-3.5z"/>',
+    dictation:  '<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>',
+    context:    '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+    synonyms:   '<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>',
+    pairs:      '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+    blitz:      '<line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/>',
+    crossword:  '<circle cx="12" cy="5" r="1"/><circle cx="19" cy="5" r="1"/><circle cx="5" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="12" cy="19" r="1"/><circle cx="19" cy="19" r="1"/><circle cx="5" cy="19" r="1"/>',
+    anagram:    '<path d="m6 16 6-12 6 12"/><path d="M8 12h8"/><path d="m16 20 2 2 4-4"/>',
+    navStudy:   '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+    navWords:   '<path d="M12.8 2.2a2 2 0 0 0-1.6 0L2.6 6.1a1 1 0 0 0 0 1.8l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9a1 1 0 0 0 0-1.8Z"/><path d="m22 17.6-9.2 4.2a2 2 0 0 1-1.6 0L2 17.6"/><path d="m22 12.6-9.2 4.2a2 2 0 0 1-1.6 0L2 12.6"/>',
+    navSettings:'<path d="M10 5H3"/><path d="M21 5h-7"/><path d="M8 12H3"/><path d="M21 12h-9"/><path d="M12 19H3"/><path d="M21 19h-5"/><path d="M12 3v4"/><path d="M10 10v4"/><path d="M14 17v4"/>',
+    signOut:    '<path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>',
+    sun:        '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.3 17.7-1.4 1.4"/><path d="m19.1 4.9-1.4 1.4"/>',
+    moon:       '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+    monitor:    '<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
+    folder:     '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+    play:       '<polygon points="6 3 20 12 6 21 6 3"/>'
+  };
+  function icon(name, cls) {
+    const body = ICONS[name] || '';
+    return `<svg class="icon${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+  }
+
+  /* Українська множина: 1 картка, 2–4 картки, 5+ карток. 11–14 — завжди форма «карток». */
+  function ukPlural(n, one, few, many) {
+    const abs = Math.abs(Math.trunc(n));
+    const mod100 = abs % 100;
+    if (mod100 >= 11 && mod100 <= 14) return many;
+    const mod10 = abs % 10;
+    if (mod10 === 1) return one;
+    if (mod10 >= 2 && mod10 <= 4) return few;
+    return many;
+  }
+  /* Імені в базі немає — беремо частину пошти до «@». Це єдине, що ми справді знаємо про учня. */
+  function userGreetingName() {
+    const email = (currentUser && currentUser.email) || '';
+    const local = String(email).split('@')[0].replace(/[._-]+/g, ' ').trim();
+    if (!local) return 'друже';
+    return local.charAt(0).toUpperCase() + local.slice(1);
+  }
+  function sessionInvite() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Час для спокійної ранкової сесії з французької.';
+    if (h < 18) return 'Кілька хвилин французької серед дня — і слова лишаються.';
+    return 'Вечірнє повторення закріплює те, що вчили вдень.';
+  }
+
+  /* Описи режимів: один рядок, щоб усі плитки читалися однаково й нічого не обрізалося */
   const MODES_META = [
-    { id: 'cards', name: 'Картки', svg: '<rect x="4" y="4" width="16" height="16" rx="2"/><line x1="4" y1="9" x2="20" y2="9"/>', desc: 'Класичні картки з прикладами та інтервальним повторенням' },
-    { id: 'choice', name: 'Вибір', svg: '<circle cx="6" cy="7" r="1.5"/><line x1="10" y1="7" x2="20" y2="7"/><circle cx="6" cy="12" r="1.5"/><line x1="10" y1="12" x2="20" y2="12"/>', desc: '10 запитань із 4 варіантами (прямий і зворотний)' },
-    { id: 'write', name: 'Напиши', svg: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>', desc: 'Введення французького слова за значенням і шаблоном' },
-    { id: 'dictation', name: 'Диктант', svg: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>', desc: 'Сприйняття на слух та написання французьких слів' },
-    { id: 'context', name: 'У контексті', svg: '<path d="M4 6h16"/><path d="M4 12h6"/><rect x="12" y="10" width="8" height="4" rx="1"/><path d="M4 18h14"/>', desc: 'Заповнення пропуску у французькому реченні-прикладі' },
-    { id: 'synonyms', name: 'Синоніми', svg: '<path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/>', desc: 'Пошук близького за значенням французького слова' },
-    { id: 'pairs', name: 'Пари', svg: '<rect x="3" y="4" width="7" height="6" rx="1"/><rect x="14" y="4" width="7" height="6" rx="1"/><rect x="3" y="14" width="7" height="6" rx="1"/><rect x="14" y="14" width="7" height="6" rx="1"/>', desc: '2 раунди по 5 пар на час: слово та його значення' },
-    { id: 'blitz', name: 'Бліц', svg: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>', desc: '60 секунд швидкої перевірки «Так / Ні»' },
-    { id: 'crossword', name: 'Кросворд', svg: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/>', desc: 'Сітка до 12×12 на основі вашого словника' },
-    { id: 'anagram', name: 'Анаграма', svg: '<rect x="3" y="8" width="5" height="8" rx="1"/><rect x="9.5" y="8" width="5" height="8" rx="1"/><rect x="16" y="8" width="5" height="8" rx="1"/>', desc: 'Складання слова з перемішаних літер' }
+    { id: 'cards', name: 'Картки', desc: 'Класичний перегляд' },
+    { id: 'choice', name: 'Вибір', desc: 'Вибір з варіантів' },
+    { id: 'write', name: 'Напиши', desc: 'Введення з клавіатури' },
+    { id: 'dictation', name: 'Диктант', desc: 'Запис на слух' },
+    { id: 'context', name: 'У контексті', desc: 'Заповнення пропусків' },
+    { id: 'synonyms', name: 'Синоніми', desc: 'Близьке за значенням' },
+    { id: 'pairs', name: 'Пари', desc: 'З’єднання перекладів' },
+    { id: 'blitz', name: 'Бліц', desc: 'Швидкісна відповідь' },
+    { id: 'crossword', name: 'Кросворд', desc: 'Сітка зі словника' },
+    { id: 'anagram', name: 'Анаграма', desc: 'Складання з літер' }
   ];
 
   let currentTab = 'study';
@@ -1250,9 +1365,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     clearActiveSessionProgress();
     renderCurrentTab();
   }
+  /* Бейдж показує, скільки карток чекає зараз, а не весь словник:
+     значок має означати «є що зробити», інакше він висить постійно й перестає помічатися. */
   function updateNavBadge() {
-    const el = document.getElementById('navWordCount');
-    if (el) el.textContent = state.words.length;
+    const ico = document.getElementById('navIcoWords');
+    if (ico) {
+      let due = 0;
+      try { due = getDueAndNewQueues().combined.length; } catch (e) { due = 0; }
+      ico.innerHTML = icon('navWords') + (due > 0 ? `<span class="nav-badge">${due}</span>` : '');
+    }
     const btnUk = document.getElementById('btnModeUkFr');
     const btnFr = document.getElementById('btnModeFrFr');
     if (btnUk && btnFr) {
@@ -1318,30 +1439,38 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 
     container.innerHTML = `
       <div class="topic-focus-bar">
-        <label for="selDashboardTopic" style="font-weight:600;">Фокус на темі:</label>
+        ${icon('folder')}
+        <label for="selDashboardTopic" class="visually-hidden">Фокус на темі</label>
         <select id="selDashboardTopic" class="topic-focus-select">
-          <option value="all" ${currentFocus === 'all' ? 'selected' : ''}>🌟 Усі теми разом (${state.words.length})</option>
-          ${availableTopics.map(t => `<option value="${escapeHtml(t)}" ${currentFocus === t ? 'selected' : ''}>📁 ${escapeHtml(t)} (${state.words.filter(w => w.src === t).length})</option>`).join('')}
+          <option value="all" ${currentFocus === 'all' ? 'selected' : ''}>Усі теми разом (${state.words.length} ${ukPlural(state.words.length, 'слово', 'слова', 'слів')})</option>
+          ${availableTopics.map(t => { const n = state.words.filter(w => w.src === t).length; return `<option value="${escapeHtml(t)}" ${currentFocus === t ? 'selected' : ''}>${escapeHtml(t)} (${n} ${ukPlural(n, 'слово', 'слова', 'слів')})</option>`; }).join('')}
         </select>
       </div>
       
-      <section class="index-card" style="margin-bottom:16px;">
-        <div class="hero-top">
-          <div class="due-counter">
-            <span class="due-label">До повторення сьогодні</span>
-            <span class="due-number">${queues.combined.length}</span>
-          </div>
-          <button type="button" class="btn btn-primary" id="btnMainReview" style="min-width:160px; font-size:1.05rem;">Повторити</button>
+      <div>
+        <h2 class="greeting-title">Bonjour, ${escapeHtml(userGreetingName())}</h2>
+        <p class="greeting-sub">${escapeHtml(sessionInvite())}</p>
+      </div>
+
+      <section class="panel-card" style="margin-bottom:16px;">
+        <div class="card-caption">До повторення сьогодні</div>
+        <div class="due-row">
+          <span class="due-number">${queues.combined.length}</span>
+          <span class="due-label">${ukPlural(queues.combined.length, 'картка', 'картки', 'карток')} очікують</span>
         </div>
         <div class="hero-stats">
-          <div class="stat-item"><span class="stat-val">${queues.newToday.length} / ${state.settings.newLimit}</span><span class="stat-lbl">Нових на сьогодні</span></div>
-          <div class="stat-item"><span class="stat-val">${state.stats.streak} дн</span><span class="stat-lbl">Серія поспіль</span></div>
-          <div class="stat-item"><span class="stat-val">${state.stats.answersToday}</span><span class="stat-lbl">Відповідей за день</span></div>
+          <div class="stat-item"><span class="stat-lbl">Нові</span><span class="stat-val">${queues.newToday.length} / ${state.settings.newLimit}</span></div>
+          <div class="stat-item"><span class="stat-lbl">Серія</span><span class="stat-val">${state.stats.streak} ${ukPlural(state.stats.streak, 'день', 'дні', 'днів')}</span></div>
+          <div class="stat-item"><span class="stat-lbl">Відповідей сьогодні</span><span class="stat-val">${state.stats.answersToday}</span></div>
         </div>
+        <button type="button" class="btn btn-primary" id="btnMainReview" style="width:100%; margin-top:14px; gap:8px;">${icon('play')}Почати повторення (${queues.combined.length})</button>
       </section>
 
       <section class="panel-card" style="margin-bottom:16px;">
-        <div class="section-label">Словниковий запас (${pool.length})</div>
+        <div class="card-head">
+          <h2 class="card-title">Словниковий запас</h2>
+          <span class="pill-badge">${pool.length} ${ukPlural(pool.length, 'слово', 'слова', 'слів')}</span>
+        </div>
         <div class="segment-bar">
           <div class="seg-part" style="width:${(counts.new/total)*100}%; background:var(--st-new);"></div>
           <div class="seg-part" style="width:${(counts.learn/total)*100}%; background:var(--st-learn);"></div>
@@ -1357,16 +1486,19 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       </section>
       
       <section class="panel-card" style="margin-bottom:16px;">
-        <div class="section-label">Прогноз повторень на 7 днів</div>
+        <div class="card-head"><h2 class="card-title">Прогноз повторень на 7 днів</h2></div>
         <div class="forecast-chart">
           ${daysForecast.map(f => `<div class="forecast-col${f.isToday ? ' is-today' : ''}"><span class="forecast-val">${f.count}</span><div class="forecast-bar-wrap">${f.count > 0 ? `<div class="forecast-bar" style="height:${Math.max(8, Math.round((f.count / maxForecast) * 100))}%;"></div>` : ''}</div><span class="forecast-day"${f.isToday ? ' aria-label="сьогодні"' : ''}>${f.label}</span></div>`).join('')}
         </div>
       </section>
 
       <section>
-        <div class="section-label">Навчальні режими</div>
+        <div class="card-head">
+          <h2 class="card-title">Навчальні режими</h2>
+          <span class="pill-badge">${MODES_META.length} форматів</span>
+        </div>
         <div class="modes-grid">
-          ${MODES_META.map(m => `<button type="button" class="mode-tile" data-mode="${m.id}"><div class="mode-icon-box"><svg class="icon" viewBox="0 0 24 24">${m.svg}</svg></div><div><div class="mode-title">${m.name}</div><div class="mode-desc">${m.desc}</div></div></button>`).join('')}
+          ${MODES_META.map(m => `<button type="button" class="mode-tile" data-mode="${m.id}"><div class="mode-icon-box">${icon(m.id)}</div><div><div class="mode-title">${m.name}</div><div class="mode-desc">${m.desc}</div></div></button>`).join('')}
         </div>
       </section>
     `;
@@ -3144,6 +3276,17 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   });
 
   document.querySelectorAll('.nav-tab').forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+  /* Іконки малюються один раз при старті; бейдж «Слова» потім оновлює updateNavBadge() */
+  (function paintStaticIcons() {
+    const set = (id, name) => { const el = document.getElementById(id); if (el) el.innerHTML = icon(name); };
+    set('navIcoStudy', 'navStudy');
+    set('navIcoWords', 'navWords');
+    set('navIcoSettings', 'navSettings');
+    set('btnSignOut', 'signOut');
+    syncThemeButton();
+  })();
+  document.getElementById('btnSignOut').addEventListener('click', () => signOut());
+  document.getElementById('btnThemeToggle').addEventListener('click', cycleTheme);
   document.getElementById('btnModeUkFr').addEventListener('click', () => { state.settings.langMode = 'UK_FR'; saveLocalStats(); renderCurrentTab(); });
   document.getElementById('btnModeFrFr').addEventListener('click', () => { state.settings.langMode = 'FR_FR'; saveLocalStats(); renderCurrentTab(); });
 </script>
