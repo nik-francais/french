@@ -125,11 +125,19 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* Підпис лишається для зчитувача екрана, хоча на екрані його заміняє іконка */
 /* Панель викладача живе в тій самій оболонці, що й застосунок учня,
    але без нижньої навігації — вкладок тут лише дві. */
-.teacher-shell { padding-bottom: 32px; }
+.teacher-shell { padding-bottom: 32px; -webkit-user-select: text; user-select: text; }
+/* Пошту, ім'я та слова учня можна виділити й скопіювати; кнопка «Копіювати» робить це одним дотиком. */
+.copy-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.copy-line .copy-text { min-width: 0; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
+.copy-btn { flex-shrink: 0; width: 36px; height: 36px; border: 0; border-radius: var(--radius); background: transparent; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.copy-btn:hover { color: var(--accent); background: var(--bg-elevated); }
+.copy-btn .icon { width: 16px; height: 16px; }
+.t-add-card textarea { margin-bottom: 12px; }
+.t-add-result { font-size: var(--fs-small); margin-bottom: 12px; line-height: 1.45; }
 .seg-tabs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: var(--bg-elevated); padding: 4px; border-radius: var(--radius-card); border: 1px solid var(--border); }
 .seg-tab { min-height: 44px; border: none; background: transparent; border-radius: var(--radius-pill); font-family: var(--font-ui); font-weight: 600; font-size: var(--fs-action); color: var(--text-muted); cursor: pointer; }
 .seg-tab.active { background: var(--bg-card); color: var(--text-main); box-shadow: var(--shadow); }
-.student-card { width: 100%; text-align: left; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 16px; cursor: pointer; display: block; margin-bottom: 10px; }
+.student-card { width: 100%; text-align: left; -webkit-user-select: text; user-select: text; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 16px; cursor: pointer; display: block; margin-bottom: 10px; }
 .student-card:hover { border-color: var(--accent); }
 .student-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .student-name { font-family: var(--font-fr); font-size: var(--fs-title); font-weight: 700; color: var(--text-main); }
@@ -769,7 +777,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    * Читаємо всі картки одним запитом і рахуємо на місці — учнів десятки,
    * а не тисячі, тож окремі запити на кожного були б зайвим навантаженням.
    * ========================================================= */
-  const teacher = { tab: 'students', rows: [], names: {}, openEmail: null, query: '', topic: 'all', loaded: false, error: '' };
+  const teacher = { tab: 'students', rows: [], names: {}, openEmail: null, query: '', topic: 'all', loaded: false, error: '',
+    addOpen: false, addTopic: '', addMsg: '', addBusy: false };
 
   function teacherView() { return document.getElementById('teacherView'); }
 
@@ -843,7 +852,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       <div class="card-head"><h2 class="card-title">Учні</h2><span class="pill-badge">${list.length}</span></div>
       ${list.length === 0 ? '<section class="study-card">Поки жодного учня. Додайте слова на вкладці «Додати слова».</section>' : ''}
       ${list.map(st => `
-        <button type="button" class="student-card" data-student="${escapeHtml(st.email)}">
+        <div class="student-card" role="button" tabindex="0" data-student="${escapeHtml(st.email)}">
           <div class="student-head">
             <span class="student-name">${escapeHtml(studentLabel(st.email))}</span>
             <span class="pill-badge">${st.total} ${ukPlural(st.total, 'слово', 'слова', 'слів')}</span>
@@ -855,11 +864,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             <div><div class="stat-mini-lbl">Остання активність</div><div class="stat-mini-val">${escapeHtml(sinceLabel(st.last))}</div></div>
           </div>
           ${st.last && (Date.now() - st.last) > 7 * DAY_MS ? '<div class="student-quiet">Не займався понад тиждень</div>' : ''}
-        </button>`).join('')}
+        </div>`).join('')}
     `;
-    view.querySelectorAll('[data-student]').forEach(b => b.addEventListener('click', () => {
-      teacher.openEmail = b.dataset.student; teacher.query = ''; teacher.topic = 'all'; renderTeacherPanel();
-    }));
+    const open = email => { teacher.openEmail = email; teacher.query = ''; teacher.topic = 'all'; teacher.addOpen = false; teacher.addMsg = ''; renderTeacherPanel(); };
+    view.querySelectorAll('[data-student]').forEach(b => {
+      // Картка — не <button>: інакше на iPhone з неї не виділити пошту.
+      // Якщо викладач щось виділяє, це не «відкрити учня».
+      b.addEventListener('click', () => { const sel = window.getSelection && window.getSelection(); if (sel && String(sel).trim()) return; open(b.dataset.student); });
+      b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(b.dataset.student); } });
+    });
   }
 
   function renderTeacherStudent(view, email) {
@@ -879,10 +892,17 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       <button type="button" class="btn btn-sm" id="btnBackStudents" style="margin-bottom:14px;">← До списку</button>
       <section class="study-card" style="margin-bottom:16px;">
         <div class="card-head">
-          <h2 class="card-title">${escapeHtml(studentLabel(email))}</h2>
+          <div class="copy-line">
+            <h2 class="card-title copy-text">${escapeHtml(studentLabel(email))}</h2>
+            ${teacher.names[email] ? `<button type="button" class="copy-btn" data-copy="name" aria-label="Копіювати ім'я" title="Копіювати ім'я">${icon('copy')}</button>` : ''}
+          </div>
           <span class="pill-badge">${st.total} ${ukPlural(st.total, 'слово', 'слова', 'слів')}</span>
         </div>
-        <div class="student-email" style="margin-bottom:14px;">${escapeHtml(email)}</div>
+        <div class="copy-line" style="margin:-6px 0 14px;">
+          <span class="student-email copy-text">${escapeHtml(email)}</span>
+          <button type="button" class="copy-btn" data-copy="email" aria-label="Копіювати пошту" title="Копіювати пошту">${icon('copy')}</button>
+        </div>
+        <button type="button" class="btn btn-primary" id="btnTAddToggle" style="width:100%; margin-bottom:16px;" aria-expanded="${teacher.addOpen}">${icon('plus')} Додати слова</button>
         <div class="segment-bar">
           <div class="seg-part" style="width:${(st.counts.new / total) * 100}%; background:var(--st-new);"></div>
           <div class="seg-part" style="width:${(st.counts.learn / total) * 100}%; background:var(--st-learn);"></div>
@@ -902,6 +922,17 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </div>
       </section>
 
+      ${teacher.addOpen ? `<section class="study-card t-add-card" style="margin-bottom:16px;">
+        <div class="card-head"><h2 class="card-title">Нові слова</h2></div>
+        <input type="text" id="tAddTopic" class="input" list="tAddTopics" maxlength="80" autocomplete="off"
+          placeholder="Тема, напр. Le travail (необов'язково)" value="${escapeHtml(teacher.addTopic)}">
+        <datalist id="tAddTopics">${topics.map(t => `<option value="${escapeHtml(t)}"></option>`).join('')}</datalist>
+        <div style="font-size:var(--fs-micro); color:var(--text-muted); margin:-6px 0 12px;">Якщо вказати тему, вона замінить «src» у всіх словах цієї партії. Слова, які в учня вже є, пропускаються.</div>
+        <textarea id="tAddJson" class="teacher-textarea" placeholder="Вставте JSON масив слів…"></textarea>
+        ${teacher.addMsg ? `<div class="t-add-result">${teacher.addMsg}</div>` : ''}
+        <button type="button" class="btn btn-primary" id="btnTAddSend" style="width:100%;" ${teacher.addBusy ? 'disabled' : ''}>${teacher.addBusy ? 'Додаю…' : 'Додати учню'}</button>
+      </section>` : ''}
+
       ${tough.length ? `<section class="study-card" style="margin-bottom:16px;">
         <div class="card-head"><h2 class="card-title">Даються важко</h2></div>
         ${tough.map(w => `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-subtle);">
@@ -909,7 +940,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           <span style="color:var(--text-muted);font-size:var(--fs-small);white-space:nowrap;">забув ${w.l} ${ukPlural(w.l, 'раз', 'рази', 'разів')}</span></div>`).join('')}
       </section>` : ''}
 
-      <div class="card-head"><h2 class="card-title">Слова</h2><span class="pill-badge">${shown.length}</span></div>
+      <div class="card-head">
+        <h2 class="card-title">Слова</h2>
+        <div style="display:flex; align-items:center; gap:6px;">
+          ${shown.length ? `<button type="button" class="btn btn-sm" id="btnTCopyWords" title="Скопіювати показані слова: «слово — переклад», по рядку">${icon('copy')} Копіювати</button>` : ''}
+          <span class="pill-badge">${shown.length}</span>
+        </div>
+      </div>
       <input type="search" id="tSearch" class="input" placeholder="Пошук слова або перекладу…" value="${escapeHtml(teacher.query)}">
       <select id="tTopic" class="select" style="width:100%; margin-bottom:12px;">
         <option value="all">Усі теми (${st.total})</option>
@@ -938,8 +975,100 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
     });
     view.querySelector('#tTopic').addEventListener('change', e => { teacher.topic = e.target.value; renderTeacherPanel(); });
+    view.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+      if (b.dataset.copy === 'email') copyText(email, 'Пошту скопійовано');
+      else copyText(teacher.names[email] || '', "Ім'я скопійовано");
+    }));
+    const copyWords = view.querySelector('#btnTCopyWords');
+    if (copyWords) copyWords.addEventListener('click', () => copyText(teacherWordsAsText(shown), `Скопійовано ${shown.length} ${ukPlural(shown.length, 'слово', 'слова', 'слів')}`));
+    view.querySelector('#btnTAddToggle').addEventListener('click', () => {
+      teacher.addOpen = !teacher.addOpen; teacher.addMsg = ''; renderTeacherPanel();
+      const ta = teacherView().querySelector('#tAddJson'); if (ta) ta.focus();
+    });
+    const send = view.querySelector('#btnTAddSend');
+    if (send) send.addEventListener('click', () => teacherSubmitWords(email));
     view.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => teacherEditWord(b.dataset.edit)));
     view.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => teacherDeleteWord(b.dataset.del)));
+  }
+
+  /* Копіювання: спершу сучасний буфер обміну, потім запасний шлях для старих браузерів.
+     Якщо обидва не вийшли — чесно кажемо, текст однаково можна виділити вручну. */
+  async function copyText(text, okMsg) {
+    const value = String(text || '');
+    if (!value) return false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(value); showToast(okMsg || 'Скопійовано'); return true; }
+    } catch (e) { /* пробуємо запасний шлях */ }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = value; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand && document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (ok) { showToast(okMsg || 'Скопійовано'); return true; }
+    } catch (e) { /* нижче — повідомлення */ }
+    showToast('Не вдалося скопіювати. Виділіть текст вручну.');
+    return false;
+  }
+
+  function teacherWordsAsText(words) {
+    return words.map(w => `${w.fr} — ${w.uk || w.def}`).join('\n');
+  }
+
+  // Ключ для пошуку дублів: регістр, зайві пробіли й різні апострофи не роблять слово новим
+  function frKey(s) { return String(s || '').trim().toLowerCase().replace(/[’ʼ`´]/g, "'").replace(/\s+/g, ' '); }
+
+  /* Слова з картки учня: пошта вже відома, тож вставляється лише JSON.
+     Тема (якщо вказана) замінює src усієї партії. Слова, які в учня вже є
+     (і повтори всередині самої партії), пропускаються — інакше учень отримав би дві однакові картки. */
+  async function teacherAddWords(email, rawJson, topic) {
+    const owner = String(email || '').trim().toLowerCase();
+    const words = parseTolerantWordsJson(rawJson);
+    const t = String(topic || '').trim();
+    const have = new Set(teacher.rows.filter(w => w.userEmail === owner).map(w => frKey(w.fr)));
+    const seen = new Set();
+    const fresh = [], dups = [];
+    words.forEach(w => {
+      const k = frKey(w && (w.fr || w.word));
+      if (k && (have.has(k) || seen.has(k))) { dups.push(String(w.fr || w.word).trim()); return; }
+      if (k) seen.add(k);
+      fresh.push(t ? Object.assign({}, w, { src: t }) : w);
+    });
+    if (fresh.length === 0) return { added: 0, dups, skipped: 0 };
+    const inserted = await insertWordsBatchForEmail(owner, fresh);
+    teacher.rows.push(...inserted.map(r => normalizeWordRow(Object.assign({ user_email: owner }, r))));
+    return { added: inserted.length, dups, skipped: inserted.skipped || 0, topic: t };
+  }
+
+  async function teacherSubmitWords(email) {
+    const view = teacherView();
+    const ta = view && view.querySelector('#tAddJson');
+    const topicEl = view && view.querySelector('#tAddTopic');
+    const raw = ta ? ta.value : '';
+    teacher.addTopic = topicEl ? topicEl.value.trim() : '';
+    if (!String(raw).trim()) { teacher.addMsg = '<span style="color:var(--danger);">Вставте JSON зі словами.</span>'; renderTeacherPanel(); return; }
+    teacher.addBusy = true; teacher.addMsg = ''; renderTeacherPanel();
+    const keep = teacherView() && teacherView().querySelector('#tAddJson');
+    if (keep) keep.value = raw; // поки йде запит, текст не зникає
+    try {
+      const res = await teacherAddWords(email, raw, teacher.addTopic);
+      const parts = [];
+      if (res.added) parts.push(`<span style="color:var(--success);">✓ Додано ${res.added} ${ukPlural(res.added, 'слово', 'слова', 'слів')}${res.topic ? ` у тему «${escapeHtml(res.topic)}»` : ''}.</span>`);
+      else parts.push('<span style="color:var(--warning);">Нових слів немає — нічого не додано.</span>');
+      if (res.dups.length) parts.push(`Пропущено ${res.dups.length}, бо вже є в учня: ${res.dups.slice(0, 8).map(escapeHtml).join(', ')}${res.dups.length > 8 ? '…' : ''}`);
+      if (res.skipped) parts.push(`Пропущено ${res.skipped} без перекладу або тлумачення.`);
+      teacher.addMsg = parts.join('<br>');
+      teacher.addBusy = false;
+      renderTeacherPanel();
+      if (res.added) showToast(`Додано ${res.added} ${ukPlural(res.added, 'слово', 'слова', 'слів')}`);
+    } catch (err) {
+      teacher.addBusy = false;
+      teacher.addMsg = `<span style="color:var(--danger);">Помилка: ${escapeHtml(err && err.message ? err.message : String(err))}</span>`;
+      renderTeacherPanel();
+      const back = teacherView() && teacherView().querySelector('#tAddJson');
+      if (back) back.value = raw; // JSON не губимо — можна виправити й надіслати знову
+    }
   }
 
   function teacherFindWord(dbId) { return teacher.rows.find(w => String(w.dbId) === String(dbId)) || null; }
@@ -966,7 +1095,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     view.innerHTML = `
       <section class="study-card">
         <div class="card-head"><h2 class="card-title">Додати слова</h2></div>
-        <input type="email" id="target-student-email" class="input" placeholder="Email учня">
+        <input type="email" id="target-student-email" class="input" placeholder="Email учня" list="tKnownEmails" autocomplete="off">
+        <datalist id="tKnownEmails">${teacherStudents().map(st => `<option value="${escapeHtml(st.email)}">${escapeHtml(teacher.names[st.email] || '')}</option>`).join('')}</datalist>
         <div style="display:flex; gap:8px; margin-bottom:12px;">
           <input type="text" id="target-student-name" class="input" maxlength="60" autocomplete="off" placeholder="Ім'я учня" style="margin-bottom:0; flex:1; min-width:0;">
           <button type="button" class="btn" id="btnSaveName" style="flex-shrink:0;">Зберегти ім'я</button>
@@ -974,6 +1104,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <textarea id="json-code" class="teacher-textarea" placeholder="Вставте JSON масив слів..."></textarea>
         <button type="button" class="btn btn-primary" id="btnSendWords" style="width:100%;">Відправити слова</button>
       </section>`;
+    // Знайома пошта підставляє збережене ім'я — не треба шукати його в переписці
+    view.querySelector('#target-student-email').addEventListener('change', e => {
+      const known = teacher.names[String(e.target.value || '').trim().toLowerCase()];
+      const nameEl = view.querySelector('#target-student-name');
+      if (known && nameEl && !nameEl.value.trim()) nameEl.value = known;
+    });
     view.querySelector('#btnSaveName').addEventListener('click', saveStudentNameFromPanel);
     view.querySelector('#btnSendWords').addEventListener('click', addWordsToStudent);
   }
@@ -1703,7 +1839,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     eye:        '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
     eyeOff:     '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
     cross:      '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
-    arrowRight: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'
+    arrowRight: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+    copy:       '<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+    plus:       '<path d="M5 12h14"/><path d="M12 5v14"/>'
   };
   function icon(name, cls) {
     const body = ICONS[name] || '';
