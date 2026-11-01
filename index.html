@@ -102,6 +102,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* АВТОРИЗАЦІЯ */
+/* Блідий: застереження має бути, але не відволікати від навчання. */
+.legal-note { margin: 20px 0 0; font-size: var(--fs-micro); line-height: 1.45; color: var(--text-muted); opacity: 0.55; text-align: center; }
 .auth-wrapper { display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 20px; }
 .auth-container { width: 100%; max-width: 440px; background: var(--bg-card); padding: 32px 28px; border-radius: var(--radius-card); box-shadow: var(--shadow); border: 1px solid var(--border); border-top: 4px solid var(--accent); }
 .auth-logo { font-family: var(--font-fr); font-size: 30px; font-weight: 700; text-align: center; margin-bottom: 8px; color: var(--text-main); }
@@ -424,6 +426,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     </div>
     <button type="button" onclick="signInWithPassword()" id="login-btn" class="btn btn-primary" style="width:100%;">Увійти</button>
     <p id="auth-err" style="text-align:center; color:var(--danger); font-size:14px; display:none; margin-top:14px;"></p>
+    <p class="legal-note">© 2026 ФОП Передєла Микита Сергійович · Boîte à Mots.<br>Усі права захищено. Копіювання та використання без дозволу автора заборонено.</p>
   </div>
 </div>
 
@@ -1628,7 +1631,54 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   };
 
   /* Іконки Lucide (ISC, lucide.dev) — інлайн, без мережі й залежностей.
-     Контур 24×24, товщина 2, круглі кінці: стиль однаковий для всіх. */
+     Контур 24×24, товщина 2, круглі кінці: стиль однаковий для всіх.
+     Ліцензія вимагає зберігати її текст у кожній копії — він нижче повністю.
+     Частина іконок (check, x, arrow-right, log-out, moon тощо) походить з Feather (MIT).
+
+     ISC License
+
+     Copyright (c) 2026 Lucide Icons and Contributors
+
+     Permission to use, copy, modify, and/or distribute this software for any
+     purpose with or without fee is hereby granted, provided that the above
+     copyright notice and this permission notice appear in all copies.
+
+     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+     WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+     MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+     ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+     WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+     ---
+
+     The following Lucide icons are derived from the Feather project:
+
+     airplay, alert-circle, alert-octagon, alert-triangle, aperture, arrow-down-circle, arrow-down-left, arrow-down-right, arrow-down, arrow-left-circle, arrow-left, arrow-right-circle, arrow-right, arrow-up-circle, arrow-up-left, arrow-up-right, arrow-up, at-sign, calendar, cast, check, chevron-down, chevron-left, chevron-right, chevron-up, chevrons-down, chevrons-left, chevrons-right, chevrons-up, circle, clipboard, clock, code, columns, command, compass, corner-down-left, corner-down-right, corner-left-down, corner-left-up, corner-right-down, corner-right-up, corner-up-left, corner-up-right, crosshair, database, divide-circle, divide-square, dollar-sign, download, external-link, feather, frown, hash, headphones, help-circle, info, italic, key, layout, life-buoy, link-2, link, loader, lock, log-in, log-out, maximize, meh, minimize, minimize-2, minus-circle, minus-square, minus, monitor, moon, more-horizontal, more-vertical, move, music, navigation-2, navigation, octagon, pause-circle, percent, plus-circle, plus-square, plus, power, radio, rss, search, server, share, shopping-bag, sidebar, smartphone, smile, square, table-2, tablet, target, terminal, trash-2, trash, triangle, tv, type, upload, x-circle, x-octagon, x-square, x, zoom-in, zoom-out
+
+     The MIT License (MIT) (for the icons listed above)
+
+     Copyright (c) 2013-present Cole Bemis
+
+     Permission is hereby granted, free of charge, to any person obtaining a copy
+     of this software and associated documentation files (the "Software"), to deal
+     in the Software without restriction, including without limitation the rights
+     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+     copies of the Software, and to permit persons to whom the Software is
+     furnished to do so, subject to the following conditions:
+
+     The above copyright notice and this permission notice shall be included in all
+     copies or substantial portions of the Software.
+
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+     AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+     SOFTWARE.
+  */
   const ICONS = {
     cards:      '<path d="M2 7v10"/><path d="M6 5v14"/><rect width="12" height="18" x="10" y="3" rx="2"/>',
     choice:     '<path d="M21.8 10A10 10 0 1 1 17 3.3"/><path d="m9 11 3 3L22 4"/>',
@@ -3596,6 +3646,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   // === НАЛАШТУВАННЯ ===
+  // Застереження авторських прав. Той самий текст стоїть статично на екрані входу
+  // (там скрипт ще не відпрацював); тест стежить, щоб вони не розійшлися.
+  const LEGAL_NOTE = '© 2026 ФОП Передєла Микита Сергійович · Boîte à Mots.<br>Усі права захищено. Копіювання та використання без дозволу автора заборонено.';
+
   function renderSettingsTab(container) {
     container.innerHTML = `
       <div style="display:flex; flex-direction:column; gap:16px;">
@@ -3648,6 +3702,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             <div><button type="button" class="btn" id="btnTestSound">🔊 Перевірити обраний голос</button></div>
           ` : `<div style="color:var(--warning); font-size:0.9rem;">Ваш браузер не підтримує синтез мовлення.</div>`}
         </section>
+        <p class="legal-note">${LEGAL_NOTE}</p>
       </div>`;
     refreshVoices();
     container.querySelector('#selTheme').addEventListener('change', e => { state.settings.theme = e.target.value; applyTheme(); saveLocalStats(); });

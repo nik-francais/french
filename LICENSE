@@ -1,0 +1,31 @@
+Copyright © 2026 ФОП Передєла Микита Сергійович (Peredela Mykyta Serhiiovych).
+Усі права захищено. All rights reserved.
+
+Boîte à Mots — програмний код, дизайн, тексти інтерфейсу, навчальна методика,
+добірки слів, тлумачення й приклади є об'єктами авторського права.
+
+Без попередньої письмової згоди правовласника ЗАБОРОНЕНО копіювати, змінювати,
+поширювати, публікувати, продавати, передавати в користування третім особам або
+використовувати ці матеріали чи будь-яку їх частину для створення похідних творів.
+
+Перегляд вихідного коду в цьому репозиторії не надає жодної ліцензії на його
+використання.
+
+---
+
+English summary: This software and its content are proprietary. No permission is
+granted to use, copy, modify, merge, publish, distribute, sublicense or sell any
+part of it without the prior written consent of the copyright holder. Viewing the
+source code in this repository does not grant any licence.
+
+---
+
+Сторонні компоненти / Third-party components
+
+Іконки Lucide (https://lucide.dev) — ISC License, частина іконок з Feather — MIT
+License. Повний текст обох ліцензій наведено в коментарі до константи ICONS у
+файлі index.html. Ці компоненти не підпадають під застереження вище і
+використовуються на умовах власних ліцензій.
+
+Шрифти Literata, Golos Text і JetBrains Mono підключаються з Google Fonts за SIL Open Font
+License 1.1.
