@@ -30,6 +30,9 @@ test('Дрібний текст застереження не дрібніший
   const r = (CSS.match(/\.legal-note \{[^}]*\}/) || [''])[0];
   assert.match(r, /font-size: var\(--fs-micro\)/);
   assert.match(r, /color: var\(--text-muted\)/);
+  // Блідий, щоб не відволікав, але не настільки, щоб зникнути зовсім.
+  const op = Number((r.match(/opacity: ([\d.]+)/) || [])[1]);
+  assert.ok(op >= 0.45 && op <= 0.7, `прозорість ${op}: має бути блідо, але читабельно`);
 });
 
 test('Файл LICENSE: усі права застережені за ФОП', () => {
