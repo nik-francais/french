@@ -300,7 +300,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .option-btn:disabled { cursor: default; }
 /* Варіант відповіді має однаковий вигляд, якою б мовою він не був:
    різний шрифт для латиниці й кирилиці читався як різна важливість. */
-.option-btn .opt-word { font-family: var(--font-fr); font-weight: 700; font-size: 1.05rem; flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+/* Текст і плашка стоять колонкою праворуч від цифри: довгий варіант переноситься
+   поруч із номером, а «Ваша відповідь» лягає під текст і не стискає його. */
+.option-btn .opt-body { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.option-btn .opt-word { font-family: var(--font-fr); font-weight: 700; font-size: 1.05rem; overflow-wrap: break-word; }
 /* Питання у вікторині: один розмір і колір незалежно від напрямку */
 .study-sub { font-family: var(--font-fr); color: var(--text-muted); }
 .study-prompt { font-family: var(--font-fr); font-size: 1.6rem; font-weight: 700; line-height: 1.25; color: var(--text-main); margin-bottom: 4px; }
@@ -313,7 +316,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .option-btn.wrong { background: var(--danger-soft); }
 .option-btn.wrong .option-key { background: var(--danger); color: var(--on-danger); }
 .option-btn.faded { opacity: 0.5; }
-.option-tag { margin-left: auto; flex-shrink: 0; font-size: var(--fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 4px 10px; border-radius: var(--radius-pill); }
+.option-tag { font-size: var(--fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 4px 10px; border-radius: var(--radius-pill); }
 .option-btn.correct .option-tag { background: var(--success); color: var(--on-success); }
 .option-btn.wrong .option-tag { background: var(--danger); color: var(--on-danger); }
 
@@ -1638,7 +1641,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     const tag = state === 'correct' ? '<span class="option-tag">Правильно</span>'
       : state === 'wrong' ? '<span class="option-tag">Ваша відповідь</span>' : '';
     return `<button type="button" class="${cls}" ${attr} ${answered ? 'disabled' : ''}>` +
-      `<span class="option-key">${key}</span><span class="opt-word">${escapeHtml(text)}</span>${tag}</button>`;
+      `<span class="option-key">${key}</span><span class="opt-body"><span class="opt-word">${escapeHtml(text)}</span>${tag}</span></button>`;
   }
 
   /* Правильна відповідь веде далі сама: учень не тисне «Далі» після кожного влучання.
