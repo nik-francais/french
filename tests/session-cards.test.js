@@ -175,3 +175,21 @@ test('«Далі» — кнопка на всю ширину зі стрілко
   }
   assert.ok(HTML.includes("arrowRight:"), 'немає іконки стрілки');
 });
+
+test('Довгий варіант відповіді переноситься поруч із цифрою, а не під неї', () => {
+  // З flex-basis: auto текст просив усю свою ширину, не влазив у рядок
+  // і через flex-wrap падав під кружечок з номером (баг з iPhone).
+  // Тепер текст і плашка — колонка з основою 0 праворуч від цифри.
+  const body = rule('.option-btn .opt-body');
+  assert.match(body, /flex: 1 1 0[;\s]/, 'колонка тексту має займати решту рядка, а не власну ширину');
+  assert.match(body, /min-width: 0/, 'без min-width: 0 довгий текст розпирає рядок');
+  assert.match(body, /flex-direction: column/, 'плашка має лягати під текст, а не стискати його збоку');
+  assert.match(rule('.option-key'), /flex-shrink: 0/, 'кружечок з номером не має стискатися');
+  assert.ok(!/overflow-wrap: anywhere/.test(rule('.option-btn .opt-word')), 'слова не рвемо посередині без потреби');
+});
+
+test('Плашка статусу всередині колонки тексту, а не окремим елементом рядка', async () => {
+  const app = await loadApp();
+  const html = app.api.optionHtml(3, 'можливість працевлаштування', 'wrong', 'data-i="3"', true);
+  assert.match(html, /<span class="opt-body"><span class="opt-word">[^<]*<\/span><span class="option-tag">Ваша відповідь<\/span><\/span>/);
+});
