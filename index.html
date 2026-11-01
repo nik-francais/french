@@ -188,6 +188,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn-icon { min-width: 42px; min-height: 42px; padding: 8px; border-radius: var(--radius-pill); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .btn-icon:hover { background: var(--bg-elevated); color: var(--accent); }
 svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.pw-field { position: relative; margin-bottom: 12px; }
+.pw-field .input { margin-bottom: 0; padding-right: 48px; }
+.pw-toggle { position: absolute; right: 0; top: 0; width: 44px; height: 44px; border: 0; background: transparent; color: var(--text-muted); border-radius: var(--radius); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.pw-toggle:hover { color: var(--text-main); }
+.pw-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .input { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); color: var(--text-main); font-size: 0.95rem; margin-bottom: 12px; box-sizing: border-box; }
 .select { width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); color: var(--text-main); font-size: 0.9375rem; }
 .textarea { width: 100%; min-height: 120px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); color: var(--text-main); font-size: 0.85rem; font-family: var(--font-mono); resize: vertical; box-sizing: border-box; }
@@ -411,8 +416,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   <div class="auth-container">
     <div class="auth-logo">Boîte à Mots</div>
     <p style="text-align:center; color:var(--text-muted); margin-bottom:20px;">Вхід до картотеки</p>
-    <input type="email" id="email-input" class="input" placeholder="Email">
-    <input type="password" id="password-input" class="input" placeholder="Пароль">
+    <input type="email" id="email-input" class="input" placeholder="Email" autocomplete="username" autocapitalize="none">
+    <!-- Око показує пароль: на телефоні легко схибити з літерою й не помітити. -->
+    <div class="pw-field">
+      <input type="password" id="password-input" class="input" placeholder="Пароль" autocomplete="current-password" autocapitalize="none" spellcheck="false">
+      <button type="button" class="pw-toggle" id="btnTogglePw" onclick="togglePasswordVisibility()" aria-label="Показати пароль" aria-pressed="false" title="Показати пароль"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
     <button type="button" onclick="signInWithPassword()" id="login-btn" class="btn btn-primary" style="width:100%;">Увійти</button>
     <p id="auth-err" style="text-align:center; color:var(--danger); font-size:14px; display:none; margin-top:14px;"></p>
   </div>
@@ -626,6 +635,24 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     } else {
       window.location.reload();
     }
+  }
+
+  // Показати / сховати пароль. Курсор лишається в полі й у кінці тексту,
+  // щоб можна було одразу дописати або виправити.
+  function togglePasswordVisibility() {
+    const inp = document.getElementById('password-input');
+    const btn = document.getElementById('btnTogglePw');
+    if (!inp || !btn) return;
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    const label = show ? 'Сховати пароль' : 'Показати пароль';
+    btn.innerHTML = icon(show ? 'eyeOff' : 'eye');
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('title', label);
+    btn.setAttribute('aria-pressed', String(show));
+    inp.focus();
+    const len = String(inp.value || '').length;
+    try { inp.setSelectionRange(len, len); } catch (e) {}
   }
 
   ['email-input', 'password-input'].forEach(id => {
@@ -1623,6 +1650,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     folder:     '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
     play:       '<polygon points="6 3 20 12 6 21 6 3"/>',
     check:      '<path d="M20 6 9 17l-5-5"/>',
+    eye:        '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
+    eyeOff:     '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
     cross:      '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
     arrowRight: '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>'
   };
