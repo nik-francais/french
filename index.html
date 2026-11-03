@@ -828,6 +828,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     const days = teacher.days[email] || {};
     const t = Object.values(days).reduce((acc, d) => ({ a: acc.a + (d.a || 0), c: acc.c + (d.c || 0) }), { a: 0, c: 0 });
     return { email, words, total: words.length, counts, due, week, last,
+      learned: counts.know + counts.master,
       days,
       streak: currentStreak(days), best: bestStreak(days), month: activeDaysInMonth(days),
       answers: t.a, accuracy: t.a ? Math.round((t.c / t.a) * 100) : null };
@@ -875,9 +876,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           </div>
           <div class="student-email">${escapeHtml(st.email)}</div>
           <div class="student-stats" style="margin-top:12px;">
-            <div><div class="stat-mini-lbl">Повторено за тиждень</div><div class="stat-mini-val">${st.week}</div></div>
+            <div><div class="stat-mini-lbl">Серія</div><div class="stat-mini-val">${st.streak} ${ukPlural(st.streak, 'день', 'дні', 'днів')}</div></div>
+            <div><div class="stat-mini-lbl">Вивчено слів</div><div class="stat-mini-val">${st.learned} / ${st.total}</div></div>
             <div><div class="stat-mini-lbl">Чекає сьогодні</div><div class="stat-mini-val">${st.due}</div></div>
-            <div><div class="stat-mini-lbl">Остання активність</div><div class="stat-mini-val">${escapeHtml(sinceLabel(st.last))}</div></div>
           </div>
           ${st.last && (Date.now() - st.last) > 7 * DAY_MS ? '<div class="student-quiet">Не займався понад тиждень</div>' : ''}
         </div>`).join('')}
@@ -935,8 +936,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           <div><div class="stat-mini-lbl">Серія</div><div class="stat-mini-val">${st.streak} ${ukPlural(st.streak, 'день', 'дні', 'днів')}</div></div>
           <div><div class="stat-mini-lbl">Рекорд</div><div class="stat-mini-val">${st.best}</div></div>
           <div><div class="stat-mini-lbl">Днів цього місяця</div><div class="stat-mini-val">${st.month}</div></div>
-        </div>
-        <div class="student-stats" style="margin-top:10px;">
+          <div><div class="stat-mini-lbl">Вивчено слів</div><div class="stat-mini-val">${st.learned} / ${st.total}</div></div>
           <div><div class="stat-mini-lbl">Усього відповідей</div><div class="stat-mini-val">${st.answers}</div></div>
           <div><div class="stat-mini-lbl">Правильних</div><div class="stat-mini-val">${st.accuracy === null ? '—' : st.accuracy + '%'}</div></div>
           <div><div class="stat-mini-lbl">Повторено за тиждень</div><div class="stat-mini-val">${st.week}</div></div>

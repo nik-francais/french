@@ -199,3 +199,26 @@ test('Без таблиці днів екран учня працює, прос�
   assert.match(view.innerHTML, /Серія/);
   assert.match(view.innerHTML, /—/, 'відсоток без даних показується прочерком');
 });
+
+test('Викладач бачить «вивчено слів» — ту саму цифру, що й учень у себе', async () => {
+  const w = (fr, r, iv) => ({ id: 'o-' + fr, user_email: 'olena@x.com', fr, uk: 'х', def: '', ex: '', src: 'Одяг', r, iv, ef: 2.5, l: 0, due: 0, t: 0 });
+  const app = await loadApp({ supabase: { session: TEACHER, rows: [
+    w('a', 0, 0),    // нове
+    w('b', 2, 3),    // вчу
+    w('c', 4, 12),   // знаю
+    w('d', 9, 60),   // засвоєно
+    w('e', 9, 90)    // засвоєно
+  ] } });
+  await settle();
+  const st = app.fn('teacherStudentStats')('olena@x.com');
+  assert.equal(st.learned, 3, '«вивчено» = Знаю + Засвоєно, як і на екрані учня');
+  assert.equal(st.total, 5);
+
+  const view = { innerHTML: '', querySelector: () => ({ addEventListener() {}, focus() {}, value: '' }), querySelectorAll: () => [] };
+  app.fn('renderTeacherStudent')(view, 'olena@x.com');
+  assert.match(view.innerHTML, /Вивчено слів<\/div><div class="stat-mini-val">3 \/ 5</);
+  const list = { innerHTML: '', querySelector: () => null, querySelectorAll: () => [] };
+  app.fn('renderTeacherStudentsList')(list);
+  assert.match(list.innerHTML, /Вивчено слів<\/div><div class="stat-mini-val">3 \/ 5</, 'видно вже у списку, без заходу в картку');
+  assert.match(list.innerHTML, /Серія/);
+});
