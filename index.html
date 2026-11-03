@@ -555,7 +555,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   const defaultState = () => ({ 
     words: [], 
     settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random', profileName: '', autoNext: true },
-    stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0 } 
+    stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0, days: {} } 
   });
   let state = defaultState();
 
@@ -614,6 +614,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           loadPendingProgress();
           await flushPendingProgress(); // догнати те, що не встигло зберегтись минулого разу
           await loadStudentProfile();
+          await loadStudyDays();
           await loadStudentWords();
         }
       } else {
@@ -777,7 +778,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    * Читаємо всі картки одним запитом і рахуємо на місці — учнів десятки,
    * а не тисячі, тож окремі запити на кожного були б зайвим навантаженням.
    * ========================================================= */
-  const teacher = { tab: 'students', rows: [], names: {}, openEmail: null, query: '', topic: 'all', loaded: false, error: '',
+  const teacher = { tab: 'students', rows: [], names: {}, days: {}, openEmail: null, query: '', topic: 'all', loaded: false, error: '',
     addOpen: false, addTopic: '', addMsg: '', addBusy: false };
 
   function teacherView() { return document.getElementById('teacherView'); }
@@ -793,6 +794,16 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     } else {
       teacher.rows = (cards.data || []).map(r => normalizeWordRow(r));
     }
+    // Журнал днів: без нього серія й активність не видно (див. 004_study_days.sql).
+    // Його відсутність не ламає екран — просто немає рядка про серію.
+    teacher.days = {};
+    const days = await sbClient.from('study_days').select('user_email, day, answers, correct, new_words, cleared');
+    if (!days.error) (days.data || []).forEach(r => {
+      const e = String(r.user_email || '').toLowerCase();
+      const day = String(r.day || '').slice(0, 10);
+      if (!e || !day) return;
+      (teacher.days[e] = teacher.days[e] || {})[day] = { a: Number(r.answers) || 0, c: Number(r.correct) || 0, n: Number(r.new_words) || 0, k: r.cleared ? 1 : 0 };
+    });
     const profs = await sbClient.from('student_profiles').select('user_email, name');
     teacher.names = {};
     if (!profs.error) (profs.data || []).forEach(r => { teacher.names[String(r.user_email).toLowerCase()] = r.name; });
@@ -814,7 +825,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       if (w.t && w.t >= weekAgo) week++;
       if (w.t && w.t > last) last = w.t;
     });
-    return { email, words, total: words.length, counts, due, week, last };
+    const days = teacher.days[email] || {};
+    const t = Object.values(days).reduce((acc, d) => ({ a: acc.a + (d.a || 0), c: acc.c + (d.c || 0) }), { a: 0, c: 0 });
+    return { email, words, total: words.length, counts, due, week, last,
+      days,
+      streak: currentStreak(days), best: bestStreak(days), month: activeDaysInMonth(days),
+      answers: t.a, accuracy: t.a ? Math.round((t.c / t.a) * 100) : null };
   }
 
   function teacherStudents() {
@@ -916,6 +932,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           <div class="legend-item"><span class="legend-dot" style="background:var(--st-master);"></span><span>Засвоєно</span><span class="legend-count">${st.counts.master}</span></div>
         </div>
         <div class="student-stats" style="margin-top:14px;">
+          <div><div class="stat-mini-lbl">Серія</div><div class="stat-mini-val">${st.streak} ${ukPlural(st.streak, 'день', 'дні', 'днів')}</div></div>
+          <div><div class="stat-mini-lbl">Рекорд</div><div class="stat-mini-val">${st.best}</div></div>
+          <div><div class="stat-mini-lbl">Днів цього місяця</div><div class="stat-mini-val">${st.month}</div></div>
+        </div>
+        <div class="student-stats" style="margin-top:10px;">
+          <div><div class="stat-mini-lbl">Усього відповідей</div><div class="stat-mini-val">${st.answers}</div></div>
+          <div><div class="stat-mini-lbl">Правильних</div><div class="stat-mini-val">${st.accuracy === null ? '—' : st.accuracy + '%'}</div></div>
           <div><div class="stat-mini-lbl">Повторено за тиждень</div><div class="stat-mini-val">${st.week}</div></div>
           <div><div class="stat-mini-lbl">Чекає сьогодні</div><div class="stat-mini-val">${st.due}</div></div>
           <div><div class="stat-mini-lbl">Остання активність</div><div class="stat-mini-val">${escapeHtml(sinceLabel(st.last))}</div></div>
@@ -1318,11 +1341,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (document.visibilityState === 'hidden') {
       saveActiveSessionProgress();
       saveLocalStats();
+      flushStudyDay();
     } else if (document.visibilityState === 'visible') {
       flushPendingProgress(); // учень повернувся: пробуємо догнати незбережене
     }
   });
-  window.addEventListener('online', () => flushPendingProgress());
+  window.addEventListener('online', () => { flushPendingProgress(); flushStudyDay(); });
   window.addEventListener('pagehide', () => {
     saveActiveSessionProgress();
     saveLocalStats();
@@ -1380,17 +1404,146 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       state.stats.newLearnedToday = 0;
     }
   }
-  function recordDailyActivity(wasNewWord) {
+  function recordDailyActivity(wasNewWord, wasCorrect) {
     checkDailyRollover();
     const today = todayStr();
     state.stats.answersToday += 1;
     if (wasNewWord) state.stats.newLearnedToday += 1;
-    if (state.stats.lastStudyDate !== today) {
-      const yesterday = todayStr(Date.now() - 86400000);
-      if (state.stats.lastStudyDate === yesterday) state.stats.streak += 1;
-      else state.stats.streak = 1;
-      state.stats.lastStudyDate = today;
-    }
+    const d = studyDay(today);
+    d.a += 1;
+    if (wasCorrect !== false) d.c += 1;
+    if (wasNewWord) d.n += 1;
+    if (!d.k && noMoreDueCards()) d.k = 1; // усі картки, що чекали, закрито
+    // lastStudyDate лишаємо для сумісності зі старими збереженнями; серію рахуємо з журналу
+    state.stats.lastStudyDate = today;
+    state.stats.streak = currentStreak();
+    queueStudyDaySync();
+  }
+
+  /* ======================= ЖУРНАЛ НАВЧАЛЬНИХ ДНІВ =======================
+   * Навіщо окремо від карток: серія та активність — це про ДНІ, а не про слова.
+   * Доки вони жили лише в localStorage, зміна телефона обнуляла серію, а викладач
+   * їх не бачив. Тепер день — рядок у study_days (див. supabase/004_study_days.sql).
+   * Формат у пам'яті компактний, бо лежить і в localStorage:
+   *   days['2026-11-03'] = { a: відповідей, c: правильних, n: нових слів, k: 1 якщо все закрито }
+   * ===================================================================== */
+  const STUDY_DAYS_KEEP = 400;        // ~13 місяців історії на пристрої
+  const STUDY_DAY_SYNC_MS = 4000;     // не стріляємо запитом на кожну відповідь
+  let studyDayTimer = null;
+
+  function studyDays() {
+    if (!state.stats.days || typeof state.stats.days !== 'object') state.stats.days = {};
+    return state.stats.days;
+  }
+  function studyDay(day) {
+    const all = studyDays();
+    if (!all[day]) all[day] = { a: 0, c: 0, n: 0, k: 0 };
+    return all[day];
+  }
+  function shiftDay(day, delta) {
+    const [y, m, d] = String(day).split('-').map(Number);
+    return todayStr(new Date(y, m - 1, d + delta).getTime());
+  }
+  function wasActive(day, days) { const d = (days || studyDays())[day]; return Boolean(d && d.a > 0); }
+
+  // Усі картки, що чекали, закрито? Рахуємо по всьому словнику, а не по обраній темі.
+  function noMoreDueCards() {
+    const now = Date.now();
+    return !state.words.some(w => w.r > 0 && w.due && w.due <= now);
+  }
+
+  /* Серія: скільки днів поспіль були відповіді. День ще не скінчився, тож серія,
+     що обірвалась би лише сьогодні, ще жива — інакше вранці учень бачив би нуль. */
+  function currentStreak(days, today = todayStr()) {
+    const set = days || studyDays();
+    let cursor = wasActive(today, set) ? today : shiftDay(today, -1);
+    if (!wasActive(cursor, set)) return 0;
+    let n = 0;
+    while (wasActive(cursor, set)) { n += 1; cursor = shiftDay(cursor, -1); }
+    return n;
+  }
+  function bestStreak(days) {
+    const set = days || studyDays();
+    const list = Object.keys(set).filter(d => wasActive(d, set)).sort();
+    let best = 0, run = 0, prev = null;
+    list.forEach(day => {
+      run = (prev && shiftDay(prev, 1) === day) ? run + 1 : 1;
+      prev = day;
+      if (run > best) best = run;
+    });
+    return Math.max(best, currentStreak(set));
+  }
+  function activeDaysInMonth(days, ts = Date.now()) {
+    const set = days || studyDays();
+    const pref = todayStr(ts).slice(0, 7);
+    return Object.keys(set).filter(d => d.startsWith(pref) && wasActive(d, set)).length;
+  }
+  function studyTotals() {
+    let answers = 0, correct = 0, cleared = 0;
+    Object.values(studyDays()).forEach(d => { answers += d.a || 0; correct += d.c || 0; if (d.k) cleared += 1; });
+    return { answers, correct, cleared, accuracy: answers ? Math.round((correct / answers) * 100) : null };
+  }
+  function pruneStudyDays() {
+    const all = studyDays();
+    const keys = Object.keys(all).sort();
+    if (keys.length > STUDY_DAYS_KEEP) keys.slice(0, keys.length - STUDY_DAYS_KEEP).forEach(k => { delete all[k]; });
+  }
+
+  function studyDayRow(email, day, d) {
+    return { id: `${email}|${day}`, user_email: email, day, answers: d.a || 0, correct: d.c || 0, new_words: d.n || 0, cleared: Boolean(d.k) };
+  }
+
+  /* Вивантаження сьогоднішнього дня. Із затримкою: інакше був би запит на кожну
+     відповідь. Помилка не показується учню — день лишається на пристрої й піде
+     наступного разу; втратити тут можна лише лічильник, а не слова. */
+  function queueStudyDaySync() {
+    if (studyDayTimer) clearTimeout(studyDayTimer);
+    studyDayTimer = setTimeout(() => { studyDayTimer = null; flushStudyDay(); }, STUDY_DAY_SYNC_MS);
+  }
+  async function flushStudyDay() {
+    if (studyDayTimer) { clearTimeout(studyDayTimer); studyDayTimer = null; }
+    if (!currentUser) return;
+    const email = String(currentUser.email).toLowerCase();
+    const today = todayStr();
+    const d = studyDays()[today];
+    if (!d || !d.a) return;
+    try {
+      const { error } = await sbClient.from('study_days').upsert(studyDayRow(email, today, d), { onConflict: 'id' });
+      if (error) console.warn('[days]', error.message || error);
+    } catch (e) { console.warn('[days]', e); }
+  }
+
+  /* Злиття з хмарою при вході. Беремо більше значення з кожного боку: так
+     незакинутий день з цього пристрою не затреться нулем, а історія з іншого
+     телефона не зникне. Якщо учень того самого дня займався на двох пристроях,
+     порахується більший з двох, а не сума — свідомий обмін на те, щоб ніколи
+     не подвоїти лічильник при повторній синхронізації. */
+  function mergeStudyDays(rows) {
+    const all = studyDays();
+    (rows || []).forEach(r => {
+      const day = String(r.day || '').slice(0, 10);
+      if (!day) return;
+      const mine = all[day] || { a: 0, c: 0, n: 0, k: 0 };
+      all[day] = {
+        a: Math.max(mine.a || 0, Number(r.answers) || 0),
+        c: Math.max(mine.c || 0, Number(r.correct) || 0),
+        n: Math.max(mine.n || 0, Number(r.new_words) || 0),
+        k: (mine.k || r.cleared) ? 1 : 0
+      };
+    });
+    pruneStudyDays();
+    state.stats.streak = currentStreak();
+  }
+
+  async function loadStudyDays() {
+    if (!currentUser) return;
+    try {
+      const { data, error } = await sbClient.from('study_days').select('day, answers, correct, new_words, cleared')
+        .eq('user_email', String(currentUser.email).toLowerCase());
+      if (error) { console.warn('[days]', error.message || error); return; }
+      mergeStudyDays(data || []);
+      saveLocalStats();
+    } catch (e) { console.warn('[days]', e); }
   }
   // Відтінки мають збігатися з :root[data-accent="…"] у стилях
   const ACCENTS = [
@@ -1543,7 +1696,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       word.due = now + iv * DAY_MS;
     }
     word.iv = iv; word.ef = Math.round(ef * 100) / 100; word.r = (word.r || 0) + 1; word.t = now;
-    recordDailyActivity(wasNew);
+    recordDailyActivity(wasNew, grade !== 'again');
     syncWordProgress(word);
   }
 
@@ -1551,7 +1704,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     const now = Date.now();
     if (!isCorrect) applySM2Grade(word, 'again');
     else if (word.r === 0 || word.due <= now) applySM2Grade(word, 'good');
-    else { recordDailyActivity(false); saveLocalStats(); }
+    else { recordDailyActivity(false, true); saveLocalStats(); }
   }
   function pickStudyWords(count = 10, filterFn = null) {
     const pool = filterFn ? getActiveWordsPool().filter(filterFn) : getActiveWordsPool().slice();
