@@ -60,16 +60,16 @@ test('Serif лише для французького та заголовків, 
 
 // ───────────── Нижня навігація ─────────────
 
-test('Навігація внизу: три рівні колонки, safe-area, без вкладки викладача', () => {
+test('Навігація внизу: чотири рівні колонки, safe-area, без вкладки викладача', () => {
   const nav = rule('.nav-tabs');
   assert.match(nav, /position: fixed/, 'панель має бути закріплена внизу');
   assert.match(nav, /bottom: 0/);
   assert.match(nav, /env\(safe-area-inset-bottom/, 'без safe-area підписи впритул до краю на iPhone');
-  assert.match(rule('.nav-tabs-inner'), /grid-template-columns: repeat\(3, 1fr\)/, 'колонки мають бути рівні');
+  assert.match(rule('.nav-tabs-inner'), /grid-template-columns: repeat\(4, 1fr\)/, 'колонки мають бути рівні');
 
   const markup = HTML.slice(HTML.indexOf('<nav class="nav-tabs">'), HTML.indexOf('</nav>'));
   const tabs = [...markup.matchAll(/data-tab="(\w+)"/g)].map(m => m[1]);
-  assert.deepEqual(tabs, ['study', 'words', 'settings'], 'склад вкладок змінився');
+  assert.deepEqual(tabs, ['study', 'words', 'progress', 'settings'], 'склад вкладок змінився');
   assert.ok(!/Вчитель/.test(markup), 'вкладки «Вчитель» у застосунку немає');
 
   // Вміст не повинен ховатися під панеллю

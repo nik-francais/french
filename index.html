@@ -55,6 +55,7 @@
   --radius: 14px;
   --radius-card: 20px;
   --radius-pill: 999px;
+  --radius-cell: 4px;  /* клітинка календаря активності 18px: 8px на такому квадраті вже схоже на коло */
   --radius-bar: 8px;   /* стовпчики прогнозу: вужчі за 14px, інакше заокруглення з'їдає сам стовпчик */
   --font-ui: 'Golos Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-fr: 'Literata', Georgia, 'Times New Roman', serif;
@@ -176,7 +177,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* Панель навігації живе внизу екрана: великий палець дістає її без перехоплення телефона.
    Колонки рівні, іконки й підписи на одній лінії — бейдж накладається, а не розсовує. */
 .nav-tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; background: var(--bg-card); border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom, 0px); }
-.nav-tabs-inner { width: 100%; max-width: 760px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
+.nav-tabs-inner { width: 100%; max-width: 760px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); }
 .nav-tab { min-height: 64px; border: none; background: transparent; font-family: var(--font-ui); font-weight: 600; font-size: var(--fs-micro); color: var(--text-muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: color 0.15s; padding: 0; }
 .nav-tab .icon { width: 22px; height: 22px; }
 .nav-tab.active { color: var(--accent); }
@@ -307,6 +308,115 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .btn-next { width: 100%; margin-top: 16px; gap: 8px; }
 /* Картка навчального екрана: без ліній зошита — вони сперечалися з блоками відповідей.
    Лінії лишилися тільки в режимі «Картки», де метафора зошита доречна. */
+/* ===== Вкладка «Прогрес». Токени беремо ті самі, що й решта застосунку:
+   акцент лишається змінним, статуси слів — фіксовані в обох темах. ===== */
+.prog-head { padding: 2px 2px 2px; margin-bottom: 14px; }
+.prog-title { font-family: var(--font-fr); font-size: var(--fs-greet); font-weight: 700; line-height: 1.2; }
+.prog-sub { font-size: var(--fs-small); color: var(--text-muted); margin-top: 4px; }
+.prog-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); padding: 20px; margin-bottom: 16px; }
+.card-meta { font-size: var(--fs-micro); color: var(--text-muted); }
+.prog-note { font-size: var(--fs-body); background: var(--bg-elevated); padding: 12px 14px; border-radius: var(--radius); line-height: 1.4; display: flex; align-items: center; gap: 10px; }
+.prog-note .icon { flex-shrink: 0; color: var(--text-muted); }
+
+/* Серія */
+.streak-hero { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.streak-val { display: flex; align-items: baseline; gap: 6px; }
+.streak-num { font-size: var(--fs-hero); font-weight: 700; line-height: 1; }
+.streak-word { font-size: 17px; font-weight: 600; }
+.streak-icon { width: 38px; height: 38px; border-radius: var(--radius-pill); background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.streak-icon.cold { background: var(--bg-elevated); color: var(--text-muted); }
+.streak-stats { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; padding: 10px 14px; background: var(--bg-elevated); border-radius: var(--radius); font-size: var(--fs-micro); color: var(--text-muted); margin-top: 14px; }
+.stat-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); opacity: 0.5; }
+.streak-days-cap { font-size: var(--fs-micro); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin: 16px 0 8px; }
+.streak-days { display: flex; justify-content: space-between; align-items: center; gap: 2px; }
+.day-col { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.day-name { font-size: var(--fs-micro); color: var(--text-muted); }
+.day-dot { width: 32px; height: 32px; border-radius: var(--radius-pill); display: flex; align-items: center; justify-content: center; background: var(--bg-elevated); color: var(--text-muted); font-size: var(--fs-micro); }
+.day-dot .icon { width: 16px; height: 16px; }
+.day-dot[data-state="done"] { background: var(--accent); color: var(--accent-contrast); }
+.day-dot[data-state="today-done"] { background: var(--accent); color: var(--accent-contrast); box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--accent); }
+.day-dot[data-state="missed"] { border: 1.5px dashed var(--border); background: transparent; }
+.day-dot[data-state="today"] { border: 2px solid var(--accent); color: var(--accent); background: var(--bg-card); }
+
+/* Календар активності */
+.heatmap-wrap { display: flex; gap: 6px; margin-top: 10px; }
+.heatmap-axis { display: grid; grid-template-rows: repeat(7, 1fr); gap: 3px; align-items: center; font-size: var(--fs-micro); color: var(--text-muted); width: 20px; flex-shrink: 0; }
+.heatmap-cols { display: flex; gap: 3px; flex: 1 1 auto; min-width: 0; }
+.heat-col { display: flex; flex-direction: column; gap: 3px; flex: 1 1 0; min-width: 0; }
+.heat-cell { aspect-ratio: 1; border-radius: var(--radius-cell); background: var(--bg-elevated); border: 0; padding: 0; cursor: pointer; }
+.heat-cell[data-level="1"] { background: color-mix(in oklab, var(--accent) 25%, var(--bg-elevated)); }
+.heat-cell[data-level="2"] { background: color-mix(in oklab, var(--accent) 50%, var(--bg-elevated)); }
+.heat-cell[data-level="3"] { background: color-mix(in oklab, var(--accent) 75%, var(--bg-elevated)); }
+.heat-cell[data-level="4"] { background: var(--accent); }
+.heat-cell[data-sel="1"] { outline: 2px solid var(--text-main); outline-offset: 1px; }
+.heatmap-months { display: flex; font-size: var(--fs-micro); color: var(--text-muted); margin-left: 26px; }
+.heatmap-tip { display: inline-flex; align-items: center; gap: 6px; background: var(--text-main); color: var(--bg-card); padding: 6px 12px; border-radius: var(--radius); font-size: var(--fs-micro); font-weight: 500; margin-bottom: 10px; }
+.heatmap-tip .icon { width: 14px; height: 14px; }
+.heatmap-legend { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: var(--fs-micro); color: var(--text-muted); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-subtle); }
+.legend-cells { display: flex; gap: 3px; }
+.legend-cell { width: 12px; height: 12px; border-radius: var(--radius-cell); }
+
+/* Вивчено слів */
+.words-num { font-size: var(--fs-greet); font-weight: 700; margin-top: 12px; }
+.milestone-label { display: flex; justify-content: space-between; gap: 10px; font-size: var(--fs-micro); color: var(--text-muted); margin: 10px 0 6px; }
+.progress-bar-bg { width: 100%; height: 8px; background: var(--bg-elevated); border-radius: var(--radius-bar); overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--accent); border-radius: var(--radius-bar); width: calc(var(--p, 0) * 100%); }
+.status-bar { display: flex; width: 100%; height: 10px; border-radius: var(--radius-bar); overflow: hidden; gap: 2px; margin-top: 16px; background: var(--bg-elevated); }
+.status-segment[data-status="new"] { background: var(--st-new); }
+.status-segment[data-status="learn"] { background: var(--st-learn); }
+.status-segment[data-status="know"] { background: var(--st-know); }
+.status-segment[data-status="master"] { background: var(--st-master); }
+.status-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; font-size: var(--fs-micro); margin-top: 12px; }
+.status-legend-item { display: flex; align-items: center; gap: 6px; }
+.status-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* Цей тиждень */
+.week-stats { display: flex; align-items: center; gap: 6px 12px; font-size: var(--fs-micro); color: var(--text-muted); flex-wrap: wrap; margin-top: 6px; }
+.week-chart { display: flex; justify-content: space-between; align-items: flex-end; height: 100px; padding: 10px 4px 0; border-bottom: 1px dashed var(--border); margin-top: 12px; }
+.week-bar-col { display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; flex: 1 1 0; }
+.week-bar-val { font-size: var(--fs-micro); font-family: var(--font-mono); color: var(--text-muted); }
+.week-bar { width: 24px; max-width: 100%; border-radius: var(--radius-bar) var(--radius-bar) 0 0; background: color-mix(in oklab, var(--accent) 30%, var(--bg-elevated)); height: calc(var(--v, 0) * 68px); min-height: 4px; }
+.week-bar[data-today="1"] { background: var(--accent); }
+.week-bar[data-future="1"] { opacity: 0.35; }
+.week-days { display: flex; padding: 6px 4px 0; font-size: var(--fs-micro); color: var(--text-muted); }
+.week-days span { flex: 1 1 0; text-align: center; }
+
+/* Даються важко */
+.hard-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.hard-item { background: var(--bg-elevated); border-radius: var(--radius); padding: 12px 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.hard-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.hard-fr { font-family: var(--font-fr); font-size: var(--fs-action); font-weight: 600; overflow-wrap: break-word; }
+.hard-uk { font-size: var(--fs-small); color: var(--text-muted); line-height: 1.35; overflow-wrap: break-word; }
+.hard-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.hard-count { font-size: var(--fs-micro); color: var(--text-muted); white-space: nowrap; }
+.status-pill { font-size: var(--fs-micro); font-weight: 600; padding: 2px 8px; border-radius: var(--radius-pill); white-space: nowrap; }
+.status-pill[data-st="new"] { background: var(--bg-card); color: var(--text-muted); }
+.status-pill[data-st="learn"] { background: var(--warning-soft); color: var(--warning); }
+.status-pill[data-st="know"] { background: var(--accent-soft); color: var(--st-know); }
+.status-pill[data-st="master"] { background: var(--success-soft); color: var(--success); }
+
+/* Рубежі */
+.milestones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.badge-card { background: var(--bg-elevated); border: 1px solid transparent; border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.badge-card[data-earned="true"] { background: color-mix(in oklab, var(--accent) 10%, var(--bg-elevated)); border-color: color-mix(in oklab, var(--accent) 25%, transparent); }
+.badge-top { display: flex; justify-content: space-between; align-items: center; }
+.badge-icon-box { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: var(--bg-card); color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
+.badge-icon-box .icon { width: 15px; height: 15px; }
+.badge-card[data-earned="true"] .badge-icon-box { background: var(--accent); color: var(--accent-contrast); }
+.badge-top .icon { width: 13px; height: 13px; color: var(--text-muted); }
+.badge-card[data-earned="true"] .badge-top > .icon { color: var(--accent); }
+.badge-title { font-size: var(--fs-small); font-weight: 600; }
+.badge-cond { font-size: var(--fs-micro); color: var(--text-muted); line-height: 1.3; }
+.badge-prog { font-size: var(--fs-micro); font-family: var(--font-mono); color: var(--text-muted); font-weight: 600; }
+
+/* Картка кінця сесії */
+.session-done { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.session-done-box { background: var(--bg-elevated); border-radius: var(--radius); padding: 14px 12px; }
+.session-done-lbl { font-size: var(--fs-micro); color: var(--text-muted); }
+.session-done-val { font-size: var(--fs-action); font-weight: 700; line-height: 1.25; margin-top: 4px; }
+.session-done-val.mastered { color: var(--st-master); }
+@media (max-width: 360px) { .session-done, .status-legend, .milestones { grid-template-columns: 1fr; } }
+
 .study-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-card); box-shadow: var(--shadow); padding: 20px; position: relative; }
 @media (max-width: 480px) { .study-card { padding: 16px; } }
 .options-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
@@ -475,6 +585,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     <div class="nav-tabs-inner">
       <button type="button" class="nav-tab active" data-tab="study"><span class="nav-tab-ico" id="navIcoStudy"></span>Вчити</button>
       <button type="button" class="nav-tab" data-tab="words"><span class="nav-tab-ico" id="navIcoWords"></span>Слова</button>
+      <button type="button" class="nav-tab" data-tab="progress"><span class="nav-tab-ico" id="navIcoProgress"></span>Прогрес</button>
       <button type="button" class="nav-tab" data-tab="settings"><span class="nav-tab-ico" id="navIcoSettings"></span>Налаштування</button>
     </div>
   </nav>
@@ -555,7 +666,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   const defaultState = () => ({ 
     words: [], 
     settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random', profileName: '', autoNext: true, tempo: 'standard' },
-    stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0 } 
+    stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0, days: {} } 
   });
   let state = defaultState();
 
@@ -614,6 +725,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           loadPendingProgress();
           await flushPendingProgress(); // догнати те, що не встигло зберегтись минулого разу
           await loadStudentProfile();
+          await loadStudyDays();
           await loadStudentWords();
         }
       } else {
@@ -777,7 +889,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    * Читаємо всі картки одним запитом і рахуємо на місці — учнів десятки,
    * а не тисячі, тож окремі запити на кожного були б зайвим навантаженням.
    * ========================================================= */
-  const teacher = { tab: 'students', rows: [], names: {}, openEmail: null, query: '', topic: 'all', loaded: false, error: '',
+  const teacher = { tab: 'students', rows: [], names: {}, days: {}, openEmail: null, query: '', topic: 'all', loaded: false, error: '',
     addOpen: false, addTopic: '', addMsg: '', addBusy: false };
 
   function teacherView() { return document.getElementById('teacherView'); }
@@ -793,6 +905,16 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     } else {
       teacher.rows = (cards.data || []).map(r => normalizeWordRow(r));
     }
+    // Журнал днів: без нього серія й активність не видно (див. 004_study_days.sql).
+    // Його відсутність не ламає екран — просто немає рядка про серію.
+    teacher.days = {};
+    const days = await sbClient.from('study_days').select('user_email, day, answers, correct, new_words, cleared');
+    if (!days.error) (days.data || []).forEach(r => {
+      const e = String(r.user_email || '').toLowerCase();
+      const day = String(r.day || '').slice(0, 10);
+      if (!e || !day) return;
+      (teacher.days[e] = teacher.days[e] || {})[day] = { a: Number(r.answers) || 0, c: Number(r.correct) || 0, n: Number(r.new_words) || 0, k: r.cleared ? 1 : 0 };
+    });
     const profs = await sbClient.from('student_profiles').select('user_email, name');
     teacher.names = {};
     if (!profs.error) (profs.data || []).forEach(r => { teacher.names[String(r.user_email).toLowerCase()] = r.name; });
@@ -814,7 +936,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       if (w.t && w.t >= weekAgo) week++;
       if (w.t && w.t > last) last = w.t;
     });
-    return { email, words, total: words.length, counts, due, week, last };
+    const days = teacher.days[email] || {};
+    const t = Object.values(days).reduce((acc, d) => ({ a: acc.a + (d.a || 0), c: acc.c + (d.c || 0) }), { a: 0, c: 0 });
+    return { email, words, total: words.length, counts, due, week, last,
+      learned: counts.know + counts.master,
+      days,
+      streak: currentStreak(days), best: bestStreak(days), month: activeDaysInMonth(days),
+      answers: t.a, accuracy: t.a ? Math.round((t.c / t.a) * 100) : null };
   }
 
   function teacherStudents() {
@@ -859,9 +987,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           </div>
           <div class="student-email">${escapeHtml(st.email)}</div>
           <div class="student-stats" style="margin-top:12px;">
-            <div><div class="stat-mini-lbl">Повторено за тиждень</div><div class="stat-mini-val">${st.week}</div></div>
+            <div><div class="stat-mini-lbl">Серія</div><div class="stat-mini-val">${st.streak} ${ukPlural(st.streak, 'день', 'дні', 'днів')}</div></div>
+            <div><div class="stat-mini-lbl">Вивчено слів</div><div class="stat-mini-val">${st.learned} / ${st.total}</div></div>
             <div><div class="stat-mini-lbl">Чекає сьогодні</div><div class="stat-mini-val">${st.due}</div></div>
-            <div><div class="stat-mini-lbl">Остання активність</div><div class="stat-mini-val">${escapeHtml(sinceLabel(st.last))}</div></div>
           </div>
           ${st.last && (Date.now() - st.last) > 7 * DAY_MS ? '<div class="student-quiet">Не займався понад тиждень</div>' : ''}
         </div>`).join('')}
@@ -916,6 +1044,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           <div class="legend-item"><span class="legend-dot" style="background:var(--st-master);"></span><span>Засвоєно</span><span class="legend-count">${st.counts.master}</span></div>
         </div>
         <div class="student-stats" style="margin-top:14px;">
+          <div><div class="stat-mini-lbl">Серія</div><div class="stat-mini-val">${st.streak} ${ukPlural(st.streak, 'день', 'дні', 'днів')}</div></div>
+          <div><div class="stat-mini-lbl">Рекорд</div><div class="stat-mini-val">${st.best}</div></div>
+          <div><div class="stat-mini-lbl">Днів цього місяця</div><div class="stat-mini-val">${st.month}</div></div>
+          <div><div class="stat-mini-lbl">Вивчено слів</div><div class="stat-mini-val">${st.learned} / ${st.total}</div></div>
+          <div><div class="stat-mini-lbl">Усього відповідей</div><div class="stat-mini-val">${st.answers}</div></div>
+          <div><div class="stat-mini-lbl">Правильних</div><div class="stat-mini-val">${st.accuracy === null ? '—' : st.accuracy + '%'}</div></div>
           <div><div class="stat-mini-lbl">Повторено за тиждень</div><div class="stat-mini-val">${st.week}</div></div>
           <div><div class="stat-mini-lbl">Чекає сьогодні</div><div class="stat-mini-val">${st.due}</div></div>
           <div><div class="stat-mini-lbl">Остання активність</div><div class="stat-mini-val">${escapeHtml(sinceLabel(st.last))}</div></div>
@@ -1318,11 +1452,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (document.visibilityState === 'hidden') {
       saveActiveSessionProgress();
       saveLocalStats();
+      flushStudyDay();
     } else if (document.visibilityState === 'visible') {
       flushPendingProgress(); // учень повернувся: пробуємо догнати незбережене
     }
   });
-  window.addEventListener('online', () => flushPendingProgress());
+  window.addEventListener('online', () => { flushPendingProgress(); flushStudyDay(); });
   window.addEventListener('pagehide', () => {
     saveActiveSessionProgress();
     saveLocalStats();
@@ -1380,17 +1515,146 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       state.stats.newLearnedToday = 0;
     }
   }
-  function recordDailyActivity(wasNewWord) {
+  function recordDailyActivity(wasNewWord, wasCorrect) {
     checkDailyRollover();
     const today = todayStr();
     state.stats.answersToday += 1;
     if (wasNewWord) state.stats.newLearnedToday += 1;
-    if (state.stats.lastStudyDate !== today) {
-      const yesterday = todayStr(Date.now() - 86400000);
-      if (state.stats.lastStudyDate === yesterday) state.stats.streak += 1;
-      else state.stats.streak = 1;
-      state.stats.lastStudyDate = today;
-    }
+    const d = studyDay(today);
+    d.a += 1;
+    if (wasCorrect !== false) d.c += 1;
+    if (wasNewWord) d.n += 1;
+    if (!d.k && noMoreDueCards()) d.k = 1; // усі картки, що чекали, закрито
+    // lastStudyDate лишаємо для сумісності зі старими збереженнями; серію рахуємо з журналу
+    state.stats.lastStudyDate = today;
+    state.stats.streak = currentStreak();
+    queueStudyDaySync();
+  }
+
+  /* ======================= ЖУРНАЛ НАВЧАЛЬНИХ ДНІВ =======================
+   * Навіщо окремо від карток: серія та активність — це про ДНІ, а не про слова.
+   * Доки вони жили лише в localStorage, зміна телефона обнуляла серію, а викладач
+   * їх не бачив. Тепер день — рядок у study_days (див. supabase/004_study_days.sql).
+   * Формат у пам'яті компактний, бо лежить і в localStorage:
+   *   days['2026-11-03'] = { a: відповідей, c: правильних, n: нових слів, k: 1 якщо все закрито }
+   * ===================================================================== */
+  const STUDY_DAYS_KEEP = 400;        // ~13 місяців історії на пристрої
+  const STUDY_DAY_SYNC_MS = 4000;     // не стріляємо запитом на кожну відповідь
+  let studyDayTimer = null;
+
+  function studyDays() {
+    if (!state.stats.days || typeof state.stats.days !== 'object') state.stats.days = {};
+    return state.stats.days;
+  }
+  function studyDay(day) {
+    const all = studyDays();
+    if (!all[day]) all[day] = { a: 0, c: 0, n: 0, k: 0 };
+    return all[day];
+  }
+  function shiftDay(day, delta) {
+    const [y, m, d] = String(day).split('-').map(Number);
+    return todayStr(new Date(y, m - 1, d + delta).getTime());
+  }
+  function wasActive(day, days) { const d = (days || studyDays())[day]; return Boolean(d && d.a > 0); }
+
+  // Усі картки, що чекали, закрито? Рахуємо по всьому словнику, а не по обраній темі.
+  function noMoreDueCards() {
+    const now = Date.now();
+    return !state.words.some(w => w.r > 0 && w.due && w.due <= now);
+  }
+
+  /* Серія: скільки днів поспіль були відповіді. День ще не скінчився, тож серія,
+     що обірвалась би лише сьогодні, ще жива — інакше вранці учень бачив би нуль. */
+  function currentStreak(days, today = todayStr()) {
+    const set = days || studyDays();
+    let cursor = wasActive(today, set) ? today : shiftDay(today, -1);
+    if (!wasActive(cursor, set)) return 0;
+    let n = 0;
+    while (wasActive(cursor, set)) { n += 1; cursor = shiftDay(cursor, -1); }
+    return n;
+  }
+  function bestStreak(days) {
+    const set = days || studyDays();
+    const list = Object.keys(set).filter(d => wasActive(d, set)).sort();
+    let best = 0, run = 0, prev = null;
+    list.forEach(day => {
+      run = (prev && shiftDay(prev, 1) === day) ? run + 1 : 1;
+      prev = day;
+      if (run > best) best = run;
+    });
+    return Math.max(best, currentStreak(set));
+  }
+  function activeDaysInMonth(days, ts = Date.now()) {
+    const set = days || studyDays();
+    const pref = todayStr(ts).slice(0, 7);
+    return Object.keys(set).filter(d => d.startsWith(pref) && wasActive(d, set)).length;
+  }
+  function studyTotals() {
+    let answers = 0, correct = 0, cleared = 0;
+    Object.values(studyDays()).forEach(d => { answers += d.a || 0; correct += d.c || 0; if (d.k) cleared += 1; });
+    return { answers, correct, cleared, accuracy: answers ? Math.round((correct / answers) * 100) : null };
+  }
+  function pruneStudyDays() {
+    const all = studyDays();
+    const keys = Object.keys(all).sort();
+    if (keys.length > STUDY_DAYS_KEEP) keys.slice(0, keys.length - STUDY_DAYS_KEEP).forEach(k => { delete all[k]; });
+  }
+
+  function studyDayRow(email, day, d) {
+    return { id: `${email}|${day}`, user_email: email, day, answers: d.a || 0, correct: d.c || 0, new_words: d.n || 0, cleared: Boolean(d.k) };
+  }
+
+  /* Вивантаження сьогоднішнього дня. Із затримкою: інакше був би запит на кожну
+     відповідь. Помилка не показується учню — день лишається на пристрої й піде
+     наступного разу; втратити тут можна лише лічильник, а не слова. */
+  function queueStudyDaySync() {
+    if (studyDayTimer) clearTimeout(studyDayTimer);
+    studyDayTimer = setTimeout(() => { studyDayTimer = null; flushStudyDay(); }, STUDY_DAY_SYNC_MS);
+  }
+  async function flushStudyDay() {
+    if (studyDayTimer) { clearTimeout(studyDayTimer); studyDayTimer = null; }
+    if (!currentUser) return;
+    const email = String(currentUser.email).toLowerCase();
+    const today = todayStr();
+    const d = studyDays()[today];
+    if (!d || !d.a) return;
+    try {
+      const { error } = await sbClient.from('study_days').upsert(studyDayRow(email, today, d), { onConflict: 'id' });
+      if (error) console.warn('[days]', error.message || error);
+    } catch (e) { console.warn('[days]', e); }
+  }
+
+  /* Злиття з хмарою при вході. Беремо більше значення з кожного боку: так
+     незакинутий день з цього пристрою не затреться нулем, а історія з іншого
+     телефона не зникне. Якщо учень того самого дня займався на двох пристроях,
+     порахується більший з двох, а не сума — свідомий обмін на те, щоб ніколи
+     не подвоїти лічильник при повторній синхронізації. */
+  function mergeStudyDays(rows) {
+    const all = studyDays();
+    (rows || []).forEach(r => {
+      const day = String(r.day || '').slice(0, 10);
+      if (!day) return;
+      const mine = all[day] || { a: 0, c: 0, n: 0, k: 0 };
+      all[day] = {
+        a: Math.max(mine.a || 0, Number(r.answers) || 0),
+        c: Math.max(mine.c || 0, Number(r.correct) || 0),
+        n: Math.max(mine.n || 0, Number(r.new_words) || 0),
+        k: (mine.k || r.cleared) ? 1 : 0
+      };
+    });
+    pruneStudyDays();
+    state.stats.streak = currentStreak();
+  }
+
+  async function loadStudyDays() {
+    if (!currentUser) return;
+    try {
+      const { data, error } = await sbClient.from('study_days').select('day, answers, correct, new_words, cleared')
+        .eq('user_email', String(currentUser.email).toLowerCase());
+      if (error) { console.warn('[days]', error.message || error); return; }
+      mergeStudyDays(data || []);
+      saveLocalStats();
+    } catch (e) { console.warn('[days]', e); }
   }
   // Відтінки мають збігатися з :root[data-accent="…"] у стилях
   const ACCENTS = [
@@ -1557,7 +1821,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       word.due = now + iv * DAY_MS;
     }
     word.iv = iv; word.ef = Math.round(ef * 100) / 100; word.r = (word.r || 0) + 1; word.t = now;
-    recordDailyActivity(wasNew);
+    recordDailyActivity(wasNew, grade !== 'again');
     syncWordProgress(word);
   }
 
@@ -1565,7 +1829,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     const now = Date.now();
     if (!isCorrect) applySM2Grade(word, 'again');
     else if (word.r === 0 || word.due <= now) applySM2Grade(word, 'good');
-    else { recordDailyActivity(false); saveLocalStats(); }
+    else { recordDailyActivity(false, true); saveLocalStats(); }
   }
   function pickStudyWords(count = 10, filterFn = null) {
     const pool = filterFn ? getActiveWordsPool().filter(filterFn) : getActiveWordsPool().slice();
@@ -1850,6 +2114,16 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     folder:     '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
     play:       '<polygon points="6 3 20 12 6 21 6 3"/>',
     check:      '<path d="M20 6 9 17l-5-5"/>',
+    navProgress:'<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>',
+    flame:      '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+    calendar:   '<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>',
+    rotateCw:   '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>',
+    lock:       '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+    award:      '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>',
+    bookmark:   '<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>',
+    zap:        '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>',
+    compass:    '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
+    checkCheck: '<path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/>',
     eye:        '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
     eyeOff:     '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
     cross:      '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
@@ -1984,7 +2258,267 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (!main) return;
     if (currentTab === 'study') renderStudyDashboard(main);
     else if (currentTab === 'words') renderWordsTab(main);
+    else if (currentTab === 'progress') renderProgressTab(main);
     else if (currentTab === 'settings') renderSettingsTab(main);
+  }
+
+
+  /* =========================================================
+   * ВКЛАДКА «ПРОГРЕС»
+   * Усе тут рахується з того, що застосунок справді знає: журнал днів
+   * (study_days) і стан карток. Нічого вигаданого: ні рівнів CEFR, ні балів.
+   * Календар заповнюється з дня, коли журнал почав вестись, — за попередні
+   * тижні даних просто не існує, і підробляти їх ми не будемо.
+   * ========================================================= */
+  const MILESTONE_STEPS = [10, 50, 100, 250, 500, 1000];
+  const WEEK_DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+  const MONTHS_SHORT = ['січ.', 'лют.', 'бер.', 'квіт.', 'трав.', 'черв.', 'лип.', 'серп.', 'вер.', 'жовт.', 'лист.', 'груд.'];
+  let heatSelected = null;   // обрана клітинка календаря (показує підказку)
+
+  // Понеділок як перший день тижня: у нас тиждень починається з Пн, а getDay() — з Нд
+  function mondayIndex(date) { return (date.getDay() + 6) % 7; }
+  function startOfWeek(ts = Date.now()) {
+    const d = new Date(ts);
+    return todayStr(new Date(d.getFullYear(), d.getMonth(), d.getDate() - mondayIndex(d)).getTime());
+  }
+  function dayDate(day) { const [y, m, dd] = String(day).split('-').map(Number); return new Date(y, m - 1, dd); }
+  function humanDay(day) { const d = dayDate(day); return `${WEEK_DAYS[mondayIndex(d)]}, ${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`; }
+
+  // Наступний рубіж словника: 48 вивчених → «до 50 лишилось 2»
+  function nextMilestone(learned) {
+    const target = MILESTONE_STEPS.find(n => n > learned) || null;
+    return target ? { target, left: target - learned, p: learned / target } : null;
+  }
+
+  /* Рівень клітинки 0–4. Поріг рахуємо від звичайного для учня дня (медіани),
+     а не від його рекорду: інакше один ударний день зробив би решту блідою. */
+  function heatLevel(answers, base) {
+    if (!answers) return 0;
+    const unit = Math.max(4, base);
+    if (answers <= unit * 0.5) return 1;
+    if (answers <= unit) return 2;
+    if (answers <= unit * 1.75) return 3;
+    return 4;
+  }
+  function heatBase() {
+    const vals = Object.values(studyDays()).map(d => d.a || 0).filter(a => a > 0).sort((a, b) => a - b);
+    if (!vals.length) return 0;
+    return vals[Math.floor(vals.length / 2)];
+  }
+
+  function progressModel() {
+    const days = studyDays();
+    const pool = state.words;
+    const counts = { new: 0, learn: 0, know: 0, master: 0 };
+    pool.forEach(w => { counts[getWordStatus(w)]++; });
+    const learned = counts.know + counts.master;
+    const totals = studyTotals();
+
+    // 12 тижнів по 7 днів, останній стовпець — поточний тиждень
+    const weekStart = startOfWeek();
+    const base = heatBase();
+    const cols = [];
+    for (let c = 11; c >= 0; c--) {
+      const colStart = shiftDay(weekStart, -7 * c);
+      const cells = [];
+      for (let i = 0; i < 7; i++) {
+        const day = shiftDay(colStart, i);
+        const a = (days[day] && days[day].a) || 0;
+        cells.push({ day, a, level: heatLevel(a, base), future: day > todayStr() });
+      }
+      cols.push({ start: colStart, cells });
+    }
+    // Підпис місяця ставимо над стовпцем, у якому місяць змінюється
+    const months = cols.map((col, i) => {
+      const m = dayDate(col.start).getMonth();
+      const prev = i ? dayDate(cols[i - 1].start).getMonth() : -1;
+      return m === prev ? '' : MONTHS_SHORT[m];
+    });
+
+    const week = [];
+    let weekAnswers = 0, weekCorrect = 0;
+    for (let i = 0; i < 7; i++) {
+      const day = shiftDay(weekStart, i);
+      const d = days[day] || { a: 0, c: 0 };
+      weekAnswers += d.a || 0; weekCorrect += d.c || 0;
+      week.push({ day, a: d.a || 0, today: day === todayStr(), future: day > todayStr() });
+    }
+    const weekMax = Math.max(1, ...week.map(d => d.a));
+
+    const last7 = [];
+    for (let i = 6; i >= 0; i--) {
+      const day = shiftDay(todayStr(), -i);
+      const d = dayDate(day);
+      const active = wasActive(day);
+      last7.push({
+        day,
+        name: i === 0 ? 'Сьогодні' : WEEK_DAYS[mondayIndex(d)],
+        state: i === 0 ? (active ? 'today-done' : 'today') : (active ? 'done' : 'missed')
+      });
+    }
+
+    const streak = currentStreak();
+    const best = bestStreak();
+    return {
+      streak, best, month: activeDaysInMonth(), last7,
+      counts, total: pool.length, learned, milestone: nextMilestone(learned),
+      cols, months, hasHistory: Object.keys(days).some(d => wasActive(d)),
+      week, weekMax, weekAnswers, weekAccuracy: weekAnswers ? Math.round((weekCorrect / weekAnswers) * 100) : null,
+      hard: pool.filter(w => w.l > 0).sort((a, b) => b.l - a.l || a.fr.localeCompare(b.fr)).slice(0, 5),
+      totals,
+      badges: [
+        { id: 'week',    icon: 'award',    title: 'Перший тиждень', cond: '7 днів поспіль',    have: best,            need: 7 },
+        { id: 'month',   icon: 'calendar', title: 'Місяць поспіль', cond: '30 днів поспіль',   have: best,            need: 30 },
+        { id: 'ten',     icon: 'navStudy', title: 'Перша десятка',  cond: '10 слів засвоєно',  have: counts.master,   need: 10 },
+        { id: 'hundred', icon: 'bookmark', title: 'Сотня',          cond: '100 слів засвоєно', have: counts.master,   need: 100 },
+        { id: 'clean',   icon: 'zap',      title: 'Без пропусків',  cond: 'усі картки дня виконано 5 разів', have: totals.cleared, need: 5 },
+        { id: 'mara',    icon: 'compass',  title: 'Марафон',        cond: '1000 відповідей',   have: totals.answers,  need: 1000 }
+      ]
+    };
+  }
+
+  function renderProgressTab(container) {
+    clearActiveSessionProgress();
+    const m = progressModel();
+    const dueCount = getDueAndNewQueues().combined.length;
+    const pl = (n) => ukPlural(n, 'день', 'дні', 'днів');
+    const earned = m.badges.filter(b => b.have >= b.need).length;
+
+    const streakNote = m.streak > 0 ? ''
+      : (m.best > 0
+        ? `<div class="prog-note">Нова серія починається сьогодні. Твій рекорд — ${m.best} ${pl(m.best)}.</div>`
+        : '<div class="prog-note">Почни серію сьогодні.</div>');
+
+    const startBtn = state.words.length === 0 ? '' :
+      `<button type="button" class="btn btn-primary" id="btnProgStart" style="width:100%; margin-top:16px; gap:8px;">${m.totals.answers ? `Почати повторення (${dueCount})` : 'Почати перше повторення'} ${icon('arrowRight')}</button>`;
+
+    container.innerHTML = `
+      <div class="prog-head">
+        <h1 class="prog-title">Прогрес</h1>
+        <p class="prog-sub">Твій шлях у французькій</p>
+      </div>
+
+      <section class="prog-card">
+        <div class="streak-hero">
+          <div class="streak-val"><span class="streak-num">${m.streak}</span><span class="streak-word">${pl(m.streak)} поспіль</span></div>
+          <div class="streak-icon${m.streak ? '' : ' cold'}">${icon('flame')}</div>
+        </div>
+        ${streakNote}
+        <div class="streak-stats">
+          <span>Рекорд: <strong>${m.best} ${pl(m.best)}</strong></span>
+          <span class="stat-dot"></span>
+          <span>Цього місяця: <strong>${m.month} ${pl(m.month)}</strong></span>
+        </div>
+        <div class="streak-days-cap">Останні 7 днів</div>
+        <div class="streak-days">
+          ${m.last7.map(d => `<div class="day-col"><span class="day-name">${d.name}</span>
+            <div class="day-dot" data-state="${d.state}" title="${escapeHtml(humanDay(d.day))}">${d.state === 'done' || d.state === 'today-done' ? icon('check') : (d.state === 'today' ? icon('play') : '')}</div></div>`).join('')}
+        </div>
+        ${startBtn}
+      </section>
+
+      <section class="prog-card">
+        <div class="card-head"><h2 class="card-title">Календар активності</h2><span class="card-meta">12 тижнів</span></div>
+        ${m.hasHistory ? `
+          ${heatSelected ? `<div class="heatmap-tip">${icon('calendar')}<span>${escapeHtml(heatSelected)}</span></div>` : ''}
+          <div class="heatmap-months">${m.months.map(x => `<span style="flex:1 1 0;min-width:0;">${x}</span>`).join('')}</div>
+          <div class="heatmap-wrap">
+            <div class="heatmap-axis"><span>Пн</span><span></span><span>Ср</span><span></span><span>Пт</span><span></span><span></span></div>
+            <div class="heatmap-cols">
+              ${m.cols.map(col => `<div class="heat-col">${col.cells.map(c => c.future ? '<div class="heat-cell" data-level="0" style="opacity:.35"></div>'
+                : `<button type="button" class="heat-cell" data-level="${c.level}" data-date="${c.day}" data-count="${c.a}" data-sel="${heatSelected && heatSelected.startsWith(humanDay(c.day)) ? 1 : 0}" aria-label="${escapeHtml(humanDay(c.day))}: ${c.a}"></button>`).join('')}</div>`).join('')}
+            </div>
+          </div>
+          <div class="heatmap-legend"><span>Менше</span><div class="legend-cells">
+            ${[0, 1, 2, 3, 4].map(l => `<div class="legend-cell heat-cell" data-level="${l}"></div>`).join('')}
+          </div><span>Більше</span></div>`
+        : `<div class="prog-note">${icon('calendar')}<span>Почни першу сесію — і тут з'явиться твій календар.</span></div>`}
+      </section>
+
+      <section class="prog-card">
+        <div class="card-head"><h2 class="card-title">Вивчено слів</h2><span class="card-meta">Знаю + Засвоєно</span></div>
+        <div class="words-num">${m.learned} ${ukPlural(m.learned, 'слово', 'слова', 'слів')} вивчено</div>
+        ${m.milestone ? `
+          <div class="milestone-label"><span>До ${m.milestone.target} слів: залишилось ще ${m.milestone.left}</span><span>${m.learned} / ${m.milestone.target}</span></div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="--p: ${m.milestone.p.toFixed(3)};"></div></div>` : ''}
+        ${m.total ? `
+          <div class="status-bar">
+            ${['new', 'learn', 'know', 'master'].map(k => `<div class="status-segment" data-status="${k}" style="width:${(m.counts[k] / m.total) * 100}%"></div>`).join('')}
+          </div>
+          <div class="status-legend">
+            ${[['new', 'Нові'], ['learn', 'Вчу'], ['know', 'Знаю'], ['master', 'Засвоєно']].map(([k, label]) =>
+              `<div class="status-legend-item"><span class="status-legend-dot" style="background:var(--st-${k})"></span><span>${label}: <strong>${m.counts[k]}</strong></span></div>`).join('')}
+          </div>`
+        : '<div class="prog-note" style="margin-top:12px;">Слів поки немає. Викладач додасть їх — і прогрес почне рухатись.</div>'}
+      </section>
+
+      <section class="prog-card">
+        <div class="card-head"><h2 class="card-title">Цей тиждень</h2></div>
+        <div class="week-stats"><span>Відповідей: <strong>${m.weekAnswers}</strong></span>${m.weekAccuracy === null ? '' : `<span class="stat-dot"></span><span>Правильних: <strong>${m.weekAccuracy}%</strong></span>`}</div>
+        ${m.weekAnswers ? `
+          <div class="week-chart">
+            ${m.week.map(d => `<div class="week-bar-col"><span class="week-bar-val">${d.future ? '' : d.a}</span>
+              <div class="week-bar" data-today="${d.today ? 1 : 0}" data-future="${d.future ? 1 : 0}" style="--v: ${(d.a / m.weekMax).toFixed(3)};"></div></div>`).join('')}
+          </div>
+          <div class="week-days">${m.week.map((d, i) => `<span>${WEEK_DAYS[i]}</span>`).join('')}</div>`
+        : '<div class="prog-note" style="margin-top:12px;">Зроби сесію — і тут з\'явиться графік тижня.</div>'}
+      </section>
+
+      <section class="prog-card">
+        <div class="card-head"><h2 class="card-title">Даються важко</h2>${m.hard.length ? '<span class="card-meta">Найбільше помилок</span>' : ''}</div>
+        ${m.hard.length ? `
+          <div class="hard-list">
+            ${m.hard.map(w => `<div class="hard-item">
+              <div class="hard-body"><span class="hard-fr">${escapeHtml(w.fr)}</span><span class="hard-uk">${escapeHtml(w.uk || w.def)}</span></div>
+              <div class="hard-side"><span class="status-pill" data-st="${getWordStatus(w)}">${escapeHtml(getStatusLabel(getWordStatus(w)))}</span>
+                <span class="hard-count">забув ${w.l} ${ukPlural(w.l, 'раз', 'рази', 'разів')}</span></div>
+            </div>`).join('')}
+          </div>
+          <button type="button" class="btn" id="btnProgHard" style="width:100%; margin-top:12px; gap:8px;">${icon('rotateCw')} Повторити ці слова</button>`
+        : '<div class="prog-note">Складних слів поки немає. Усі слова даються легко або ще не повторювалися.</div>'}
+      </section>
+
+      <section class="prog-card">
+        <div class="card-head"><h2 class="card-title">Рубежі</h2><span class="card-meta">${earned} / ${m.badges.length} відкрито</span></div>
+        <div class="milestones">
+          ${m.badges.map(b => { const done = b.have >= b.need; return `
+            <div class="badge-card" data-earned="${done}">
+              <div class="badge-top"><div class="badge-icon-box">${icon(b.icon)}</div>${done ? icon('check') : icon('lock')}</div>
+              <div class="badge-title">${b.title}</div>
+              <div class="badge-cond">${b.cond}</div>
+              ${done ? '' : `<div class="badge-prog">${b.have} / ${b.need}</div>`}
+            </div>`; }).join('')}
+        </div>
+      </section>
+    `;
+
+    const start = container.querySelector('#btnProgStart');
+    if (start) start.addEventListener('click', () => { switchTab('study'); startMode('cards'); });
+    const hard = container.querySelector('#btnProgHard');
+    if (hard) hard.addEventListener('click', () => startFocusedReview(m.hard));
+    container.querySelectorAll('.heat-cell[data-date]').forEach(b => b.addEventListener('click', () => {
+      const n = Number(b.dataset.count) || 0;
+      const label = `${humanDay(b.dataset.date)} · ${n} ${ukPlural(n, 'відповідь', 'відповіді', 'відповідей')}`;
+      heatSelected = (heatSelected === label) ? null : label;
+      renderProgressTab(container);
+    }));
+  }
+
+  /* Повторення саме цих слів. Звичайна сесія бере те, що на часі; тут учень
+     сам вибрав, що розібрати, тож чергу складаємо з переданих слів. */
+  let focusedReviewIds = null;
+  function startFocusedReview(words) {
+    const ids = (words || []).map(w => w.id).filter(Boolean);
+    if (!ids.length) return;
+    focusedReviewIds = ids;
+    switchTab('study');
+    startMode('cards');
+  }
+  function takeFocusedReview() {
+    if (!focusedReviewIds) return null;
+    const deck = focusedReviewIds.map(id => state.words.find(w => w.id === id)).filter(Boolean);
+    focusedReviewIds = null;              // список одноразовий: «Ще раунд» бере звичайну чергу
+    return deck.length ? deck : null;
   }
 
   // 6. ДАШБОРД
@@ -2116,11 +2650,23 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     else if (modeId === 'anagram') runAnagramMode(main, restoredState);
   }
 
+  /* Два рядки наприкінці сесії: зроблене сьогодні помітно одразу, а не лише
+     на окремій вкладці. Засвоєні слова — та сама цифра, що й у «Прогресі». */
+  function sessionDoneHtml() {
+    const streak = currentStreak();
+    const master = state.words.filter(w => getWordStatus(w) === 'master').length;
+    return `<div class="session-done">
+      <div class="session-done-box"><div class="session-done-lbl">Серія</div><div class="session-done-val">${streak} ${ukPlural(streak, 'день', 'дні', 'днів')} поспіль</div></div>
+      <div class="session-done-box"><div class="session-done-lbl">Словниковий запас</div><div class="session-done-val mastered">Засвоєно вже ${master} ${ukPlural(master, 'слово', 'слова', 'слів')}</div></div>
+    </div>`;
+  }
+
   function renderRoundSummary(container, modeId, results) {
     cleanupSession();
     clearActiveSessionProgress();
     container.innerHTML = `<section class="study-card"><div class="session-header"><h2 style="font-family:var(--font-fr); font-size:1.35rem;">Підсумок раунду</h2><span class="session-progress">${results.filter(r=>r.ok).length} / ${results.length}</span></div>
       <div class="summary-list">${results.map(r => `<div class="summary-row"><div><strong style="font-family:var(--font-fr);">${escapeHtml(r.word.fr)}</strong><span style="color:var(--text-muted); margin-left:8px;">— ${escapeHtml(getPromptText(r.word))}</span></div><div style="display:flex; align-items:center; gap:8px;">${speakerBtnHtml(r.word.fr)}<span class="${r.ok?'mark-ok':'mark-err'}">${r.ok?'✓':'✗'}</span></div></div>`).join('')}</div>
+      ${sessionDoneHtml()}
       <div style="display:flex; gap:10px; margin-top:16px;"><button type="button" class="btn btn-primary" id="btnSummaryAgain">Ще раунд</button><button type="button" class="btn" id="btnSummaryBack">До режимів</button></div></section>`;
     container.querySelector('#btnSummaryAgain').addEventListener('click', () => startMode(modeId));
     container.querySelector('#btnSummaryBack').addEventListener('click', exitToDashboard);
@@ -2149,7 +2695,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         });
       }
     } else {
-      deck = q.combined.length > 0 ? q.combined.slice() : shuffle(getActiveWordsPool()).slice(0, 10);
+      const focused = takeFocusedReview();
+      deck = focused || (q.combined.length > 0 ? q.combined.slice() : shuffle(getActiveWordsPool()).slice(0, 10));
       totalInitial = deck.length;
     }
 
@@ -3897,6 +4444,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   (function paintStaticIcons() {
     const set = (id, name) => { const el = document.getElementById(id); if (el) el.innerHTML = icon(name); };
     set('navIcoStudy', 'navStudy');
+    set('navIcoProgress', 'navProgress');
     set('navIcoWords', 'navWords');
     set('navIcoSettings', 'navSettings');
     set('btnSignOut', 'signOut');
