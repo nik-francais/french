@@ -665,7 +665,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   
   const defaultState = () => ({ 
     words: [], 
-    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random', profileName: '', autoNext: true },
+    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random', profileName: '', autoNext: true, tempo: 'standard' },
     stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0, days: {} } 
   });
   let state = defaultState();
@@ -1770,6 +1770,18 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     return { 'new':'Нове', 'learn':'Вчу', 'know':'Знаю', 'master':'Засвоєно' }[st] || 'Нове';
   }
   
+  /* Темп повторення: множник росту інтервалу після «Добре» / «Легко».
+     Інтенсивний — для тих, хто забуває між повтореннями (≈6 повторень за перший місяць
+     замість ≈4; ціна — приблизно в 1,5 раза більше щоденних карток). «Важко» росте
+     однаково повільно в усіх темпах, «Знову» завжди повертає слово через 10 хв.
+     Змінює лише майбутні інтервали: вже заплановане повторення не зсувається. */
+  const TEMPOS = {
+    intense:  { name: 'Інтенсивний', growth: 0.7, firstEasy: 2 },
+    standard: { name: 'Стандартний', growth: 1,   firstEasy: 3 },
+    relaxed:  { name: 'Спокійний',   growth: 1.3, firstEasy: 4 }
+  };
+  function currentTempo() { return TEMPOS[state.settings && state.settings.tempo] || TEMPOS.standard; }
+
   function previewNextInterval(word, grade) {
     const isInitial = (word.r === 0 || word.iv < 1);
     let ivDays = 0;
@@ -1777,12 +1789,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (isInitial) {
       if (grade === 'hard') return { iv: 0.5, ms: 12 * 60 * MIN_MS, label: '12 год' };
       if (grade === 'good') return { iv: 1, ms: DAY_MS, label: '1 дн' };
-      if (grade === 'easy') return { iv: 3, ms: 3 * DAY_MS, label: '3 дн' };
+      if (grade === 'easy') { const d = currentTempo().firstEasy; return { iv: d, ms: d * DAY_MS, label: `${d} дн` }; }
     } else {
       const ef = word.ef || 2.5;
+      const g = currentTempo().growth;
       if (grade === 'hard') ivDays = Math.min(365, word.iv * 1.2);
-      if (grade === 'good') ivDays = Math.min(365, word.iv * ef);
-      if (grade === 'easy') ivDays = Math.min(365, word.iv * ef * 1.3);
+      if (grade === 'good') ivDays = Math.min(365, word.iv * ef * g);
+      if (grade === 'easy') ivDays = Math.min(365, word.iv * ef * 1.3 * g);
       return { iv: Math.max(1, Math.round(ivDays * 10) / 10), label: `${Math.round(Math.max(1, ivDays))} дн` };
     }
   }
@@ -1798,12 +1811,13 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     } else if (isInitial) {
       if (grade === 'hard') { iv = 0.5; word.due = now + 12 * 60 * MIN_MS; }
       else if (grade === 'good') { iv = 1; word.due = now + DAY_MS; }
-      else if (grade === 'easy') { iv = 3; ef = Math.min(3.2, ef + 0.15); word.due = now + 3 * DAY_MS; }
+      else if (grade === 'easy') { iv = currentTempo().firstEasy; ef = Math.min(3.2, ef + 0.15); word.due = now + iv * DAY_MS; }
     } else {
+      const g = currentTempo().growth;
       if (grade === 'hard') { iv = Math.min(365, iv * 1.2); ef = Math.max(1.3, ef - 0.15); }
-      else if (grade === 'good') { iv = Math.min(365, iv * ef); }
-      else if (grade === 'easy') { iv = Math.min(365, iv * ef * 1.3); ef = Math.min(3.2, ef + 0.15); }
-      iv = Math.round(iv * 100) / 100;
+      else if (grade === 'good') { iv = Math.min(365, iv * ef * g); }
+      else if (grade === 'easy') { iv = Math.min(365, iv * ef * 1.3 * g); ef = Math.min(3.2, ef + 0.15); }
+      iv = Math.max(1, Math.round(iv * 100) / 100); // інтервал вивченого слова не менший за день
       word.due = now + iv * DAY_MS;
     }
     word.iv = iv; word.ef = Math.round(ef * 100) / 100; word.r = (word.r || 0) + 1; word.t = now;
@@ -4363,6 +4377,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
               <option value="dark" ${state.settings.theme==='dark'?'selected':''}>Темна</option>
             </select>
           </div>
+          <div class="setting-row" style="align-items:flex-start;">
+            <div>
+              <div style="font-weight:600;">Темп повторення</div>
+              <div style="font-size:var(--fs-small); color:var(--text-muted);">Інтенсивний — якщо слова встигають забуватись між повтореннями. Карток щодня стане більше.</div>
+            </div>
+            <select id="selTempo" class="select" style="width:auto; min-width:140px;">
+              ${Object.entries(TEMPOS).map(([id, t]) => `<option value="${id}" ${(state.settings.tempo || 'standard') === id ? 'selected' : ''}>${t.name}</option>`).join('')}
+            </select>
+          </div>
           <div class="setting-row">
             <div>
               <div style="font-weight:600;">Автоперехід після правильної відповіді</div>
@@ -4391,6 +4414,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       </div>`;
     refreshVoices();
     container.querySelector('#selTheme').addEventListener('change', e => { state.settings.theme = e.target.value; applyTheme(); saveLocalStats(); });
+    container.querySelector('#selTempo').addEventListener('change', e => { state.settings.tempo = TEMPOS[e.target.value] ? e.target.value : 'standard'; saveLocalStats(); });
     container.querySelector('#selAutoNext').addEventListener('change', e => { state.settings.autoNext = e.target.value === 'on'; saveLocalStats(); });
     container.querySelectorAll('[data-accent-id]').forEach(btn => btn.addEventListener('click', () => {
       state.settings.accent = btn.dataset.accentId;
