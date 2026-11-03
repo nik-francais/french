@@ -2497,10 +2497,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <div class="card-head"><h2 class="card-title">Рубежі</h2><span class="card-meta">${earned} / ${m.badges.length} відкрито</span></div>
         <div class="milestones">
           ${m.badges.map(b => { const done = b.have >= b.need; return `
-            <div class="badge-card" data-earned="${done}">
+            <div class="badge-card" data-earned="${done}" title="${escapeHtml(b.cond)}">
               <div class="badge-top"><div class="badge-icon-box">${icon(b.icon)}</div>${done ? icon('check') : icon('lock')}</div>
               <div class="badge-title">${b.title}</div>
-              ${done ? `<div class="badge-cond">${b.cond}</div>` : `<div class="badge-prog">${b.have} / ${b.need}</div><div class="badge-cond">${b.unit}</div>`}
+              ${done ? '' : `<div class="badge-prog">${b.have} / ${b.need}</div>`}
             </div>`; }).join('')}
         </div>
       </section>
