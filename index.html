@@ -499,6 +499,19 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .word-item[data-status="learn"] { border-left-color: var(--st-learn); }
 .word-item[data-status="know"] { border-left-color: var(--st-know); }
 .word-item[data-status="master"] { border-left-color: var(--st-master); }
+.words-head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:12px; }
+.view-switch { display:inline-flex; padding:3px; gap:2px; border-radius:var(--radius-pill); background:var(--bg-elevated); }
+.view-switch button { width:36px; height:32px; border:0; border-radius:var(--radius-pill); background:transparent; color:var(--text-muted); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+.view-switch button .icon { width:17px; height:17px; }
+.view-switch button[aria-pressed="true"] { background:var(--bg-card); color:var(--accent); box-shadow:0 1px 3px rgba(0,0,0,.12); }
+.word-list.is-compact { gap:6px; }
+.word-row { display:flex; align-items:center; gap:4px; background:var(--bg-card); border:1px solid var(--border); border-left:4px solid var(--st-new); border-radius:var(--radius); padding:2px 6px 2px 0; }
+.word-row[data-status="learn"] { border-left-color: var(--st-learn); }
+.word-row[data-status="know"] { border-left-color: var(--st-know); }
+.word-row[data-status="master"] { border-left-color: var(--st-master); }
+.word-row-main { flex:1; min-width:0; min-height:44px; display:flex; flex-direction:column; justify-content:center; gap:1px; padding:6px 10px; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; font:inherit; }
+.word-row-fr { font-size:1.05rem; overflow-wrap:anywhere; }
+.word-row-tr { font-size:var(--fs-small); color:var(--text-muted); overflow-wrap:anywhere; }
 .word-item-header { display: flex; flex-direction: column; gap: 4px; }
 .word-fr-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
 .word-fr { font-family: var(--font-fr); font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
@@ -665,7 +678,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   
   const defaultState = () => ({ 
     words: [], 
-    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random', profileName: '', autoNext: true, tempo: 'standard' },
+    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random', profileName: '', autoNext: true, tempo: 'standard', wordsView: 'full' },
     stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0, days: {} } 
   });
   let state = defaultState();
@@ -2124,6 +2137,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     zap:        '<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>',
     compass:    '<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
     checkCheck: '<path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/>',
+    viewList: '<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
+    viewCards: '<rect width="18" height="7" x="3" y="3" rx="1"/><rect width="18" height="7" x="3" y="14" rx="1"/>',
     eye:        '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/>',
     eyeOff:     '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
     cross:      '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
@@ -2367,12 +2382,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       hard: pool.filter(w => w.l > 0).sort((a, b) => b.l - a.l || a.fr.localeCompare(b.fr)).slice(0, 5),
       totals,
       badges: [
-        { id: 'week',    icon: 'award',    title: 'Перший тиждень', cond: '7 днів поспіль',    have: best,            need: 7 },
-        { id: 'month',   icon: 'calendar', title: 'Місяць поспіль', cond: '30 днів поспіль',   have: best,            need: 30 },
-        { id: 'ten',     icon: 'navStudy', title: 'Перша десятка',  cond: '10 слів засвоєно',  have: counts.master,   need: 10 },
-        { id: 'hundred', icon: 'bookmark', title: 'Сотня',          cond: '100 слів засвоєно', have: counts.master,   need: 100 },
-        { id: 'clean',   icon: 'zap',      title: 'Без пропусків',  cond: 'усі картки дня виконано 5 разів', have: totals.cleared, need: 5 },
-        { id: 'mara',    icon: 'compass',  title: 'Марафон',        cond: '1000 відповідей',   have: totals.answers,  need: 1000 }
+        { id: 'week',    icon: 'award',    title: 'Перший тиждень', cond: '7 днів поспіль', unit: 'днів поспіль',    have: best,            need: 7 },
+        { id: 'month',   icon: 'calendar', title: 'Місяць поспіль', cond: '30 днів поспіль', unit: 'днів поспіль',   have: best,            need: 30 },
+        { id: 'ten',     icon: 'navStudy', title: 'Перша десятка',  cond: '10 слів засвоєно', unit: 'слів засвоєно',  have: counts.master,   need: 10 },
+        { id: 'hundred', icon: 'bookmark', title: 'Сотня',          cond: '100 слів засвоєно', unit: 'слів засвоєно', have: counts.master,   need: 100 },
+        { id: 'clean',   icon: 'zap',      title: 'Без пропусків',  cond: 'усі картки дня виконано 5 разів', unit: 'днів з усіма картками', have: totals.cleared, need: 5 },
+        { id: 'mara',    icon: 'compass',  title: 'Марафон',        cond: '1000 відповідей', unit: 'відповідей',   have: totals.answers,  need: 1000 }
       ]
     };
   }
@@ -2485,8 +2500,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             <div class="badge-card" data-earned="${done}">
               <div class="badge-top"><div class="badge-icon-box">${icon(b.icon)}</div>${done ? icon('check') : icon('lock')}</div>
               <div class="badge-title">${b.title}</div>
-              <div class="badge-cond">${b.cond}</div>
-              ${done ? '' : `<div class="badge-prog">${b.have} / ${b.need}</div>`}
+              ${done ? `<div class="badge-cond">${b.cond}</div>` : `<div class="badge-prog">${b.have} / ${b.need}</div><div class="badge-cond">${b.unit}</div>`}
             </div>`; }).join('')}
         </div>
       </section>
@@ -3954,6 +3968,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   let wordFilterPos = 'all';
   let wordFilterSrc = 'all';
   let confirmingDeleteWordId = null;
+  const expandedWordIds = new Set(); // у компактному вигляді: слова, розгорнуті дотиком
+  function compactView() { return !!(state.settings && state.settings.wordsView === 'compact'); }
   let confirmingTopicDelete = false;
 
   function renderWordsTab(container) {
@@ -3999,8 +4015,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 
     container.innerHTML = `
       <section class="panel-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+        <div class="words-head">
           <h3 style="font-family:var(--font-fr);">Мої слова (${state.words.length})</h3>
+          <div class="view-switch" role="group" aria-label="Вигляд списку">
+            <button type="button" id="btnViewCompact" aria-pressed="${compactView()}" aria-label="Компактно: слово і переклад" title="Компактно">${icon('viewList')}</button>
+            <button type="button" id="btnViewFull" aria-pressed="${!compactView()}" aria-label="Розгорнуто: уся інформація" title="Розгорнуто">${icon('viewCards')}</button>
+          </div>
         </div>
         <div class="words-toolbar">
           <button type="button" class="btn btn-primary" id="btnAddCode">Додати з коду</button>
@@ -4104,8 +4124,19 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         listEl.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Слів не знайдено.</div>`;
         return;
       }
+      const compact = compactView();
+      listEl.classList.toggle('is-compact', compact);
       listEl.innerHTML = filtered.map(w => {
         const st = getWordStatus(w);
+        if (compact && !expandedWordIds.has(w.id)) {
+          return `<article class="word-row" data-status="${st}">
+            <button type="button" class="word-row-main" data-expand="${w.id}" aria-label="Показати все про слово ${escapeHtml(w.fr)}">
+              <span class="word-fr word-row-fr">${escapeHtml(w.fr)}</span>
+              <span class="word-row-tr">${escapeHtml(getPromptText(w))}</span>
+            </button>
+            ${speakerBtnHtml(w.fr)}
+          </article>`;
+        }
         const d = formatDueDate(w);
         const hasC = Boolean(w.conj && w.conj.tenses);
         const isConfirming = (confirmingDeleteWordId === w.id);
@@ -4134,6 +4165,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             <span>Повторень: ${w.r || 0} ${w.added ? `· Додано: ${w.added.split('-').slice(1).reverse().join('.')}` : ''}</span>
             <div style="display:flex;gap:6px;align-items:center;">
               ${speakerBtnHtml(w.fr)}
+              ${compact ? `<button type="button" class="btn btn-sm" data-collapse="${w.id}">Згорнути</button>` : ''}
               <button type="button" class="btn btn-sm" data-edit="${w.id}">Редагувати</button>
               ${!isConfirming ? `
                 <button type="button" class="btn btn-sm" data-askdel="${w.id}">Видалити</button>
@@ -4148,6 +4180,12 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         </article>`;
       }).join('');
 
+      listEl.querySelectorAll('[data-expand]').forEach(btn => {
+        btn.addEventListener('click', () => { expandedWordIds.add(btn.dataset.expand); renderList(); });
+      });
+      listEl.querySelectorAll('[data-collapse]').forEach(btn => {
+        btn.addEventListener('click', () => { expandedWordIds.delete(btn.dataset.collapse); confirmingDeleteWordId = null; renderList(); });
+      });
       listEl.querySelectorAll('[data-edit]').forEach(btn => {
         btn.addEventListener('click', () => {
           const w = state.words.find(item => item.id === btn.dataset.edit);
@@ -4194,6 +4232,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       });
     }
 
+    const setWordsView = (mode) => {
+      if (compactView() === (mode === 'compact')) return;
+      state.settings.wordsView = mode;
+      expandedWordIds.clear();
+      saveLocalStats();
+      renderWordsTab(container);
+    };
+    container.querySelector('#btnViewCompact').addEventListener('click', () => setWordsView('compact'));
+    container.querySelector('#btnViewFull').addEventListener('click', () => setWordsView('full'));
     container.querySelector('#inpWordSearch').addEventListener('input', e => {
       wordSearchQuery = e.target.value;
       renderList();
