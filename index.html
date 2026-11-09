@@ -145,6 +145,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .student-email { font-size: var(--fs-micro); color: var(--text-muted); overflow-wrap: anywhere; }
 .student-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px 14px; background: var(--bg-elevated); border-radius: var(--radius); }
 /* «Мовчить» — не докір, а підказка, кому написати першим */
+.student-bare { margin-top: 10px; font-size: var(--fs-small); color: var(--accent); font-weight: 600; }
+.t-check { display:flex; align-items:flex-start; gap:10px; margin:0 0 12px; font-size:var(--fs-small); line-height:1.4; cursor:pointer; }
+.t-check input { width:20px; height:20px; flex-shrink:0; margin:0; accent-color: var(--accent); }
+.filter-chip { display:inline-flex; align-items:center; gap:6px; min-height:40px; padding:0 14px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--bg-card); color:var(--text-main); font:inherit; font-size:var(--fs-small); font-weight:600; cursor:pointer; margin-bottom:12px; }
+.filter-chip[aria-pressed="true"] { background:var(--accent); border-color:var(--accent); color:var(--accent-contrast); }
 .student-quiet { margin-top: 10px; font-size: var(--fs-small); color: var(--warning); font-weight: 600; }
 .stat-mini-lbl { font-size: var(--fs-micro); color: var(--text-muted); line-height: 1.3; }
 .stat-mini-val { font-size: var(--fs-body); font-weight: 700; line-height: 1.3; }
@@ -903,7 +908,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    * а не тисячі, тож окремі запити на кожного були б зайвим навантаженням.
    * ========================================================= */
   const teacher = { tab: 'students', rows: [], names: {}, days: {}, openEmail: null, query: '', topic: 'all', loaded: false, error: '',
-    addOpen: false, addTopic: '', addMsg: '', addBusy: false };
+    addOpen: false, addTopic: '', addMsg: '', addBusy: false, addUpdate: false, bareOnly: false };
 
   function teacherView() { return document.getElementById('teacherView'); }
 
@@ -937,6 +942,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   /* Що саме ми можемо порахувати: у хмарі лежить лише стан кожної картки.
      Серії днів і «відповідей за день» тут немає — вони живуть на пристрої учня.
      «Повторено за 7 днів» = скільки РІЗНИХ слів учень відповідав цього тижня. */
+  // «Голе» слово: учень додав лише слово й переклад. Без прикладу і відмінювання
+  // воно не потрапляє в режими з контекстом, тож його варто збагатити.
+  function isBareWord(w) { return !w.ex && !w.context_quiz && !w.conj; }
+
   function teacherStudentStats(email) {
     const words = teacher.rows.filter(w => w.userEmail === email);
     const now = Date.now();
@@ -952,6 +961,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     const days = teacher.days[email] || {};
     const t = Object.values(days).reduce((acc, d) => ({ a: acc.a + (d.a || 0), c: acc.c + (d.c || 0) }), { a: 0, c: 0 });
     return { email, words, total: words.length, counts, due, week, last,
+      bare: words.filter(isBareWord).length,
       learned: counts.know + counts.master,
       days,
       streak: currentStreak(days), best: bestStreak(days), month: activeDaysInMonth(days),
@@ -1004,10 +1014,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             <div><div class="stat-mini-lbl">Вивчено слів</div><div class="stat-mini-val">${st.learned} / ${st.total}</div></div>
             <div><div class="stat-mini-lbl">Чекає сьогодні</div><div class="stat-mini-val">${st.due}</div></div>
           </div>
+          ${st.bare ? `<div class="student-bare">${st.bare} ${ukPlural(st.bare, 'слово', 'слова', 'слів')} без контексту</div>` : ''}
           ${st.last && (Date.now() - st.last) > 7 * DAY_MS ? '<div class="student-quiet">Не займався понад тиждень</div>' : ''}
         </div>`).join('')}
     `;
-    const open = email => { teacher.openEmail = email; teacher.query = ''; teacher.topic = 'all'; teacher.addOpen = false; teacher.addMsg = ''; renderTeacherPanel(); };
+    const open = email => { teacher.openEmail = email; teacher.query = ''; teacher.topic = 'all'; teacher.addOpen = false; teacher.addMsg = ''; teacher.bareOnly = false; renderTeacherPanel(); };
     view.querySelectorAll('[data-student]').forEach(b => {
       // Картка — не <button>: інакше на iPhone з неї не виділити пошту.
       // Якщо викладач щось виділяє, це не «відкрити учня».
@@ -1022,10 +1033,14 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     const topics = Array.from(new Set(st.words.map(w => w.src).filter(Boolean))).sort();
     if (teacher.topic !== 'all' && !topics.includes(teacher.topic)) teacher.topic = 'all';
     const q = teacher.query.trim().toLowerCase();
+    if (teacher.bareOnly && st.bare === 0) teacher.bareOnly = false;
     const shown = st.words.filter(w =>
+      (!teacher.bareOnly || isBareWord(w)) &&
       (teacher.topic === 'all' || w.src === teacher.topic) &&
       (!q || `${w.fr} ${w.uk} ${w.def}`.toLowerCase().includes(q))
-    ).sort((a, b) => (b.l - a.l) || a.fr.localeCompare(b.fr));
+    ).sort(teacher.bareOnly
+      ? (a, b) => String(b.added || '').localeCompare(String(a.added || '')) || a.fr.localeCompare(b.fr)
+      : (a, b) => (b.l - a.l) || a.fr.localeCompare(b.fr));
     // Проблемні слова: найбільше забувань. Саме їх варто розібрати на занятті.
     const tough = st.words.filter(w => w.l > 0).sort((a, b) => b.l - a.l).slice(0, 5);
 
@@ -1065,6 +1080,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           <div><div class="stat-mini-lbl">Правильних</div><div class="stat-mini-val">${st.accuracy === null ? '—' : st.accuracy + '%'}</div></div>
           <div><div class="stat-mini-lbl">Повторено за тиждень</div><div class="stat-mini-val">${st.week}</div></div>
           <div><div class="stat-mini-lbl">Чекає сьогодні</div><div class="stat-mini-val">${st.due}</div></div>
+          <div><div class="stat-mini-lbl">Без контексту</div><div class="stat-mini-val">${st.bare}</div></div>
           <div><div class="stat-mini-lbl">Остання активність</div><div class="stat-mini-val">${escapeHtml(sinceLabel(st.last))}</div></div>
         </div>
       </section>
@@ -1074,7 +1090,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <input type="text" id="tAddTopic" class="input" list="tAddTopics" maxlength="80" autocomplete="off"
           placeholder="Тема, напр. Le travail (необов'язково)" value="${escapeHtml(teacher.addTopic)}">
         <datalist id="tAddTopics">${topics.map(t => `<option value="${escapeHtml(t)}"></option>`).join('')}</datalist>
-        <div style="font-size:var(--fs-micro); color:var(--text-muted); margin:-6px 0 12px;">Якщо вказати тему, вона замінить «src» у всіх словах цієї партії. Слова, які в учня вже є, пропускаються.</div>
+        <div style="font-size:var(--fs-micro); color:var(--text-muted); margin:-6px 0 12px;">Якщо вказати тему, вона замінить «src» у всіх словах цієї партії. Слова, які в учня вже є, пропускаються, якщо не ввімкнено оновлення.</div>
+        <label class="t-check"><input type="checkbox" id="tAddUpdate" ${teacher.addUpdate ? 'checked' : ''}><span>Оновити слова, які вже є в учня: підставити приклад, відмінювання, тлумачення. Прогрес повторень лишається.</span></label>
         <textarea id="tAddJson" class="teacher-textarea" placeholder="Вставте JSON масив слів…"></textarea>
         ${teacher.addMsg ? `<div class="t-add-result">${teacher.addMsg}</div>` : ''}
         <button type="button" class="btn btn-primary" id="btnTAddSend" style="width:100%;" ${teacher.addBusy ? 'disabled' : ''}>${teacher.addBusy ? 'Додаю…' : 'Додати учню'}</button>
@@ -1094,6 +1111,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           <span class="pill-badge">${shown.length}</span>
         </div>
       </div>
+      ${st.bare ? `<button type="button" class="filter-chip" id="btnTBare" aria-pressed="${teacher.bareOnly}" title="Слова без прикладу й відмінювання: спершу найновіші">Без контексту · ${st.bare}</button>` : ''}
       <input type="search" id="tSearch" class="input" placeholder="Пошук слова або перекладу…" value="${escapeHtml(teacher.query)}">
       <select id="tTopic" class="select" style="width:100%; margin-bottom:12px;">
         <option value="all">Усі теми (${st.total})</option>
@@ -1105,7 +1123,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           <div class="word-item-header">
             <div style="font-family:var(--font-fr);font-weight:700;font-size:1.05rem;">${escapeHtml(w.fr)}</div>
             <div style="color:var(--text-muted);">${escapeHtml(w.uk || w.def)}</div>
-            <div style="font-size:var(--fs-micro);color:var(--text-muted);">${escapeHtml(getStatusLabel(getWordStatus(w)))} · ${escapeHtml(w.src || '—')} · повторень: ${w.r}${w.l ? ` · забував ${w.l}` : ''}</div>
+            <div style="font-size:var(--fs-micro);color:var(--text-muted);">${escapeHtml(getStatusLabel(getWordStatus(w)))} · ${escapeHtml(w.src || '—')} · повторень: ${w.r}${w.l ? ` · забував ${w.l}` : ''}${w.added ? ` · додано ${escapeHtml(String(w.added).split('-').slice(1).reverse().join('.'))}` : ''}${isBareWord(w) ? ' · без контексту' : ''}</div>
           </div>
           <div class="word-item-actions">
             <button type="button" class="btn btn-sm" data-edit="${escapeHtml(w.dbId || '')}">Редагувати</button>
@@ -1121,6 +1139,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       const el = teacherView().querySelector('#tSearch');
       if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
     });
+    const bareBtn = view.querySelector('#btnTBare');
+    if (bareBtn) bareBtn.addEventListener('click', () => { teacher.bareOnly = !teacher.bareOnly; renderTeacherPanel(); });
     view.querySelector('#tTopic').addEventListener('change', e => { teacher.topic = e.target.value; renderTeacherPanel(); });
     view.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
       if (b.dataset.copy === 'email') copyText(email, 'Пошту скопійовано');
@@ -1169,23 +1189,59 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   /* Слова з картки учня: пошта вже відома, тож вставляється лише JSON.
      Тема (якщо вказана) замінює src усієї партії. Слова, які в учня вже є
      (і повтори всередині самої партії), пропускаються — інакше учень отримав би дві однакові картки. */
-  async function teacherAddWords(email, rawJson, topic) {
+  // Поля з нового JSON, які варто покласти в наявну картку. Порожнє не стирає наявне.
+  function enrichPatch(existing, incoming, topic) {
+    const text = v => String(v == null ? '' : v).trim();
+    const patch = {};
+    ['uk', 'def', 'ex', 'pos'].forEach(k => {
+      const v = text(k === 'uk' ? (incoming.uk || incoming.translation) : k === 'ex' ? (incoming.ex || incoming.context) : incoming[k]);
+      if (v) patch[k] = v;
+    });
+    const syn = Array.isArray(incoming.syn) ? incoming.syn : (Array.isArray(incoming.synonyms) ? incoming.synonyms : []);
+    if (syn.length) patch.syn = syn;
+    if (topic) patch.src = topic;
+    // conj тримає і відмінювання, і context_quiz / context_translation; наявне зберігаємо, нове накладаємо
+    const inConj = incoming.conj || incoming.conjugation;
+    const base = Object.assign({}, existing.conj || {});
+    if (existing.context_quiz) base.context_quiz = existing.context_quiz;
+    if (existing.context_translation) base.context_translation = existing.context_translation;
+    const merged = Object.assign(base, (inConj && typeof inConj === 'object') ? inConj : {});
+    if (incoming.context_quiz) merged.context_quiz = incoming.context_quiz;
+    if (incoming.context_translation) merged.context_translation = text(incoming.context_translation);
+    if (Object.keys(merged).length) patch.conj = merged;
+    return patch;
+  }
+
+  async function teacherAddWords(email, rawJson, topic, update = false) {
     const owner = String(email || '').trim().toLowerCase();
     const words = parseTolerantWordsJson(rawJson);
     const t = String(topic || '').trim();
-    const have = new Set(teacher.rows.filter(w => w.userEmail === owner).map(w => frKey(w.fr)));
+    const mine = teacher.rows.filter(w => w.userEmail === owner);
+    const byKey = new Map(mine.map(w => [frKey(w.fr), w]));
     const seen = new Set();
-    const fresh = [], dups = [];
+    const fresh = [], dups = [], toUpdate = [];
     words.forEach(w => {
       const k = frKey(w && (w.fr || w.word));
-      if (k && (have.has(k) || seen.has(k))) { dups.push(String(w.fr || w.word).trim()); return; }
+      if (k && (byKey.has(k) || seen.has(k))) {
+        if (update && byKey.has(k) && !seen.has(k)) { seen.add(k); toUpdate.push([byKey.get(k), w]); return; }
+        dups.push(String(w.fr || w.word).trim()); return;
+      }
       if (k) seen.add(k);
       fresh.push(t ? Object.assign({}, w, { src: t }) : w);
     });
-    if (fresh.length === 0) return { added: 0, dups, skipped: 0 };
+    let updated = 0; const failed = [];
+    for (const [ex, inc] of toUpdate) {
+      const patch = enrichPatch(ex, inc, t);
+      if (!ex.dbId || Object.keys(patch).length === 0) { failed.push(ex.fr); continue; }
+      const { data, error } = await sbClient.from('cards').update(patch).eq('id', ex.dbId).select('id');
+      if (error || !data || data.length === 0) { failed.push(ex.fr); continue; }
+      Object.assign(ex, normalizeWordRow(Object.assign({}, ex, patch)));
+      updated++;
+    }
+    if (fresh.length === 0) return { added: 0, updated, failed, dups, skipped: 0 };
     const inserted = await insertWordsBatchForEmail(owner, fresh);
     teacher.rows.push(...inserted.map(r => normalizeWordRow(Object.assign({ user_email: owner }, r))));
-    return { added: inserted.length, dups, skipped: inserted.skipped || 0, topic: t };
+    return { added: inserted.length, updated, failed, dups, skipped: inserted.skipped || 0, topic: t };
   }
 
   async function teacherSubmitWords(email) {
@@ -1194,21 +1250,25 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     const topicEl = view && view.querySelector('#tAddTopic');
     const raw = ta ? ta.value : '';
     teacher.addTopic = topicEl ? topicEl.value.trim() : '';
+    const updEl = view && view.querySelector('#tAddUpdate');
+    teacher.addUpdate = !!(updEl && updEl.checked);
     if (!String(raw).trim()) { teacher.addMsg = '<span style="color:var(--danger);">Вставте JSON зі словами.</span>'; renderTeacherPanel(); return; }
     teacher.addBusy = true; teacher.addMsg = ''; renderTeacherPanel();
     const keep = teacherView() && teacherView().querySelector('#tAddJson');
     if (keep) keep.value = raw; // поки йде запит, текст не зникає
     try {
-      const res = await teacherAddWords(email, raw, teacher.addTopic);
+      const res = await teacherAddWords(email, raw, teacher.addTopic, teacher.addUpdate);
       const parts = [];
       if (res.added) parts.push(`<span style="color:var(--success);">✓ Додано ${res.added} ${ukPlural(res.added, 'слово', 'слова', 'слів')}${res.topic ? ` у тему «${escapeHtml(res.topic)}»` : ''}.</span>`);
-      else parts.push('<span style="color:var(--warning);">Нових слів немає — нічого не додано.</span>');
-      if (res.dups.length) parts.push(`Пропущено ${res.dups.length}, бо вже є в учня: ${res.dups.slice(0, 8).map(escapeHtml).join(', ')}${res.dups.length > 8 ? '…' : ''}`);
+      if (res.updated) parts.push(`<span style="color:var(--success);">✓ Оновлено ${res.updated} ${ukPlural(res.updated, 'слово', 'слова', 'слів')}: приклад і відмінювання підставлено, прогрес збережено.</span>`);
+      if (!res.added && !res.updated) parts.push('<span style="color:var(--warning);">Нових слів немає — нічого не додано.</span>');
+      if (res.failed && res.failed.length) parts.push(`<span style="color:var(--danger);">Не вдалося оновити: ${res.failed.slice(0, 8).map(escapeHtml).join(', ')}. Перевірте, що виконано 003_teacher_manages_cards.sql.</span>`);
+      if (res.dups.length) parts.push(`Пропущено ${res.dups.length}, бо вже є в учня (щоб їх оновити, увімкніть «Оновити слова, які вже є»): ${res.dups.slice(0, 8).map(escapeHtml).join(', ')}${res.dups.length > 8 ? '…' : ''}`);
       if (res.skipped) parts.push(`Пропущено ${res.skipped} без перекладу або тлумачення.`);
       teacher.addMsg = parts.join('<br>');
       teacher.addBusy = false;
       renderTeacherPanel();
-      if (res.added) showToast(`Додано ${res.added} ${ukPlural(res.added, 'слово', 'слова', 'слів')}`);
+      if (res.added || res.updated) showToast(res.added ? `Додано ${res.added} ${ukPlural(res.added, 'слово', 'слова', 'слів')}` : `Оновлено ${res.updated} ${ukPlural(res.updated, 'слово', 'слова', 'слів')}`);
     } catch (err) {
       teacher.addBusy = false;
       teacher.addMsg = `<span style="color:var(--danger);">Помилка: ${escapeHtml(err && err.message ? err.message : String(err))}</span>`;
