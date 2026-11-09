@@ -272,6 +272,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 /* Слово-значення у завданнях: той самий шрифт, що й французькі варіанти (Literata має кирилицю),
    інакше питання і відповіді виглядають як різні сутності. Інтерфейс лишається в Golos Text. */
 .study-meaning { font-family: var(--font-fr); font-size: 1.4rem; font-weight: 700; line-height: 1.3; color: var(--accent); margin-bottom: 8px; }
+.study-meaning-row, .study-def-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.study-meaning-row .study-meaning, .study-def-row .study-def { flex:1; min-width:0; }
 .study-def { font-family: var(--font-fr); font-size: 0.98rem; line-height: 1.5; color: var(--text-muted); margin-bottom: 12px; padding-left: 10px; border-left: 2px solid var(--border); }
 .study-synonyms { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; }
 .study-example { font-family: var(--font-fr); font-size: 1.05rem; line-height: 1.45; padding: 12px 14px; background: var(--bg-elevated); border-radius: var(--radius); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -1855,6 +1857,17 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   };
   function currentTempo() { return TEMPOS[state.settings && state.settings.tempo] || TEMPOS.standard; }
 
+  /* Інтервал (у днях) для вже вивченого слова. «Легко» завжди хоча б на день довший за «Добре»:
+     інакше після округлення обидві кнопки показують однакове число (було «3 дн» і «3 дн»). */
+  function reviewIntervalDays(word, grade) {
+    const ef = word.ef || 2.5;
+    const g = currentTempo().growth;
+    const good = Math.min(365, word.iv * ef * g);
+    if (grade === 'hard') return Math.min(365, word.iv * 1.2);
+    if (grade === 'good') return good;
+    return Math.min(365, Math.max(word.iv * ef * 1.3 * g, good + 1));
+  }
+
   function previewNextInterval(word, grade) {
     const isInitial = (word.r === 0 || word.iv < 1);
     let ivDays = 0;
@@ -1864,11 +1877,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       if (grade === 'good') return { iv: 1, ms: DAY_MS, label: '1 дн' };
       if (grade === 'easy') { const d = currentTempo().firstEasy; return { iv: d, ms: d * DAY_MS, label: `${d} дн` }; }
     } else {
-      const ef = word.ef || 2.5;
-      const g = currentTempo().growth;
-      if (grade === 'hard') ivDays = Math.min(365, word.iv * 1.2);
-      if (grade === 'good') ivDays = Math.min(365, word.iv * ef * g);
-      if (grade === 'easy') ivDays = Math.min(365, word.iv * ef * 1.3 * g);
+      ivDays = reviewIntervalDays(word, grade);
       return { iv: Math.max(1, Math.round(ivDays * 10) / 10), label: `${Math.round(Math.max(1, ivDays))} дн` };
     }
   }
@@ -1886,10 +1895,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       else if (grade === 'good') { iv = 1; word.due = now + DAY_MS; }
       else if (grade === 'easy') { iv = currentTempo().firstEasy; ef = Math.min(3.2, ef + 0.15); word.due = now + iv * DAY_MS; }
     } else {
-      const g = currentTempo().growth;
-      if (grade === 'hard') { iv = Math.min(365, iv * 1.2); ef = Math.max(1.3, ef - 0.15); }
-      else if (grade === 'good') { iv = Math.min(365, iv * ef * g); }
-      else if (grade === 'easy') { iv = Math.min(365, iv * ef * 1.3 * g); ef = Math.min(3.2, ef + 0.15); }
+      iv = reviewIntervalDays(word, grade);
+      if (grade === 'hard') ef = Math.max(1.3, ef - 0.15);
+      else if (grade === 'easy') ef = Math.min(3.2, ef + 0.15);
       iv = Math.max(1, Math.round(iv * 100) / 100); // інтервал вивченого слова не менший за день
       word.due = now + iv * DAY_MS;
     }
@@ -2827,8 +2835,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
             <button type="button" class="btn btn-primary" id="btnRev" style="width:100%; margin-top:18px;">Показати значення</button>
           ` : `
             <hr class="study-divider">
-            <div class="study-meaning">${escapeHtml(getPromptText(w))}</div>
-            ${showBothUkAndDef ? `<div class="study-def">${escapeHtml(w.def)}</div>` : ''}
+            ${state.settings.langMode === 'FR_FR' && w.def
+              ? `<div class="study-meaning-row"><div class="study-meaning">${escapeHtml(w.def)}</div>${speakerBtnHtml(w.def, 'Озвучити значення')}</div>`
+              : `<div class="study-meaning">${escapeHtml(getPromptText(w))}</div>`}
+            ${showBothUkAndDef ? `<div class="study-def-row"><div class="study-def">${escapeHtml(w.def)}</div>${speakerBtnHtml(w.def, 'Озвучити значення')}</div>` : ''}
             ${w.ex ? `<div class="study-example"><div><div>${highlightBracketExample(w.ex)}</div>${w.context_translation ? `<div style="font-family:var(--font-fr); font-size:0.85rem; color:var(--text-muted); margin-top:4px;">${escapeHtml(w.context_translation)}</div>` : ''}</div>${speakerBtnHtml(w.ex)}</div>` : ''}
             ${w.syn && w.syn.length ? `<div class="study-synonyms">Синоніми: <strong>${escapeHtml(w.syn.join(', '))}</strong></div>` : ''}
             <div class="grade-grid">
@@ -3174,7 +3184,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <span class="session-progress">Напиши · ${idx+1} / ${qs.length}</span>
       </div>
       <section class="study-card">
-        <div class="${isPromptFr ? 'study-def' : 'study-meaning'}">${escapeHtml(getPromptText(w))}</div>
+        ${isPromptFr && w.def
+          ? `<div class="study-def-row"><div class="study-def">${escapeHtml(w.def)}</div>${speakerBtnHtml(w.def, 'Озвучити значення')}</div>`
+          : `<div class="${isPromptFr ? 'study-def' : 'study-meaning'}">${escapeHtml(getPromptText(w))}</div>`}
         <div class="study-pos">${escapeHtml(cleanPos)} <span class="badge" style="font-style:normal; font-family:var(--font-mono);">Слів у виразі: ${wCount}</span></div>
         <div class="template-mask">${buildMaskTemplate(targetFr, hintCount)}</div>
         <input type="text" id="inpW" class="input" placeholder="Введіть слово або вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk ? 'disabled' : ''}>
