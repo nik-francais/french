@@ -3098,6 +3098,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     if (verdict === 'ok') return { cls: 'ok', title: 'Бездоганно!' };
     if (verdict === 'accent') return { cls: 'err', title: 'Літери правильні, але діакритика — це теж орфографія:' };
     if (verdict === 'typo') return { cls: 'err', title: 'Одруківка. Правильне написання:' };
+    if (verdict === 'skip') return { cls: 'err', title: 'Нічого страшного. Ось відповідь, слово повернеться за 10 хвилин:' };
     return { cls: 'err', title: 'Правильна відповідь:' };
   }
 
@@ -3190,7 +3191,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <div class="study-pos">${escapeHtml(cleanPos)} <span class="badge" style="font-style:normal; font-family:var(--font-mono);">Слів у виразі: ${wCount}</span></div>
         <div class="template-mask">${buildMaskTemplate(targetFr, hintCount)}</div>
         <input type="text" id="inpW" class="input" placeholder="Введіть слово або вираз французькою…" value="${escapeHtml(last)}" autocomplete="off" spellcheck="false" ${chk ? 'disabled' : ''}>
-        ${!chk ? `<div style="display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn btn-primary" id="bCh">Перевірити</button><button type="button" class="btn" id="bHint">Підказка (+1 літера)</button></div>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div>${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.25rem;margin-top:2px;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} ${targetFr !== w.fr ? `<span style="font-weight:400;font-size:0.95rem;color:var(--text-muted);">(${escapeHtml(w.fr)})</span>` : ''}</div></div>${speakerBtnHtml(w.fr)}</div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі ${icon('arrowRight')}</button></div>`}
+        ${!chk ? `<div style="display:flex;gap:10px;flex-wrap:wrap;"><button type="button" class="btn btn-primary" id="bCh">Перевірити</button><button type="button" class="btn" id="bHint">Підказка (+1 літера)</button><button type="button" class="btn" id="bSkip">Не знаю</button></div>` : `<div class="feedback-box ${writtenVerdictMeta(chk).cls}"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div>${writtenVerdictMeta(chk).title}</div><div style="font-family:var(--font-fr);font-weight:700;font-size:1.25rem;margin-top:2px;">${chk==='accent' ? markAccentDiff(last, targetFr) : escapeHtml(targetFr)} ${targetFr !== w.fr ? `<span style="font-weight:400;font-size:0.95rem;color:var(--text-muted);">(${escapeHtml(w.fr)})</span>` : ''}</div></div>${speakerBtnHtml(w.fr)}</div></div><div class="next-row"><button type="button" class="btn btn-primary" id="bNx">Далі ${icon('arrowRight')}</button></div>`}
       </section>`;
       container.querySelector('#bEx').addEventListener('click', exitToDashboard);
       const inp = container.querySelector('#inpW');
@@ -3213,6 +3214,9 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           hintCount++;
           render();
         });
+        // «Не знаю»: підказки тому, хто слова не пам'ятає, не допоможуть. Показуємо відповідь,
+        // а слово повертається в повторення як після «Знову» (через 10 хвилин)
+        container.querySelector('#bSkip').addEventListener('click', () => skip());
       } else {
         const nxBtn = container.querySelector('#bNx');
         if (nxBtn) {
@@ -3230,6 +3234,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       const ok = isWrittenAnswerCorrect(chk);
       handleMiniGameResult(w, ok);
       res.push({ word: w, ok });
+      render();
+    }
+    function skip() {
+      if (chk) return;
+      last = '';
+      const w = qs[idx];
+      chk = 'skip';
+      handleMiniGameResult(w, false);
+      res.push({ word: w, ok: false });
       render();
     }
     function next() {
