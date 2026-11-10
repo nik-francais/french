@@ -54,15 +54,31 @@ test('«Вже знаю» рахується як активність дня і
   assert.ok(day && day.a === 1 && day.n === 1, 'у журналі дня: одна відповідь, одне нове слово');
 });
 
-test('Для слів, які вже повторювались, кнопки немає, а прогрес не перезаписується', async () => {
+test('Слово «Вчу» (пауза менша за 14 днів) теж можна позначити як відоме: пауза 14, а не «нове слово»', async () => {
   const app = await loadApp();
-  const w = seasoned();
+  const w = seasoned(); // r=4, iv=6, на повторенні
+  app.api.state.words = [w];
+  const { container, handlers } = openCards(app);
+  handlers['#btnRev:click']();
+  assert.match(container.innerHTML, /id="btnKnown"/);
+  const newBefore = app.api.state.stats.newLearnedToday || 0;
+  handlers['#btnKnown:click']();
+  assert.equal(w.iv, 14); assert.equal(w.r, 5); assert.equal(w.ef, 2.5);
+  assert.equal(app.fn('getWordStatus')(w), 'know');
+  assert.equal(app.api.state.stats.newLearnedToday || 0, newBefore, 'старе слово не рахується як нове сьогодні');
+  const day = Object.values(app.api.state.stats.days)[0];
+  assert.ok(day.a === 1 && !day.n, 'відповідь є, нового слова немає');
+});
+
+test('Слово з паузою від 14 днів: кнопки немає, прогрес не скорочується', async () => {
+  const app = await loadApp();
+  const w = Object.assign(seasoned(), { iv: 20, ef: 2.8 });
   app.api.state.words = [w];
   const { container, handlers } = openCards(app);
   handlers['#btnRev:click']();
   assert.equal(container.innerHTML.includes('id="btnKnown"'), false);
   assert.equal(app.fn('markWordKnown')(w), false);
-  assert.deepEqual({ r: w.r, iv: w.iv }, { r: 4, iv: 6 });
+  assert.deepEqual({ r: w.r, iv: w.iv, ef: w.ef }, { r: 4, iv: 20, ef: 2.8 });
 });
 
 test('Помилка на повторенні «знайомого» слова повертає його на початок, як і будь-яке інше', async () => {
