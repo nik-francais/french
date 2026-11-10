@@ -286,6 +286,10 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .grade-btn:hover { background: var(--bg-elevated); }
 .grade-btn .g-name { font-weight: 600; font-size: 0.9rem; }
 .grade-btn .g-time { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
+.known-btn { width:100%; margin-top:10px; min-height:44px; display:flex; align-items:center; justify-content:center; gap:8px; padding:8px 14px; border-radius:var(--radius-pill); border:1px dashed var(--border); background:transparent; color:var(--text-muted); font:inherit; font-size:var(--fs-small); font-weight:600; cursor:pointer; }
+.known-btn .icon { width:16px; height:16px; }
+.known-btn .g-time { font-family:var(--font-mono); font-size:var(--fs-micro); }
+.known-btn:hover { background:var(--bg-elevated); color:var(--text-main); }
 .grade-again { border-bottom: 3px solid var(--danger); }
 .grade-hard { border-bottom: 3px solid var(--warning); }
 .grade-good { border-bottom: 3px solid var(--accent); }
@@ -1906,6 +1910,20 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     syncWordProgress(word);
   }
 
+  /* «Вже знаю»: слово з уроку, яке учень знав ще до додавання. Не змушуємо його проходити
+     весь шлях 1 → 3 → 10 днів: одразу ставимо паузу в два тижні (статус «Знаю»). Якщо він
+     помилиться на наступному повторенні, слово повернеться на початок, як і будь-яке інше. */
+  const KNOWN_START_DAYS = 14;
+  function markWordKnown(word) {
+    if (word.r !== 0) return false; // лише для нових слів: прогрес наявних не перезаписуємо
+    const now = Date.now();
+    word.iv = KNOWN_START_DAYS; word.ef = 2.5; word.r = 1; word.t = now;
+    word.due = now + KNOWN_START_DAYS * DAY_MS;
+    recordDailyActivity(true, true);
+    syncWordProgress(word);
+    return true;
+  }
+
   function handleMiniGameResult(word, isCorrect) {
     const now = Date.now();
     if (!isCorrect) applySM2Grade(word, 'again');
@@ -2855,6 +2873,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
               <button type="button" class="grade-btn grade-good" data-g="good"><span class="g-name">3 · Добре</span><span class="g-time">${previewNextInterval(w, 'good').label}</span></button>
               <button type="button" class="grade-btn grade-easy" data-g="easy"><span class="g-name">4 · Легко</span><span class="g-time">${previewNextInterval(w, 'easy').label}</span></button>
             </div>
+            ${w.r === 0 ? `<button type="button" class="known-btn" id="btnKnown">${icon('checkCheck')}<span>Вже знаю це слово</span><span class="g-time">${KNOWN_START_DAYS} дн</span></button>` : ''}
           `}
         </section>`;
       if (hasC) {
@@ -2866,7 +2885,19 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         container.querySelector('#btnRev').addEventListener('click', () => { revealed = true; renderCard(); });
       } else {
         container.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => grade(b.dataset.g)));
+        const knownBtn = container.querySelector('#btnKnown');
+        if (knownBtn) knownBtn.addEventListener('click', known);
       }
+    }
+
+    function known() {
+      const w = deck[0];
+      if (!w || !markWordKnown(w)) return;
+      deck.shift();
+      if (!sum.has(w.id)) sum.set(w.id, { word: w, ok: true });
+      completed++;
+      revealed = false;
+      renderCard();
     }
 
     function grade(g) {
