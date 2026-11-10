@@ -685,7 +685,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   
   const defaultState = () => ({ 
     words: [], 
-    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random', profileName: '', autoNext: true, tempo: 'standard', wordsView: 'full' },
+    settings: { langMode: 'UK_FR', newLimit: 10, voiceURI: '', theme: 'auto', accent: 'forest', focusTopic: 'all', choiceDir: 'random', profileName: '', autoNext: true, tempo: 'standard', wordsView: 'full', roundSize: 10 },
     stats: { streak: 0, lastStudyDate: '', dailyDate: todayStr(), answersToday: 0, newLearnedToday: 0, blitzBest: 0, days: {} } 
   });
   let state = defaultState();
@@ -1912,7 +1912,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     else if (word.r === 0 || word.due <= now) applySM2Grade(word, 'good');
     else { recordDailyActivity(false, true); saveLocalStats(); }
   }
-  function pickStudyWords(count = 10, filterFn = null) {
+  /* Скільки слів в одному раунді (Вибір, Напиши, Диктант, У контексті, Синоніми, Пари, Анаграма).
+     Обирає сам учень у налаштуваннях: 10, 15 або 20. Усе інше, зокрема чужі значення, — 10. */
+  const ROUND_SIZES = [10, 15, 20];
+  function roundSize() {
+    const n = Number(state.settings && state.settings.roundSize);
+    return ROUND_SIZES.includes(n) ? n : 10;
+  }
+
+  function pickStudyWords(count = roundSize(), filterFn = null) {
     const pool = filterFn ? getActiveWordsPool().filter(filterFn) : getActiveWordsPool().slice();
     const now = Date.now();
     return [...shuffle(pool.filter(w => w.r > 0 && w.due <= now)), ...pool.filter(w => w.r === 0), ...shuffle(pool.filter(w => w.r > 0 && w.due > now))].slice(0, count);
@@ -2778,7 +2786,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       }
     } else {
       const focused = takeFocusedReview();
-      deck = focused || (q.combined.length > 0 ? q.combined.slice() : shuffle(getActiveWordsPool()).slice(0, 10));
+      deck = focused || (q.combined.length > 0 ? q.combined.slice() : shuffle(getActiveWordsPool()).slice(0, roundSize()));
       totalInitial = deck.length;
     }
 
@@ -2910,7 +2918,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         });
       }
     } else {
-      qs = pickStudyWords(10);
+      qs = pickStudyWords(roundSize());
     }
     if (qs.length === 0 || idx >= qs.length) { exitToDashboard(); return; }
 
@@ -3156,7 +3164,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         });
       }
     } else {
-      qs = pickStudyWords(10);
+      qs = pickStudyWords(roundSize());
     }
     if (qs.length === 0 || idx >= qs.length) { exitToDashboard(); return; }
 
@@ -3287,7 +3295,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         });
       }
     } else {
-      qs = pickStudyWords(10);
+      qs = pickStudyWords(roundSize());
     }
     if (qs.length === 0 || idx >= qs.length) { exitToDashboard(); return; }
 
@@ -3406,7 +3414,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         });
       }
     } else {
-      qs = pickStudyWords(10, w => Boolean(w.ex));
+      qs = pickStudyWords(roundSize(), w => Boolean(w.ex));
     }
     if (qs.length < 1) {
       showToast('Мало слів із прикладами (ex)');
@@ -3524,7 +3532,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         });
       }
     } else {
-      qs = pickStudyWords(10, w => w.syn && w.syn.length > 0);
+      qs = pickStudyWords(roundSize(), w => w.syn && w.syn.length > 0);
     }
     if (qs.length < 1) {
       showToast('Немає слів із синонімами');
@@ -3610,14 +3618,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
    * 7. РЕЖИМ ПАРИ
    * ========================================================= */
   function runPairsMode(container) {
-    const pool = pickStudyWords(10);
+    const pool = pickStudyWords(roundSize());
     if (pool.length < 5) {
       showToast('Потрібно мінімум 5 слів');
       exitToDashboard();
       return;
     }
-    const rounds = [pool.slice(0, 5)];
-    if (pool.length >= 10) rounds.push(pool.slice(5, 10));
+    // раунди по 5 пар: 10 слів дають 2 раунди, 15 дають 3, 20 дають 4
+    const rounds = [];
+    for (let i = 0; i + 5 <= pool.length; i += 5) rounds.push(pool.slice(i, i + 5));
     let rIdx = 0; let t = 0; const res = []; let L = [], R = [], mat = new Set(), sL = null, sR = null;
     const iv = setInterval(() => { t++; const el = document.getElementById('pT'); if (el) el.innerText = t; }, 1000);
     activeSessionCleanup = () => clearInterval(iv);
@@ -3895,7 +3904,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         });
       }
     } else {
-      questions = pickStudyWords(10);
+      questions = pickStudyWords(roundSize());
     }
     if (questions.length === 0 || idx >= questions.length) { exitToDashboard(); return; }
 
@@ -4511,6 +4520,15 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
           </div>
           <div class="setting-row" style="align-items:flex-start;">
             <div>
+              <div style="font-weight:600;">Слів у раунді</div>
+              <div style="font-size:var(--fs-small); color:var(--text-muted);">У «Вибір», «Напиши», «Диктант», «У контексті», «Синоніми», «Пари» й «Анаграма»</div>
+            </div>
+            <select id="selRoundSize" class="select" style="width:auto; min-width:120px;">
+              ${ROUND_SIZES.map(n => `<option value="${n}" ${roundSize() === n ? 'selected' : ''}>${n} слів</option>`).join('')}
+            </select>
+          </div>
+          <div class="setting-row" style="align-items:flex-start;">
+            <div>
               <div style="font-weight:600;">Темп повторення</div>
               <div style="font-size:var(--fs-small); color:var(--text-muted);">Інтенсивний — якщо слова встигають забуватись між повтореннями. Карток щодня стане більше.</div>
             </div>
@@ -4554,6 +4572,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       saveLocalStats();
       container.querySelectorAll('[data-accent-id]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.accentId === state.settings.accent)));
     }));
+    container.querySelector('#selRoundSize').addEventListener('change', e => { const n = Number(e.target.value); state.settings.roundSize = ROUND_SIZES.includes(n) ? n : 10; saveLocalStats(); });
     container.querySelector('#selNewLimit').addEventListener('change', e => { state.settings.newLimit = Number(e.target.value); saveLocalStats(); });
     if (speechSupported) {
       container.querySelector('#selVoice').addEventListener('change', e => { state.settings.voiceURI = e.target.value; saveLocalStats(); showToast('Голос озвучення збережено'); });
