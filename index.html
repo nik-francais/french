@@ -1911,15 +1911,19 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   /* «Вже знаю»: слово з уроку, яке учень знав ще до додавання. Не змушуємо його проходити
-     весь шлях 1 → 3 → 10 днів: одразу ставимо паузу в два тижні (статус «Знаю»). Якщо він
-     помилиться на наступному повторенні, слово повернеться на початок, як і будь-яке інше. */
+     весь шлях 1 → 3 → 10 днів: одразу ставимо паузу в два тижні (статус «Знаю»). Те саме для
+     слова, яке вже «Вчу», але учень його добре знає. Якщо він помилиться на наступному
+     повторенні, слово повернеться на початок, як і будь-яке інше. */
   const KNOWN_START_DAYS = 14;
+  function canMarkKnown(word) { return (word.iv || 0) < KNOWN_START_DAYS; }
   function markWordKnown(word) {
-    if (word.r !== 0) return false; // лише для нових слів: прогрес наявних не перезаписуємо
+    if (!canMarkKnown(word)) return false; // пауза вже довша: прогрес не скорочуємо
     const now = Date.now();
-    word.iv = KNOWN_START_DAYS; word.ef = 2.5; word.r = 1; word.t = now;
+    const wasNew = (word.r === 0);
+    word.iv = KNOWN_START_DAYS; word.r = (word.r || 0) + 1; word.t = now;
+    if (wasNew) word.ef = 2.5;
     word.due = now + KNOWN_START_DAYS * DAY_MS;
-    recordDailyActivity(true, true);
+    recordDailyActivity(wasNew, true);
     syncWordProgress(word);
     return true;
   }
@@ -2873,7 +2877,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
               <button type="button" class="grade-btn grade-good" data-g="good"><span class="g-name">3 · Добре</span><span class="g-time">${previewNextInterval(w, 'good').label}</span></button>
               <button type="button" class="grade-btn grade-easy" data-g="easy"><span class="g-name">4 · Легко</span><span class="g-time">${previewNextInterval(w, 'easy').label}</span></button>
             </div>
-            ${w.r === 0 ? `<button type="button" class="known-btn" id="btnKnown">${icon('checkCheck')}<span>Вже знаю це слово</span><span class="g-time">${KNOWN_START_DAYS} дн</span></button>` : ''}
+            ${canMarkKnown(w) ? `<button type="button" class="known-btn" id="btnKnown">${icon('checkCheck')}<span>Вже знаю це слово</span><span class="g-time">${KNOWN_START_DAYS} дн</span></button>` : ''}
           `}
         </section>`;
       if (hasC) {
