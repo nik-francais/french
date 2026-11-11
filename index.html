@@ -286,6 +286,8 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 .grade-btn:hover { background: var(--bg-elevated); }
 .grade-btn .g-name { font-weight: 600; font-size: 0.9rem; }
 .grade-btn .g-time { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); }
+.chip-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+.chip-row .filter-chip { margin-bottom:0; }
 .known-btn { width:100%; margin-top:10px; min-height:44px; display:flex; align-items:center; justify-content:center; gap:8px; padding:8px 14px; border-radius:var(--radius-pill); border:1px dashed var(--border); background:transparent; color:var(--text-muted); font:inherit; font-size:var(--fs-small); font-weight:600; cursor:pointer; }
 .known-btn .icon { width:16px; height:16px; }
 .known-btn .g-time { font-family:var(--font-mono); font-size:var(--fs-micro); }
@@ -4093,6 +4095,202 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
   }
 
   let wordSearchQuery = '';
+  /* =========================================================
+   * ТРЕНАЖЕР ВІДМІНЮВАННЯ
+   * Живе у вкладці «Слова»: обираєш «Дієслова» (і, за бажанням, тему), і з'являється кнопка.
+   * Бере лише ті дієслова, для яких уже є відмінювання (conj.tenses). Не належить до розкладу
+   * повторення: не змінює статусів слів і не потрапляє в статистику словникового запасу.
+   * ========================================================= */
+  const CONJ_TENSES = [
+    { id: 'present', label: 'Présent', keys: ['present', 'présent'] },
+    { id: 'passe_compose', label: 'Passé composé', keys: ['passe_compose', 'pc'] },
+    { id: 'imparfait', label: 'Imparfait', keys: ['imparfait'] },
+    { id: 'futur', label: 'Futur', keys: ['futur_simple', 'futur'] },
+    { id: 'conditionnel', label: 'Conditionnel', keys: ['conditionnel'] },
+    { id: 'subjonctif', label: 'Subjonctif', keys: ['subjonctif'] }
+  ];
+
+  // Форми одного часу як [{ pronoun, verb }]; рядки без займенника (наказовий спосіб тощо) пропускаємо.
+  function conjFormsOf(word, tenseId) {
+    const tenses = word && word.conj && word.conj.tenses;
+    const def = CONJ_TENSES.find(t => t.id === tenseId);
+    if (!tenses || !def) return [];
+    const key = def.keys.find(k => Array.isArray(tenses[k]));
+    if (!key) return [];
+    return tenses[key].map(item => {
+      if (typeof item === 'string') return splitConjugatedForm(item);
+      if (item && typeof item === 'object') return { pronoun: String(item.p || '').trim(), verb: String(item.v || '').trim() };
+      return { pronoun: '', verb: '' };
+    }).filter(f => f.pronoun && f.verb);
+  }
+
+  function conjTensesOf(word) {
+    return CONJ_TENSES.filter(t => conjFormsOf(word, t.id).length > 0).map(t => t.id);
+  }
+
+  function conjWords(words) {
+    return words.filter(w => conjTensesOf(w).length > 0);
+  }
+
+  // Випадкові вправи: кожна пара «дієслово + час + особа» не більше разу за раунд.
+  function buildConjQuestions(words, tenseIds, count) {
+    const combos = [];
+    conjWords(words).forEach(w => {
+      tenseIds.forEach(tid => {
+        conjFormsOf(w, tid).forEach((f, i) => combos.push({ word: w, tenseId: tid, idx: i, pronoun: f.pronoun, answer: f.verb }));
+      });
+    });
+    return shuffle(combos).slice(0, count);
+  }
+
+  const normConj = s => String(s == null ? '' : s).trim().toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, ' ');
+
+  // Допустимі записи правильної відповіді: «allé(e)s» → allés / allées, «a / b» → кожна частина.
+  function conjAnswerVariants(answer) {
+    const out = new Set();
+    String(answer).split('/').map(p => p.trim()).filter(Boolean).forEach(part => {
+      out.add(normConj(part));
+      if (part.includes('(e)')) {
+        out.add(normConj(part.replace(/\(e\)/g, '')));
+        out.add(normConj(part.replace(/\(e\)/g, 'e')));
+      }
+    });
+    return Array.from(out);
+  }
+
+  // 'ok' | 'accent' | 'err'. Акценти тут значущі (chante ≠ chanté), тож «accent» теж не зараховується.
+  function checkConjAnswer(inputRaw, q) {
+    let inp = normConj(inputRaw);
+    if (!inp) return 'err';
+    const pron = normConj(q.pronoun);
+    if (inp.startsWith(pron + ' ')) inp = inp.slice(pron.length + 1).trim();
+    else if (pron.endsWith("'") && inp.startsWith(pron)) inp = inp.slice(pron.length).trim();
+    const variants = conjAnswerVariants(q.answer);
+    if (variants.includes(inp)) return 'ok';
+    const bare = stripDiacritics(inp);
+    if (variants.some(v => stripDiacritics(v) === bare)) return 'accent';
+    return 'err';
+  }
+
+  function conjTrainerCandidates(filters) {
+    return conjWords(state.words.filter(w => posGroupId(w.pos) === 'verbe' && wordPassesFilters(w, Object.assign({}, filters, { pos: 'verbe' }))));
+  }
+
+  function runConjTrainer(container, words, scopeLabel) {
+    const available = CONJ_TENSES.filter(t => words.some(w => conjFormsOf(w, t.id).length > 0));
+    let chosen = new Set(available.map(t => t.id));
+
+    function back() { renderCurrentTab(); }
+
+    function renderSetup() {
+      const n = roundSize();
+      container.innerHTML = `
+        <div class="session-header">
+          <button type="button" class="btn btn-sm" id="cjBack">← До слів</button>
+          <span class="session-progress">Відмінювання</span>
+        </div>
+        <section class="study-card">
+          <div class="study-meaning">Тренажер відмінювання</div>
+          <div class="study-pos">${words.length} ${ukPlural(words.length, 'дієслово', 'дієслова', 'дієслів')} · ${escapeHtml(scopeLabel)}</div>
+          <div style="font-weight:600; margin:16px 0 8px;">Які часи тренуємо?</div>
+          <div class="chip-row">
+            ${available.map(t => `<button type="button" class="filter-chip" data-tense="${t.id}" aria-pressed="${chosen.has(t.id)}">${t.label}</button>`).join('')}
+          </div>
+          <div style="font-size:var(--fs-small); color:var(--text-muted); margin:4px 0 16px;">Вправ у раунді: ${n}. Змінити можна в Налаштуваннях («Слів у раунді»). Тренажер не впливає на розклад повторення слів.</div>
+          <button type="button" class="btn btn-primary" id="cjStart" ${chosen.size ? '' : 'disabled'}>Почати</button>
+        </section>`;
+      container.querySelector('#cjBack').addEventListener('click', back);
+      container.querySelectorAll('[data-tense]').forEach(b => b.addEventListener('click', () => {
+        const id = b.dataset.tense;
+        if (chosen.has(id)) chosen.delete(id); else chosen.add(id);
+        renderSetup();
+      }));
+      const start = container.querySelector('#cjStart');
+      if (start) start.addEventListener('click', () => { if (chosen.size) startRound(); });
+    }
+
+    function startRound() {
+      const qs = buildConjQuestions(words, Array.from(chosen), roundSize());
+      if (qs.length === 0) { showToast('Немає форм для обраних часів'); renderSetup(); return; }
+      let idx = 0; let verdict = null; const res = [];
+
+      function renderQ() {
+        const q = qs[idx];
+        const tenseLabel = (CONJ_TENSES.find(t => t.id === q.tenseId) || {}).label || '';
+        const table = verdict && verdict !== 'ok'
+          ? `<div class="forms-grid" style="margin-top:12px;">${conjFormsOf(q.word, q.tenseId).map(f => formatConjugationRow({ p: f.pronoun, v: f.verb })).join('')}</div>`
+          : '';
+        container.innerHTML = `
+          <div class="session-header">
+            <button type="button" class="btn btn-sm" id="cjBack">← До слів</button>
+            <span class="session-progress">Відмінювання · ${idx + 1} / ${qs.length}</span>
+          </div>
+          <section class="study-card">
+            <div class="study-word" style="font-family:var(--font-fr); font-size:1.6rem; font-weight:700;">${escapeHtml(q.word.fr)}</div>
+            <div class="study-pos">${escapeHtml(q.word.uk || '')} <span class="badge">${tenseLabel}</span></div>
+            <div style="display:flex; align-items:center; gap:10px; margin:16px 0 12px;">
+              <span class="pronoun" style="font-size:1.1rem;">${escapeHtml(q.pronoun)}</span>
+              <input type="text" id="cjInp" class="input" style="margin-bottom:0; flex:1;" placeholder="…" autocomplete="off" autocapitalize="off" spellcheck="false" ${verdict ? 'disabled' : ''}>
+            </div>
+            ${verdict ? `<div class="feedback-box ${verdict === 'ok' ? 'ok' : 'err'}">${
+              verdict === 'ok' ? 'Правильно!'
+              : verdict === 'accent' ? `Майже: у відмінюванні акценти важливі. Правильно: <b>${escapeHtml(q.pronoun)} ${escapeHtml(q.answer)}</b>`
+              : `Правильна форма: <b>${escapeHtml(q.pronoun)} ${escapeHtml(q.answer)}</b>`}</div>${table}
+              <button type="button" class="btn btn-primary" id="cjNext" style="margin-top:14px;">${idx + 1 >= qs.length ? 'Підсумок' : 'Далі'}</button>`
+            : `<div style="display:flex; gap:10px; flex-wrap:wrap;"><button type="button" class="btn btn-primary" id="cjCheck">Перевірити</button><button type="button" class="btn" id="cjSkip">Не знаю</button></div>`}
+          </section>`;
+        container.querySelector('#cjBack').addEventListener('click', back);
+        const inp = container.querySelector('#cjInp');
+        if (!verdict) {
+          if (inp) {
+            inp.focus();
+            inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); answer(inp.value); } });
+          }
+          container.querySelector('#cjCheck').addEventListener('click', () => answer(inp ? inp.value : ''));
+          container.querySelector('#cjSkip').addEventListener('click', () => answer(''));
+        } else {
+          container.querySelector('#cjNext').addEventListener('click', next);
+        }
+      }
+
+      function answer(val) {
+        if (verdict) return;
+        verdict = checkConjAnswer(val, qs[idx]);
+        res.push({ q: qs[idx], ok: verdict === 'ok' });
+        renderQ();
+      }
+
+      function next() {
+        idx++; verdict = null;
+        if (idx >= qs.length) renderDone(res); else renderQ();
+      }
+
+      renderQ();
+    }
+
+    function renderDone(res) {
+      const ok = res.filter(r => r.ok).length;
+      const wrong = res.filter(r => !r.ok);
+      container.innerHTML = `
+        <div class="session-header">
+          <button type="button" class="btn btn-sm" id="cjBack">← До слів</button>
+          <span class="session-progress">Відмінювання</span>
+        </div>
+        <section class="study-card">
+          <h2 style="font-family:var(--font-fr); font-size:1.35rem;">Підсумок раунду</h2>
+          <div style="font-size:1.1rem; margin:8px 0 12px;"><b>${ok}</b> із ${res.length} правильно</div>
+          ${wrong.length ? `<div style="font-weight:600; margin-bottom:6px;">Над чим попрацювати:</div>
+            <div class="summary-list">${wrong.map(r => `<div class="summary-row"><div><strong style="font-family:var(--font-fr);">${escapeHtml(r.q.word.fr)}</strong><span style="color:var(--text-muted);"> · ${(CONJ_TENSES.find(t => t.id === r.q.tenseId) || {}).label}</span></div><div>${escapeHtml(r.q.pronoun)} <b>${escapeHtml(r.q.answer)}</b></div></div>`).join('')}</div>` : '<div>Без жодної помилки!</div>'}
+          <div style="display:flex; gap:10px; margin-top:16px;"><button type="button" class="btn btn-primary" id="cjAgain">Ще раунд</button><button type="button" class="btn" id="cjSetup">Змінити часи</button></div>
+        </section>`;
+      container.querySelector('#cjBack').addEventListener('click', back);
+      container.querySelector('#cjAgain').addEventListener('click', startRound);
+      container.querySelector('#cjSetup').addEventListener('click', renderSetup);
+    }
+
+    renderSetup();
+  }
+
   let wordFilterStatus = 'all';
   let wordFilterPos = 'all';
   let wordFilterSrc = 'all';
@@ -4139,6 +4337,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         + labels.map(([id, label]) => `<option value="${id}" ${wordFilterStatus === id ? 'selected' : ''}>${label} (${tally.get(id) || 0})</option>`).join('');
     }
 
+    const conjCount = wordFilterPos === 'verbe' ? conjTrainerCandidates(currentFilters()).length : 0;
     const canBulkDeleteTopic = (wordFilterSrc !== 'all');
     const topicWordCount = canBulkDeleteTopic ? state.words.filter(w => w.src === wordFilterSrc).length : 0;
 
@@ -4154,6 +4353,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <div class="words-toolbar">
           <button type="button" class="btn btn-primary" id="btnAddCode">Додати з коду</button>
           <button type="button" class="btn" id="btnAddSingle">+ Слово</button>
+          ${wordFilterPos === 'verbe' ? `<button type="button" class="btn" id="btnConjTrainer" ${conjCount ? '' : 'disabled'} title="${conjCount ? '' : 'У цих дієсловах ще немає відмінювання'}">Тренажер відмінювання · ${conjCount}</button>` : ''}
           ${canBulkDeleteTopic ? `
             ${!confirmingTopicDelete ? `
               <button type="button" class="btn btn-danger btn-sm" id="btnAskDeleteTopic" style="margin-left:auto;">
@@ -4178,6 +4378,11 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
       
     container.querySelector('#btnAddCode').addEventListener('click', openAddCodeModal);
     container.querySelector('#btnAddSingle').addEventListener('click', () => openWordFormModal());
+    const conjBtn = container.querySelector('#btnConjTrainer');
+    if (conjBtn) conjBtn.addEventListener('click', () => {
+      const words = conjTrainerCandidates(currentFilters());
+      if (words.length) runConjTrainer(container, words, wordFilterSrc === 'all' ? 'усі теми' : 'тема «' + wordFilterSrc + '»');
+    });
 
     const askTopicBtn = container.querySelector('#btnAskDeleteTopic');
     if (askTopicBtn) {
@@ -4380,7 +4585,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     });
     container.querySelector('#selFilterPos').addEventListener('change', e => {
       wordFilterPos = e.target.value;
-      renderList();
+      renderWordsTab(container); // кнопка тренажера залежить від фільтра
     });
     container.querySelector('#selFilterSrc').addEventListener('change', e => {
       wordFilterSrc = e.target.value;
