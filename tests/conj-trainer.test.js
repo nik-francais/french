@@ -66,11 +66,11 @@ test('Вправи: не більше за ліміт, лише обрані ч�
   assert.equal(few.length, 6, 'форм менше, ніж ліміт — вправ стільки, скільки є');
 });
 
-test('Кнопка тренажера: лише коли обрано «Дієслова», з лічильником', async () => {
+test('Кнопка тренажера: завжди є, з лічильником дієслів', async () => {
   const a = await setup();
   const html = () => { const el = a.el('x'); a.fn('renderWordsTab')(el); return el.innerHTML; };
   a.api.fn("(wordFilterPos = 'all')");
-  assert.equal(html().includes('btnConjTrainer'), false);
+  assert.match(html(), /id="btnConjTrainer"[^>]*>Тренажер відмінювання · 2</, 'кнопка є одразу, без фільтра «Дієслова»');
   a.api.fn("(wordFilterPos = 'verbe')");
   assert.match(html(), /id="btnConjTrainer"[^>]*>Тренажер відмінювання · 2</);
   a.api.fn("(wordFilterSrc = 'Рух')");
@@ -98,6 +98,7 @@ test('Екран налаштування: усі наявні часи обра
   for (const t of ['Présent', 'Passé composé', 'Imparfait']) { if (t !== 'Imparfait') assert.match(container.innerHTML, new RegExp(t)); }
   assert.equal(container.innerHTML.includes('>Imparfait<'), false, 'часу без даних немає в списку');
   assert.match(container.innerHTML, /Вправ у раунді: 15/);
+  assert.match(container.innerHTML, /id="cjStart" disabled/, 'нічого не обрано → «Почати» неактивна');
 });
 
 test('Раунд: помилка показує правильну форму й таблицю часу; підсумок рахує; SRS не чіпається', async () => {
@@ -106,6 +107,7 @@ test('Раунд: помилка показує правильну форму й
   const daysBefore = JSON.stringify(a.api.state.stats.days || {});
   a.api.state.settings.roundSize = 10;
   const { container, handlers } = open(a, [w]);
+  handlers['#cjAll:click']();
   handlers['#cjStart:click']();
   assert.match(container.innerHTML, /Відмінювання · 1 \/ 10/);
   handlers['#cjSkip:click']();                       // «Не знаю»
@@ -122,19 +124,30 @@ test('Раунд: помилка показує правильну форму й
 test('Подвійне «Перевірити» не дублює відповідь', async () => {
   const a = await setup();
   const { container, handlers } = open(a, [a.api.state.words[0]]);
+  handlers['#cjAll:click']();
   handlers['#cjStart:click']();
   handlers['#cjSkip:click'](); handlers['#cjSkip:click']();
   handlers['#cjNext:click']();
   assert.match(container.innerHTML, /2 \/ 10|2 \/ 1[0-9]?/);
 });
 
-test('Зміна фільтра «Частина мови» перемальовує вкладку, щоб з’явилась кнопка', async () => {
+test('Обрано лише Présent → усі вправи тільки в Présent, і так до кінця раунду', async () => {
+  const a = await setup(); a.api.state.settings.roundSize = 10;
+  const { container, handlers } = open(a, a.api.state.words.slice(0, 2));
+  handlers['tense:present:click']();                 // обрати лише présent
+  handlers['#cjStart:click']();
+  for (let i = 0; i < 10; i++) {
+    assert.match(container.innerHTML, /<span class="badge">Présent<\/span>/, 'вправа ' + (i + 1));
+    handlers['#cjSkip:click'](); if (i < 9) handlers['#cjNext:click']();
+  }
+});
+
+test('«Усі часи» обирає всі, повторне торкання знімає', async () => {
   const a = await setup();
-  const handlers = {};
-  const container = { innerHTML: '', querySelector(sel) { return { value: '', style: {}, innerHTML: '', classList: { toggle() {}, add() {}, remove() {} }, querySelectorAll() { return []; }, querySelector() { return null; }, addEventListener(ev, fn) { handlers[sel + ':' + ev] = fn; } }; }, querySelectorAll() { return []; } };
-  a.api.fn("(wordFilterPos = 'all')");
-  a.fn('renderWordsTab')(container);
-  assert.equal(container.innerHTML.includes('btnConjTrainer'), false);
-  handlers['#selFilterPos:change']({ target: { value: 'verbe' } });
-  assert.match(container.innerHTML, /btnConjTrainer/);
+  const { container, handlers } = open(a, a.api.state.words.slice(0, 1));
+  handlers['#cjAll:click']();
+  assert.equal(container.innerHTML.includes('id="cjStart" disabled'), false);
+  assert.equal((container.innerHTML.match(/aria-pressed="true"/g) || []).length, 4, 'Усі + 3 часи');
+  handlers['#cjAll:click']();
+  assert.match(container.innerHTML, /id="cjStart" disabled/);
 });
