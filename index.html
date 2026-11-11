@@ -4178,7 +4178,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
 
   function runConjTrainer(container, words, scopeLabel) {
     const available = CONJ_TENSES.filter(t => words.some(w => conjFormsOf(w, t.id).length > 0));
-    let chosen = new Set(available.map(t => t.id));
+    let chosen = new Set(); // спочатку нічого не обрано: учень свідомо вибирає часи
 
     function back() { renderCurrentTab(); }
 
@@ -4192,14 +4192,20 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <section class="study-card">
           <div class="study-meaning">Тренажер відмінювання</div>
           <div class="study-pos">${words.length} ${ukPlural(words.length, 'дієслово', 'дієслова', 'дієслів')} · ${escapeHtml(scopeLabel)}</div>
-          <div style="font-weight:600; margin:16px 0 8px;">Які часи тренуємо?</div>
+          <div style="font-weight:600; margin:16px 0 8px;">Які часи тренуємо? <span style="font-weight:400; color:var(--text-muted);">Обери один або кілька</span></div>
           <div class="chip-row">
+            ${available.length > 1 ? `<button type="button" class="filter-chip" id="cjAll" aria-pressed="${chosen.size === available.length}">Усі часи</button>` : ''}
             ${available.map(t => `<button type="button" class="filter-chip" data-tense="${t.id}" aria-pressed="${chosen.has(t.id)}">${t.label}</button>`).join('')}
           </div>
           <div style="font-size:var(--fs-small); color:var(--text-muted); margin:4px 0 16px;">Вправ у раунді: ${n}. Змінити можна в Налаштуваннях («Слів у раунді»). Тренажер не впливає на розклад повторення слів.</div>
           <button type="button" class="btn btn-primary" id="cjStart" ${chosen.size ? '' : 'disabled'}>Почати</button>
         </section>`;
       container.querySelector('#cjBack').addEventListener('click', back);
+      const allBtn = container.querySelector('#cjAll');
+      if (allBtn) allBtn.addEventListener('click', () => {
+        if (chosen.size === available.length) chosen.clear(); else chosen = new Set(available.map(t => t.id));
+        renderSetup();
+      });
       container.querySelectorAll('[data-tense]').forEach(b => b.addEventListener('click', () => {
         const id = b.dataset.tense;
         if (chosen.has(id)) chosen.delete(id); else chosen.add(id);
@@ -4337,7 +4343,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         + labels.map(([id, label]) => `<option value="${id}" ${wordFilterStatus === id ? 'selected' : ''}>${label} (${tally.get(id) || 0})</option>`).join('');
     }
 
-    const conjCount = wordFilterPos === 'verbe' ? conjTrainerCandidates(currentFilters()).length : 0;
+    const conjCount = conjTrainerCandidates(currentFilters()).length;
     const canBulkDeleteTopic = (wordFilterSrc !== 'all');
     const topicWordCount = canBulkDeleteTopic ? state.words.filter(w => w.src === wordFilterSrc).length : 0;
 
@@ -4353,7 +4359,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
         <div class="words-toolbar">
           <button type="button" class="btn btn-primary" id="btnAddCode">Додати з коду</button>
           <button type="button" class="btn" id="btnAddSingle">+ Слово</button>
-          ${wordFilterPos === 'verbe' ? `<button type="button" class="btn" id="btnConjTrainer" ${conjCount ? '' : 'disabled'} title="${conjCount ? '' : 'У цих дієсловах ще немає відмінювання'}">Тренажер відмінювання · ${conjCount}</button>` : ''}
+          ${`<button type="button" class="btn" id="btnConjTrainer" ${conjCount ? '' : 'disabled'} title="${conjCount ? '' : 'У цих дієсловах ще немає відмінювання'}">Тренажер відмінювання · ${conjCount}</button>`}
           ${canBulkDeleteTopic ? `
             ${!confirmingTopicDelete ? `
               <button type="button" class="btn btn-danger btn-sm" id="btnAskDeleteTopic" style="margin-left:auto;">
@@ -4585,7 +4591,7 @@ svg.icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.8; f
     });
     container.querySelector('#selFilterPos').addEventListener('change', e => {
       wordFilterPos = e.target.value;
-      renderWordsTab(container); // кнопка тренажера залежить від фільтра
+      renderList();
     });
     container.querySelector('#selFilterSrc').addEventListener('change', e => {
       wordFilterSrc = e.target.value;
